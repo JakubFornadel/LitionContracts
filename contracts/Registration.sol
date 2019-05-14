@@ -5,6 +5,14 @@ interface ChainValidator{
    function check_participant(uint vesting, address participant) external returns (bool);
 }
 
+contract DummyChainValidator{
+   function check_participant(uint vesting, address participant) pure public returns (bool){
+      if(vesting > 100*10^18 )
+         return true;
+      return false;
+   }
+}
+
 interface ERC20{
    function totalSupply() external view returns (uint);
    function balanceOf(address tokenOwner) external view returns (uint balance);
@@ -14,15 +22,57 @@ interface ERC20{
    function transferFrom(address from, address to, uint tokens) external returns (bool success);
 }
 
+contract TestToken is ERC20{
+   mapping(address => uint) _holding;
+   mapping(address => mapping(address => uint)) _allowances;
+   uint _totalSupply;
+
+   function totalSupply() public view returns (uint){
+      return _totalSupply;
+   }
+
+   function balanceOf(address tokenOwner) public view returns (uint balance){
+      return _holding[tokenOwner];
+   }
+
+   function allowance(address tokenOwner, address spender) public view returns (uint remaining){
+      return _allowances[tokenOwner][spender];
+   }
+
+   function transfer(address to, uint tokens) public returns (bool success){
+      require( _holding[msg.sender] >= tokens );
+      _holding[msg.sender] -= tokens;
+      _holding[to] += tokens;
+      return true;
+   }
+   
+   function approve(address spender, uint tokens) public returns (bool success){
+      _allowances[msg.sender][spender] = tokens;
+      return true;
+   }
+
+   function transferFrom(address from, address to, uint tokens) public returns (bool success){
+      require( _allowances[from][msg.sender] >= tokens );
+      _holding[from] -= tokens;
+      _holding[to] += tokens;
+      return true;
+   }
+   
+   function mint(address to, uint tokens) public{
+      _holding[to] += tokens;
+      _totalSupply += tokens;
+   }
+
+}
+
 interface LitionSidechainRegistry{
-   //prerequisite for the register functions is, that the executing account approves this contract to spend LIT tokens
+/*   //prerequisite for the register functions is, that the executing account approves this contract to spend LIT tokens
    function register_chain( string calldata info, ChainValidator validator ) external returns (uint256 id);
    function vest_in_chain( uint id, uint vesting ) external;
    function has_vested( uint id, address user) view external returns (bool);
    function deposit_in_chain( uint id, uint deposit ) external;
    function has_deposited( uint id, address user) view external returns (bool);
-   function notary() external;
-
+*/
    event NewChain(uint id, string description);
    event NewChainEndpoint(uint id, string endpoint);
    event Deposit(uint indexed chain_id, uint deposit, address indexed depositer, uint256 datetime);
@@ -89,18 +139,19 @@ contract LitionRegistry is LitionSidechainRegistry{
       //then, do ec_recover of the signatures to determine signers
       //check if there is enough signers (total vesting of signers > 50% of all vestings)
       //then, calculate reward
-
-      require(chains[id].active, "Trying to report about non-existing chain");
-      chains[id].last_notary = notary_block;
+      
+      chain_info storage chain = chains[id];
+      require(chain.active, "Trying to report about non-existing chain");
+      chain.last_notary = notary_block;
 
       uint total_mined = 0;
       uint involved_vesting = 0;
       for(uint i = 0; i < miners.length; i++){
          total_mined += blocks_mined[i];
-         involved_vesting += chains[id].users[miners[i]].vesting;
+         involved_vesting += chain.users[miners[i]].vesting;
       }
 
-      require(involved_vesting * 3/2 > chains[id].total_vesting);
+      require(involved_vesting * 3/2 > chain.total_vesting);
 
       uint total_gas = 0; 
       uint total_cost = 0;
@@ -110,9 +161,9 @@ contract LitionRegistry is LitionSidechainRegistry{
       for(uint i = 0; i < users.length; i++){
          total_gas +=user_gas[i];
          uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
-         if( user_cost > chains[id].users[users[i]].deposit ) 
-            user_cost = chains[id].users[users[i]].deposit;
-         chains[id].users[users[i]].deposit -= user_cost;   
+         if( user_cost > chain.users[users[i]].deposit ) 
+            user_cost = chain.users[users[i]].deposit;
+         chain.users[users[i]].deposit -= user_cost;   
          total_cost += user_cost;
       }
       
