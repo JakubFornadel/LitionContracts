@@ -1,6 +1,7 @@
 pragma solidity >=0.5.0;
 pragma experimental ABIEncoderV2;
 
+
 interface ChainValidator{
    function check_participant(uint vesting, address participant) external returns (bool);
 }
@@ -65,22 +66,12 @@ contract TestToken is ERC20{
 
 }
 
-interface LitionSidechainRegistry{
-/*   //prerequisite for the register functions is, that the executing account approves this contract to spend LIT tokens
-   function register_chain( string calldata info, ChainValidator validator ) external returns (uint256 id);
-   function vest_in_chain( uint id, uint vesting ) external;
-   function has_vested( uint id, address user) view external returns (bool);
-   function deposit_in_chain( uint id, uint deposit ) external;
-   function has_deposited( uint id, address user) view external returns (bool);
-*/
+contract LitionRegistry{
    event NewChain(uint id, string description);
    event NewChainEndpoint(uint id, string endpoint);
    event Deposit(uint indexed chain_id, uint deposit, address indexed depositer, uint256 datetime);
    event Vesting(uint indexed chain_id, uint deposit, address indexed depositer, uint256 datetime);
 
-}
-
-contract LitionRegistry is LitionSidechainRegistry{
    ERC20 token;
    struct user_details{
       bool active;
