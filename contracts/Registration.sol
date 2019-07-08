@@ -17,7 +17,7 @@ contract DummyChainValidator is ChainValidator, ECVerify{
    }
 
    function check_notary_data(bytes memory data) public returns (address[] memory sigs){
-      bytes32 hash;
+/*      bytes32 hash;
       int data_pointer = 32;//first 32 bytes is array length
       require( data.length % 65 == 32 );
       uint sig_count = (data.length - 32)/65;
@@ -49,8 +49,9 @@ contract DummyChainValidator is ChainValidator, ECVerify{
             bool recovered;
             (recovered, sigs[i]) = safer_ecrecover(hash, v,r,s);
          }
-      }
+      }*/
    }
+
 }
 
 interface ERC20{
@@ -60,12 +61,16 @@ interface ERC20{
    function transfer(address to, uint tokens) external returns (bool success);
    function approve(address spender, uint tokens) external returns (bool success);
    function transferFrom(address from, address to, uint tokens) external returns (bool success);
+   event Transfer(address indexed from, address indexed to, uint tokens);
+   event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 contract TestToken is ERC20{
    mapping(address => uint) _holding;
    mapping(address => mapping(address => uint)) _allowances;
    uint _totalSupply;
+   string public constant symbol = "LIT";
+   uint8 public constant decimals = 18;
 
    function totalSupply() public view returns (uint){
       return _totalSupply;
@@ -83,11 +88,13 @@ contract TestToken is ERC20{
       require( _holding[msg.sender] >= tokens );
       _holding[msg.sender] -= tokens;
       _holding[to] += tokens;
+      emit Transfer(msg.sender, to, tokens);
       return true;
    }
    
    function approve(address spender, uint tokens) public returns (bool success){
       _allowances[msg.sender][spender] = tokens;
+      emit Approval(msg.sender, spender, tokens);
       return true;
    }
 
@@ -95,6 +102,7 @@ contract TestToken is ERC20{
       require( _allowances[from][msg.sender] >= tokens );
       _holding[from] -= tokens;
       _holding[to] += tokens;
+      emit Transfer(from, to, tokens);
       return true;
    }
    
@@ -182,7 +190,7 @@ contract LitionRegistry{
          involved_vesting += chain.users[miners_in_notary[i]].vesting;
       }
 
-      require(involved_vesting * 3/2 > chain.total_vesting);
+//      require(involved_vesting * 3/2 > chain.total_vesting);
 
       uint total_gas = 0; 
       uint total_cost = 0;
