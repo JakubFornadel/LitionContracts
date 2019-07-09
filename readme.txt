@@ -14,15 +14,14 @@ make devtools
 #### Create SC ABI
 run
 ```
-cd abi
-solc --abi ../Registration.sol -o .
-abigen --abi=LitionRegistry.abi --pkg=lition --out=LitionRegistry.go
+cd contracts
+solc --abi Registration.sol --output-dir abi
 ```
 
 #### Create SC go class 
 run
 ```
-cd go_wrapper
-abigen --abi=../abi/LitionRegistry.abi --pkg=lition --out=LitionRegistry.go
+cd contracts
+abigen --abi=abi/LitionRegistry.abi --pkg=lition --out=go_wrapper/LitionRegistry.go
 ```
 
