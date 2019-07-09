@@ -1,16 +1,15 @@
 
 pragma solidity >=0.5.4;
 //pragma experimental ABIEncoderV2;
-import "contracts/ECVerify.sol";
 
 
 interface ChainValidator{
-   function check_participant(uint vesting, address participant) external returns (bool);
+   function check_participant(uint vesting) external returns (bool);
    function check_notary_data(bytes calldata data) external returns (address[] memory);  
 }
 
-contract DummyChainValidator is ChainValidator, ECVerify{
-   function check_participant(uint vesting, address participant) public returns (bool){
+contract DummyChainValidator is ChainValidator {
+   function check_participant(uint vesting) public returns (bool){
       if(vesting > 100*10^18 )
          return true;
       return false;
@@ -45,10 +44,11 @@ contract DummyChainValidator is ChainValidator, ECVerify{
          v += 27;
          if (v != 27 && v != 28) {
             sigs[i] = address(0);
-         } else {
-            bool recovered;
-            (recovered, sigs[i]) = safer_ecrecover(hash, v,r,s);
-         }
+         } 
+	 //else {
+         //   bool recovered;
+         //   (recovered, sigs[i]) = safer_ecrecover(hash, v,r,s);
+         //}
       }
    }
 }
@@ -214,7 +214,7 @@ contract LitionRegistry{
    function _vest_in_chain( uint id, uint vesting, address user ) private {
       if(vesting > 0 ){
          require( chains[id].active, "can't vest into non-existing chain" );
-         require( chains[id].validator.check_participant( vesting, user ), "user does not meet chain criteria");
+         require( chains[id].validator.check_participant( vesting ), "user does not meet chain criteria");
       }
       if( chains[id].users[user].vesting > vesting ){
          uint to_withdraw = chains[id].users[user].vesting - vesting;
@@ -263,5 +263,4 @@ contract LitionRegistry{
       emit StopMining(id, msg.sender);
    }
    
-
 }
