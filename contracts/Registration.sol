@@ -1,7 +1,7 @@
 
 pragma solidity >=0.5.4;
 //pragma experimental ABIEncoderV2;
-import "contracts/ECVerify.sol";
+import "ECVerify.sol";
 
 
 interface ChainValidator{
@@ -271,5 +271,4 @@ contract LitionRegistry{
       emit StopMining(id, msg.sender);
    }
    
-
 }
