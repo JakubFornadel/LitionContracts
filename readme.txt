@@ -15,13 +15,13 @@ make devtools
 run
 ```
 cd contracts
-solc --abi Registration.sol --output-dir abi
+solc --abi Registration.sol --output-dir client/abi
 ```
 
 #### Create SC go class 
 run
 ```
 cd contracts
-abigen --abi=abi/LitionRegistry.abi --pkg=lition --out=go_wrapper/LitionRegistry.go
+abigen --abi=client/abi/LitionRegistry.abi --pkg=litionContractClient --out=client/litionRegistry.go
 ```
 
