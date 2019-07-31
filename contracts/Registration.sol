@@ -5,13 +5,20 @@ import "contracts/ECVerify.sol";
 
 
 interface ChainValidator{
-   function check_participant(uint vesting, address participant) external returns (bool);
-   function check_notary_data(bytes calldata data) external returns (address[] memory);  
+   function check_vesting(uint vesting, address participant) external returns (bool);
+   function check_deposit(uint vesting, address participant) external returns (bool);
+   function check_notary_data(bytes calldata data) external returns (address[] memory);
 }
 
 contract DummyChainValidator is ChainValidator, ECVerify{
-   function check_participant(uint vesting, address participant) public returns (bool){
+   function check_vesting(uint vesting, address participant) public returns (bool){
       if(vesting > 100*10^18 )
+         return true;
+      return false;
+   }
+
+   function check_deposit(uint vesting, address participant) public returns (bool){
+      if(vesting > 1*10^18 )
          return true;
       return false;
    }
@@ -27,7 +34,7 @@ contract DummyChainValidator is ChainValidator, ECVerify{
          hash := mload(add(data, data_pointer))
       }
       data_pointer +=32;
-      
+
       for(uint i =0; i<sig_count; i++) {
          bytes32 r;
          bytes32 s;
@@ -65,54 +72,6 @@ interface ERC20{
    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-contract TestToken is ERC20{
-   mapping(address => uint) _holding;
-   mapping(address => mapping(address => uint)) _allowances;
-   uint _totalSupply;
-   string public constant symbol = "LIT";
-   uint8 public constant decimals = 18;
-
-   function totalSupply() public view returns (uint){
-      return _totalSupply;
-   }
-
-   function balanceOf(address tokenOwner) public view returns (uint balance){
-      return _holding[tokenOwner];
-   }
-
-   function allowance(address tokenOwner, address spender) public view returns (uint remaining){
-      return _allowances[tokenOwner][spender];
-   }
-
-   function transfer(address to, uint tokens) public returns (bool success){
-      require( _holding[msg.sender] >= tokens );
-      _holding[msg.sender] -= tokens;
-      _holding[to] += tokens;
-      emit Transfer(msg.sender, to, tokens);
-      return true;
-   }
-   
-   function approve(address spender, uint tokens) public returns (bool success){
-      _allowances[msg.sender][spender] = tokens;
-      emit Approval(msg.sender, spender, tokens);
-      return true;
-   }
-
-   function transferFrom(address from, address to, uint tokens) public returns (bool success){
-      require( _allowances[from][msg.sender] >= tokens );
-      _holding[from] -= tokens;
-      _holding[to] += tokens;
-      emit Transfer(from, to, tokens);
-      return true;
-   }
-   
-   function mint(address to, uint tokens) public{
-      _holding[to] += tokens;
-      _totalSupply += tokens;
-   }
-
-}
-
 contract LitionRegistry{
    event NewChain(uint id, string description);
    event NewChainEndpoint(uint id, string endpoint);
@@ -133,6 +92,7 @@ contract LitionRegistry{
    struct chain_info{
       bool active;
       mapping(address => user_details) users;
+      address[] registered_users;
       uint last_notary;
       ChainValidator validator;
       uint total_vesting;
@@ -140,7 +100,7 @@ contract LitionRegistry{
 
    mapping(uint256 => chain_info) public chains;
    uint256 public next_id = 0;
-   
+
    constructor(ERC20 _token) public {
       token = _token;
    }
@@ -168,15 +128,15 @@ contract LitionRegistry{
    }
 
    function has_vested( uint id, address user) view external returns (bool){
-      return chains[id].users[user].vesting > 0; 
+      return chains[id].users[user].vesting > 0;
    }
 
    function has_deposited( uint id, address user) view external returns (bool){
-      return chains[id].users[user].deposit > 0; 
+      return chains[id].users[user].deposit > 0;
    }
 
    function notary(uint id, uint32 notary_block, address[] memory miners, uint32[] memory blocks_mined, address[] memory users, uint32[] memory user_gas, uint32 largest_tx, bytes memory notary_data) public{
-      //first, calculate hash from miners, block_mined, users and user_gas 
+      //first, calculate hash from miners, block_mined, users and user_gas
       //then, do ec_recover of the signatures to determine signers
       //check if there is enough signers (total vesting of signers > 50% of all vestings)
       //then, calculate reward
@@ -192,26 +152,26 @@ contract LitionRegistry{
 
 //      require(involved_vesting * 3/2 > chain.total_vesting);
 
-      uint total_gas = 0; 
+      uint total_gas = 0;
       uint total_cost = 0;
       //largest tx fixed at 0.1 LIT - rework that to work with current price
       uint largest_reward = 10**17;
-      
+
       for(uint i = 0; i < users.length; i++){
          total_gas +=user_gas[i];
          uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
-         if( user_cost > chain.users[users[i]].deposit ) 
+         if( user_cost > chain.users[users[i]].deposit )
             user_cost = chain.users[users[i]].deposit;
-         chain.users[users[i]].deposit -= user_cost;   
+         chain.users[users[i]].deposit -= user_cost;
          total_cost += user_cost;
       }
-      
+
       for( uint i = 0; i < miners.length - 1; i++ ){
          uint miner_reward = blocks_mined[i] * total_cost / (notary_block - chain.last_notary);
          token.transfer( miners[i], miner_reward );
          total_cost -= miner_reward;
       }
-      
+
       chain.last_notary = notary_block;
 
       token.transfer( miners[miners.length - 1], total_cost );
@@ -222,7 +182,7 @@ contract LitionRegistry{
    function _vest_in_chain( uint id, uint vesting, address user ) private {
       if(vesting > 0 ){
          require( chains[id].active, "can't vest into non-existing chain" );
-         require( chains[id].validator.check_participant( vesting, user ), "user does not meet chain criteria");
+         require( chains[id].validator.check_vesting( vesting, user ), "user does not meet chain criteria");
       }
       if( chains[id].users[user].vesting > vesting ){
          uint to_withdraw = chains[id].users[user].vesting - vesting;
@@ -234,17 +194,19 @@ contract LitionRegistry{
          token.transferFrom( user, address(this), to_deposit);
       }
       chains[id].users[user].vesting = vesting;
-      emit Vesting( id, vesting, user, now ); 
+      chains[id].registered_users.push(user);
+      emit Vesting( id, vesting, user, now );
    }
 
    function deposit_in_chain( uint id, uint deposit ) public {
       _deposit_in_chain(id, deposit, msg.sender );
    }
-   
+
    //TODO - rework so withdrawals are not processed immediatelly but after notary window
    function _deposit_in_chain( uint id, uint deposit, address user ) private {
       if(deposit > 0){
          require( chains[id].active, "can't deposit into non-existing chain" );
+         require( chains[id].validator.check_deposit( vesting, user ), "user does not meet chain criteria");
       }
       if( chains[id].users[user].deposit > deposit ){
          uint to_withdraw = chains[id].users[user].deposit - deposit;
@@ -254,22 +216,49 @@ contract LitionRegistry{
          token.transferFrom(user, address(this), to_deposit);
       }
       chains[id].users[user].deposit = deposit;
+      chains[id].registered_users.push(user);
       emit Deposit(id, deposit, user, now);
    }
-   
+
+   function get_allowed_to_transact( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
+     count = 0;
+     int j = batch * 100;
+     while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
+       address user = chains[id].registered_users[j];
+       if( chains[id].users[user].deposit > 0 ) {
+         users[count] = chains[id].registered_users[j];
+         count++;
+       }
+       j++;
+     }
+   }
+
+   function get_validators( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
+     count = 0;
+     int j = batch * 100;
+     while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
+       address user = chains[id].registered_users[j];
+       if( chains[id].users[user].vesting > 0 ) {
+         users[count] = chains[id].registered_users[j];
+         count++;
+       }
+       j++;
+     }
+   }
+
    function start_mining(uint id) public {
       require(chains[id].active);
       require(chains[id].users[msg.sender].vesting > 0);
       chains[id].users[msg.sender].mining = true;
       emit StartMining(id, msg.sender);
    }
- 
+
    function stop_mining(uint id) public {
       require(chains[id].active);
       require(chains[id].users[msg.sender].vesting > 0);
       chains[id].users[msg.sender].mining = false;
       emit StopMining(id, msg.sender);
    }
-   
+
 
 }
