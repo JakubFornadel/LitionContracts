@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Init Lition Smartcontract client
-	litionContractClient, err := litionContractClient.New(infuraURL, contractAddress, big.NewInt(int64(chainID)))
+	litionContractClient, err := litionContractClient.NewClient(infuraURL, contractAddress, big.NewInt(int64(chainID)))
 	if err != nil {
 		log.Fatal("Unable to init Lition smart contract client")
 	}

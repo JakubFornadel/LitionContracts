@@ -20,7 +20,7 @@ type ContractClient struct {
 	stopMiningEventListener  *StopMiningEventListener
 }
 
-func New(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
+func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
 	contractClient := new(ContractClient)
 	ethClient, err := ethclient.Dial(ethClientURL)
 	if err != nil {
