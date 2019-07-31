@@ -8,9 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/event"
-
 	log "github.com/sirupsen/logrus"
-	// lition "gitlab.com/lition/lition_contracts/contracts/client/sc_wrapper"
 )
 
 type StartMiningEventListener struct {

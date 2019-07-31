@@ -7,10 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-
 	log "github.com/sirupsen/logrus"
-	// eventListener "gitlab.com/lition/lition_contracts/contracts/client/eventListener"
-	//lition "gitlab.com/lition/lition_contracts/contracts/client/sc_wrapper"
 )
 
 // ContractClient contains variables needed for communication with lition smart contract
