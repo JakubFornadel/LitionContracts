@@ -112,7 +112,7 @@ func (listener *DepositEventListener) Start(f func(*LitionDeposit)) error {
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'StartMining' event received.")
+			log.Info("New 'Deposit' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
