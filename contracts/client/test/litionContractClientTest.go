@@ -20,6 +20,10 @@ func processStopMining(event *litionContractClient.LitionStopMining) {
 	log.Info("processStopMining. Acc: ", event.Miner.String())
 }
 
+func processDeposit(event *litionContractClient.LitionDeposit) {
+	log.Info("processDeposit. Acc: ", event.Depositer.String(), "Amount: ", event.Deposit)
+}
+
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
 	contractAddress := "0xF4f9c1c8D66C8c9c09456BaD6a9890C3caa768c3"
@@ -50,10 +54,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to init 'StopMining' event listeners")
 	}
+	err = litionContractClient.InitDepositEventListener()
+	if err != nil {
+		log.Fatal("Unable to init 'Deposit' event listeners")
+	}
 
 	// Start standalone event listeners
 	go litionContractClient.Start_StartMiningEventListener(processStartMining)
 	go litionContractClient.Start_StopMiningEventListener(processStopMining)
+	go litionContractClient.Start_DepositEventListener(processDeposit)
 
 	if privateKeyStr != "" {
 		err = litionContractClient.StartMining(auth)
