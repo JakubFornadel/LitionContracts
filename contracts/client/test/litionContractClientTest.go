@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
+	"gitlab.com/lition/lition/accounts/abi/bind"
+	"gitlab.com/lition/lition/crypto"
 
 	litionContractClient "gitlab.com/lition/lition_contracts/contracts/client"
 )

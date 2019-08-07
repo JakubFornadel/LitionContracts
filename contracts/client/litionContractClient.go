@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"gitlab.com/lition/lition/accounts/abi/bind"
+	"gitlab.com/lition/lition/common"
+	"gitlab.com/lition/lition/ethclient"
 	log "github.com/sirupsen/logrus"
 )
 
