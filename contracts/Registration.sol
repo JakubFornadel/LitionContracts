@@ -1,64 +1,24 @@
 
 pragma solidity >=0.5.4;
 //pragma experimental ABIEncoderV2;
-import "ECVerify.sol";
 
-
-interface ChainValidator{
+interface ChainValidator {
    function check_vesting(uint vesting, address participant) external returns (bool);
    function check_deposit(uint vesting, address participant) external returns (bool);
-   function check_notary_data(bytes calldata data) external returns (address[] memory);
 }
 
-contract DummyChainValidator is ChainValidator, ECVerify{
-   function check_vesting(uint vesting, address participant) public returns (bool){
+contract DummyChainValidator is ChainValidator {
+   function check_vesting(uint vesting, address participant) public returns (bool) {
       if(vesting > 100*10^18 )
          return true;
       return false;
    }
 
-   function check_deposit(uint vesting, address participant) public returns (bool){
+   function check_deposit(uint vesting, address participant) public returns (bool) {
       if(vesting > 1*10^18 )
          return true;
       return false;
    }
-
-   function check_notary_data(bytes memory data) public returns (address[] memory sigs){
-/*      bytes32 hash;
-      int data_pointer = 32;//first 32 bytes is array length
-      require( data.length % 65 == 32 );
-      uint sig_count = (data.length - 32)/65;
-
-      sigs = new address[](sig_count);
-      assembly {
-         hash := mload(add(data, data_pointer))
-      }
-      data_pointer +=32;
-
-      for(uint i =0; i<sig_count; i++) {
-         bytes32 r;
-         bytes32 s;
-         uint8 v;
-         assembly{
-            r := mload(add(data, data_pointer))
-            data_pointer := add(data_pointer,32)
-            s := mload(add(data, data_pointer))
-            data_pointer := add(data_pointer,32)
-            v := byte(0, mload(add(data, data_pointer)))
-            data_pointer := add(data_pointer, 1)
-         }
-         data_pointer += 65;
-         if (v < 27)
-         v += 27;
-         if (v != 27 && v != 28) {
-            sigs[i] = address(0);
-         } else {
-            bool recovered;
-            (recovered, sigs[i]) = safer_ecrecover(hash, v,r,s);
-         }
-      }*/
-   }
-
 }
 
 interface ERC20{
@@ -131,51 +91,79 @@ contract LitionRegistry{
       return chains[id].users[user].vesting > 0;
    }
 
-   function has_deposited( uint id, address user) view external returns (bool){
+   function has_deposited(uint id, address user) view external returns (bool) {
       return chains[id].users[user].deposit > 0;
    }
 
-   function notary(uint id, uint32 notary_block, address[] memory miners, uint32[] memory blocks_mined, address[] memory users, uint32[] memory user_gas, uint32 largest_tx, bytes memory notary_data) public{
+   function get_signature_hash_from_notary(uint32 notary_block, address[] memory miners,
+                                 uint32[] memory blocks_mined, address[] memory users,
+                                 uint32[] memory user_gas, uint32 largest_tx)
+                                     public pure returns (bytes32) {
+      bytes memory encoded_notary = abi.encodePacked(notary_block, miners, blocks_mined, users, user_gas, largest_tx);
+      bytes32 notary_hash = keccak256(encoded_notary);
+      return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", notary_hash));
+   }
+
+   function get_last_notary(uint id) external view returns (uint256) {
+     return chains[id].last_notary;
+   }
+
+   function process_users_consumptions(uint id, address[] memory users, uint32[] memory user_gas, uint32 largest_tx) internal returns (uint256 total_cost) {
+     uint total_gas = 0;
+     total_cost = 0;
+     //largest tx fixed at 0.1 LIT - rework that to work with current price
+     uint largest_reward = 10**17;
+
+     for(uint i = 0; i < users.length; i++) {
+        total_gas +=user_gas[i];
+        uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
+        if( user_cost > chains[id].users[users[i]].deposit )
+           user_cost = chains[id].users[users[i]].deposit;
+        chains[id].users[users[i]].deposit -= user_cost;
+        total_cost += user_cost;
+     }
+   }
+
+   function process_miners_rewards(uint id, address[] memory miners, uint32[] memory blocks_mined, uint lit_to_distribute) internal {
+     uint total_signatures = 0;
+     for(uint i = 0; i < miners.length - 1; i++) {
+        total_signatures += blocks_mined[i];
+     }
+
+     for(uint i = 0; i < miners.length - 1; i++) {
+        uint miner_reward = blocks_mined[i] * lit_to_distribute / total_signatures;
+        token.transfer( miners[i], miner_reward );
+        lit_to_distribute -= miner_reward;
+     }
+
+     token.transfer( miners[miners.length - 1], lit_to_distribute );
+   }
+
+   function notary(uint id, uint32 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
+                                 address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
+                                 uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
       //first, calculate hash from miners, block_mined, users and user_gas
       //then, do ec_recover of the signatures to determine signers
       //check if there is enough signers (total vesting of signers > 50% of all vestings)
       //then, calculate reward
+      require(v.length == r.length);
+      require(v.length == s.length);
+      bytes32 signature_hash = get_signature_hash_from_notary(notary_block_no, miners, blocks_mined, users, user_gas, largest_tx);
       chain_info storage chain = chains[id];
       require(chain.active, "Trying to report about non-existing chain");
 
       uint involved_vesting = 0;
 
-      address[] memory miners_in_notary = chains[id].validator.check_notary_data(notary_data);
-      for (uint i=0; i<miners_in_notary.length; i++){
-         involved_vesting += chain.users[miners_in_notary[i]].vesting;
+      for(uint i =0; i<v.length; i++) {
+         address signer = ecrecover(signature_hash, v[i], r[i], s[i]);
+         involved_vesting += chain.users[signer].vesting;
       }
 
-//      require(involved_vesting * 3/2 > chain.total_vesting);
+      require(involved_vesting * 2 >= chain.total_vesting);
 
-      uint total_gas = 0;
-      uint total_cost = 0;
-      //largest tx fixed at 0.1 LIT - rework that to work with current price
-      uint largest_reward = 10**17;
-
-      for(uint i = 0; i < users.length; i++){
-         total_gas +=user_gas[i];
-         uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
-         if( user_cost > chain.users[users[i]].deposit )
-            user_cost = chain.users[users[i]].deposit;
-         chain.users[users[i]].deposit -= user_cost;
-         total_cost += user_cost;
-      }
-
-      for( uint i = 0; i < miners.length - 1; i++ ){
-         uint miner_reward = blocks_mined[i] * total_cost / (notary_block - chain.last_notary);
-         token.transfer( miners[i], miner_reward );
-         total_cost -= miner_reward;
-      }
-
-      chain.last_notary = notary_block;
-
-      token.transfer( miners[miners.length - 1], total_cost );
-
+      uint256 total_cost = process_users_consumptions(id, users, user_gas, largest_tx);
+      process_miners_rewards(id, miners, blocks_mined, total_cost);
+      chain.last_notary = notary_block_no;
    }
 
    //TODO - rework so withdrawals are not processed immediatelly but after notary window
@@ -206,7 +194,7 @@ contract LitionRegistry{
    function _deposit_in_chain( uint id, uint deposit, address user ) private {
       if(deposit > 0){
          require( chains[id].active, "can't deposit into non-existing chain" );
-         require( chains[id].validator.check_deposit( vesting, user ), "user does not meet chain criteria");
+         require( chains[id].validator.check_deposit( deposit, user ), "user does not meet chain criteria");
       }
       if( chains[id].users[user].deposit > deposit ){
          uint to_withdraw = chains[id].users[user].deposit - deposit;
@@ -222,7 +210,7 @@ contract LitionRegistry{
 
    function get_allowed_to_transact( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
      count = 0;
-     int j = batch * 100;
+     uint j = batch * 100;
      while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
        address user = chains[id].registered_users[j];
        if( chains[id].users[user].deposit > 0 ) {
@@ -235,7 +223,7 @@ contract LitionRegistry{
 
    function get_validators( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
      count = 0;
-     int j = batch * 100;
+     uint j = batch * 100;
      while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
        address user = chains[id].registered_users[j];
        if( chains[id].users[user].vesting > 0 ) {
@@ -259,5 +247,5 @@ contract LitionRegistry{
       chains[id].users[msg.sender].mining = false;
       emit StopMining(id, msg.sender);
    }
-   
+
 }
