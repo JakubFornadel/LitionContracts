@@ -11,11 +11,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type StopMiningEventListener struct {
+type DepositEventListener struct {
 	initialized    bool
 	listening      bool
 	scClient       *Lition
-	eventChannel   chan *LitionStopMining
+	eventChannel   chan *LitionDeposit
 	eventSubs      event.Subscription
 	filterChainId  []*big.Int
 	stopChannel    chan struct{}
@@ -23,8 +23,8 @@ type StopMiningEventListener struct {
 	mutex          sync.Mutex
 }
 
-func NewStopMiningEventListener(scClient *Lition, chainId *big.Int) (*StopMiningEventListener, error) {
-	p := new(StopMiningEventListener)
+func NewDepositEventListener(scClient *Lition, chainId *big.Int) (*DepositEventListener, error) {
+	p := new(DepositEventListener)
 
 	p.initialized = false
 	p.listening = false
@@ -39,7 +39,7 @@ func NewStopMiningEventListener(scClient *Lition, chainId *big.Int) (*StopMining
 	return nil, err
 }
 
-func (listener *StopMiningEventListener) Init() error {
+func (listener *DepositEventListener) Init() error {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -48,11 +48,12 @@ func (listener *StopMiningEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionStopMining)
-	listener.eventSubs, err = listener.scClient.WatchStopMining(&bind.WatchOpts{
-		Context: context.Background(), Start: nil},
+	listener.eventChannel = make(chan *LitionDeposit)
+	listener.eventSubs, err = listener.scClient.WatchDeposit(
+		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
-		listener.filterChainId)
+		listener.filterChainId,
+		nil)
 
 	if err != nil {
 		log.Error(err)
@@ -67,7 +68,7 @@ func (listener *StopMiningEventListener) Init() error {
 	return nil
 }
 
-func (listener *StopMiningEventListener) DeInit() {
+func (listener *DepositEventListener) DeInit() {
 	listener.Stop()
 
 	listener.mutex.Lock()
@@ -84,23 +85,23 @@ func (listener *StopMiningEventListener) DeInit() {
 	listener.initialized = false
 }
 
-func (listener *StopMiningEventListener) ReInit() error {
+func (listener *DepositEventListener) ReInit() error {
 	listener.DeInit()
 	return listener.Init()
 }
 
-func (listener *StopMiningEventListener) Start(f func(*LitionStopMining)) error {
+func (listener *DepositEventListener) Start(f func(*LitionDeposit)) error {
 	if listener.initialized == false {
-		return errors.New("Trying to Start 'StopMiningEventListener' without previous initialization")
+		return errors.New("Trying to Start 'DepositEventListener' without previous initialization")
 	}
 	if listener.listening == true {
-		log.Warning("Trying to Start 'StopMiningEventListener', which is already listening.")
+		log.Warning("Trying to Start 'DepositEventListener', which is already listening.")
 		return nil
 	}
 
 	listener.stoppedChannel = make(chan struct{})
 	listener.listening = true
-	log.Info("StopMiningEventListener start listening")
+	log.Info("DepositEventListener start listening")
 
 	// close the stoppedchan when this func exits
 	defer func() {
@@ -111,18 +112,18 @@ func (listener *StopMiningEventListener) Start(f func(*LitionStopMining)) error 
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'StopMining' event received.")
+			log.Info("New 'Deposit' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
 		case <-listener.stopChannel:
-			log.Info("Signal to stop StopMiningEventListener received.")
+			log.Info("Signal to stop DepositEventListener received.")
 			return nil
 		}
 	}
 }
 
-func (listener *StopMiningEventListener) Stop() {
+func (listener *DepositEventListener) Stop() {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -134,5 +135,5 @@ func (listener *StopMiningEventListener) Stop() {
 	// wait for it to have stopped
 	<-listener.stoppedChannel
 	listener.stopChannel = make(chan struct{})
-	log.Info("StopMiningEventListener successfully stopped")
+	log.Info("DepositEventListener successfully stopped")
 }

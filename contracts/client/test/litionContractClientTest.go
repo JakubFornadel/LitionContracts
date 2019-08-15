@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	log "github.com/sirupsen/logrus"
+	"gitlab.com/lition/lition/accounts/abi/bind"
+	"gitlab.com/lition/lition/crypto"
 
 	litionContractClient "gitlab.com/lition/lition_contracts/contracts/client"
 )
@@ -18,6 +18,10 @@ func processStartMining(event *litionContractClient.LitionStartMining) {
 
 func processStopMining(event *litionContractClient.LitionStopMining) {
 	log.Info("processStopMining. Acc: ", event.Miner.String())
+}
+
+func processDeposit(event *litionContractClient.LitionDeposit) {
+	log.Info("processDeposit. Acc: ", event.Depositer.String(), "Amount: ", event.Deposit)
 }
 
 func main() {
@@ -50,10 +54,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to init 'StopMining' event listeners")
 	}
+	err = litionContractClient.InitDepositEventListener()
+	if err != nil {
+		log.Fatal("Unable to init 'Deposit' event listeners")
+	}
 
 	// Start standalone event listeners
 	go litionContractClient.Start_StartMiningEventListener(processStartMining)
 	go litionContractClient.Start_StopMiningEventListener(processStopMining)
+	go litionContractClient.Start_DepositEventListener(processDeposit)
 
 	if privateKeyStr != "" {
 		err = litionContractClient.StartMining(auth)

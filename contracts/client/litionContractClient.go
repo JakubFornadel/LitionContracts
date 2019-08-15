@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"gitlab.com/lition/lition/accounts/abi/bind"
+	"gitlab.com/lition/lition/common"
+	"gitlab.com/lition/lition/ethclient"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +18,7 @@ type ContractClient struct {
 	chainID                  *big.Int // chainID on top of which all sc calls are made
 	startMiningEventListener *StartMiningEventListener
 	stopMiningEventListener  *StopMiningEventListener
+	depositEventListener     *DepositEventListener
 }
 
 func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
@@ -40,6 +41,7 @@ func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*Contra
 
 	contractClient.startMiningEventListener = nil
 	contractClient.stopMiningEventListener = nil
+	contractClient.depositEventListener = nil
 
 	return contractClient, nil
 }
@@ -64,6 +66,16 @@ func (contractClient *ContractClient) InitStoptMiningEventListener() error {
 	return nil
 }
 
+func (contractClient *ContractClient) InitDepositEventListener() error {
+	var err error
+	contractClient.depositEventListener, err = NewDepositEventListener(contractClient.scClient, contractClient.chainID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (contractClient *ContractClient) DeInit() {
 	if contractClient.startMiningEventListener != nil {
 		contractClient.startMiningEventListener.DeInit()
@@ -71,10 +83,14 @@ func (contractClient *ContractClient) DeInit() {
 	if contractClient.stopMiningEventListener != nil {
 		contractClient.stopMiningEventListener.DeInit()
 	}
+	if contractClient.depositEventListener != nil {
+		contractClient.depositEventListener.DeInit()
+	}
 
 	contractClient.chainID = nil
 	contractClient.startMiningEventListener = nil
 	contractClient.stopMiningEventListener = nil
+	contractClient.depositEventListener = nil
 	contractClient.ethClient.Close()
 }
 
@@ -128,6 +144,39 @@ func (contractClient *ContractClient) Start_StopMiningEventListener(f func(*Liti
 				return
 			}
 			log.Error("Start StopMiningEventListener err: '", retErr, "'. Try to reinit.")
+		}
+
+		// Wait some time before trying to reinit and start listener again
+		time.Sleep(1 * time.Second)
+
+		err := listener.ReInit()
+		if err == nil {
+			log.Info("Reinit successfull")
+			initialized = true
+		} else {
+			log.Error("Reinit fail")
+			initialized = false
+		}
+	}
+}
+
+func (contractClient *ContractClient) Start_DepositEventListener(f func(*LitionDeposit)) {
+	listener := contractClient.depositEventListener
+	if listener == nil {
+		log.Fatal("Trying to start Deposit listener without previous initialization")
+		return
+	}
+
+	// Infinite loop - try to initialze listeners until it succeeds
+	initialized := true
+	for {
+		if initialized == true {
+			retErr := listener.Start(f)
+			// Listener was manually stopped, do not try to start it again
+			if retErr == nil {
+				return
+			}
+			log.Error("Start DepositListener err: '", retErr, "'. Try to reinit.")
 		}
 
 		// Wait some time before trying to reinit and start listener again
