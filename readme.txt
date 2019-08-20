@@ -15,13 +15,14 @@ make devtools
 run
 ```
 cd contracts
-solc --abi Registration.sol --output-dir client/abi
+solc --abi --overwrite Registration.sol --output-dir client/abi
 ```
 
 #### Create SC go class 
 run
 ```
 cd contracts
-abigen --abi=client/abi/LitionRegistry.abi --pkg=litionContractClient --out=client/litionRegistry.go
+abigen --abi=client/abi/LitionRegistry.abi --pkg=litionScClient --out=client/litionRegistry.go
+// Replace imports in client/litionRegistry.go from "github.com/ethereum/go-ethereum" to "gitlab.com/lition/lition"
 ```
 
