@@ -1,4 +1,4 @@
-package litionContractClient
+package litionScClient
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"math/big"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"gitlab.com/lition/lition/accounts/abi/bind"
 	"gitlab.com/lition/lition/event"
-	log "github.com/sirupsen/logrus"
 )
 
 type StopMiningEventListener struct {
 	initialized    bool
 	listening      bool
-	scClient       *Lition
-	eventChannel   chan *LitionStopMining
+	scClient       *LitionScClient
+	eventChannel   chan *LitionScClientStopMining
 	eventSubs      event.Subscription
 	filterChainId  []*big.Int
 	stopChannel    chan struct{}
@@ -23,7 +23,7 @@ type StopMiningEventListener struct {
 	mutex          sync.Mutex
 }
 
-func NewStopMiningEventListener(scClient *Lition, chainId *big.Int) (*StopMiningEventListener, error) {
+func NewStopMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*StopMiningEventListener, error) {
 	p := new(StopMiningEventListener)
 
 	p.initialized = false
@@ -48,7 +48,7 @@ func (listener *StopMiningEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionStopMining)
+	listener.eventChannel = make(chan *LitionScClientStopMining)
 	listener.eventSubs, err = listener.scClient.WatchStopMining(&bind.WatchOpts{
 		Context: context.Background(), Start: nil},
 		listener.eventChannel,
@@ -89,7 +89,7 @@ func (listener *StopMiningEventListener) ReInit() error {
 	return listener.Init()
 }
 
-func (listener *StopMiningEventListener) Start(f func(*LitionStopMining)) error {
+func (listener *StopMiningEventListener) Start(f func(*LitionScClientStopMining)) error {
 	if listener.initialized == false {
 		return errors.New("Trying to Start 'StopMiningEventListener' without previous initialization")
 	}

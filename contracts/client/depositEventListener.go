@@ -1,4 +1,4 @@
-package litionContractClient
+package litionScClient
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"math/big"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"gitlab.com/lition/lition/accounts/abi/bind"
 	"gitlab.com/lition/lition/event"
-	log "github.com/sirupsen/logrus"
 )
 
 type DepositEventListener struct {
 	initialized    bool
 	listening      bool
-	scClient       *Lition
-	eventChannel   chan *LitionDeposit
+	scClient       *LitionScClient
+	eventChannel   chan *LitionScClientDeposit
 	eventSubs      event.Subscription
 	filterChainId  []*big.Int
 	stopChannel    chan struct{}
@@ -23,7 +23,7 @@ type DepositEventListener struct {
 	mutex          sync.Mutex
 }
 
-func NewDepositEventListener(scClient *Lition, chainId *big.Int) (*DepositEventListener, error) {
+func NewDepositEventListener(scClient *LitionScClient, chainId *big.Int) (*DepositEventListener, error) {
 	p := new(DepositEventListener)
 
 	p.initialized = false
@@ -48,7 +48,7 @@ func (listener *DepositEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionDeposit)
+	listener.eventChannel = make(chan *LitionScClientDeposit)
 	listener.eventSubs, err = listener.scClient.WatchDeposit(
 		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
@@ -90,7 +90,7 @@ func (listener *DepositEventListener) ReInit() error {
 	return listener.Init()
 }
 
-func (listener *DepositEventListener) Start(f func(*LitionDeposit)) error {
+func (listener *DepositEventListener) Start(f func(*LitionScClientDeposit)) error {
 	if listener.initialized == false {
 		return errors.New("Trying to Start 'DepositEventListener' without previous initialization")
 	}
