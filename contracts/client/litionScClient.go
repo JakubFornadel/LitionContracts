@@ -253,3 +253,19 @@ func (contractClient *ContractClient) GetAllowedToTransact() ([]common.Address, 
 
 	return accountsWhitelist, nil
 }
+
+func (contractClient *ContractClient) Notary(auth *bind.TransactOpts, notary_block_no uint32, miners []common.Address, blocks_mined []uint32, users []common.Address, user_gas []uint32, largest_tx uint32, v []uint8, r [][32]byte, s [][32]byte) error {
+	_, err := contractClient.scClient.Notary(auth, contractClient.chainID, notary_block_no, miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (contractClient *ContractClient) GetLastNotary() (int64, error) {
+	number, err := contractClient.scClient.GetLastNotary(&bind.CallOpts{}, contractClient.chainID)
+	if err != nil {
+		return 0, err
+	}
+	return number.Int64(), nil
+}
