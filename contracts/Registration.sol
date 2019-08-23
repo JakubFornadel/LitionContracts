@@ -9,14 +9,16 @@ interface ChainValidator {
 
 contract DummyChainValidator is ChainValidator {
    function check_vesting(uint vesting, address participant) public returns (bool) {
-      if(vesting > 100*10^18 )
-         return true;
+      if(vesting >= 100*(uint256(10)**uint256(18))) {
+        return true;   
+      }
       return false;
    }
 
-   function check_deposit(uint vesting, address participant) public returns (bool) {
-      if(vesting > 1*10^18 )
+   function check_deposit(uint deposit, address participant) public returns (bool) {
+      if(deposit >= 1*(uint256(10)**uint256(18))) {
          return true;
+      }
       return false;
    }
 }
@@ -117,8 +119,10 @@ contract LitionRegistry{
      for(uint i = 0; i < users.length; i++) {
         total_gas +=user_gas[i];
         uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
-        if( user_cost > chains[id].users[users[i]].deposit )
+        if( user_cost > chains[id].users[users[i]].deposit ) {
            user_cost = chains[id].users[users[i]].deposit;
+           emit Deposit(id, 0, users[i], now);
+        }
         chains[id].users[users[i]].deposit -= user_cost;
         total_cost += user_cost;
      }
