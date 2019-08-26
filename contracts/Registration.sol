@@ -72,38 +72,6 @@ contract LitionRegistry{
     chains[chain_id].users_list.push(user);
     chains[chain_id].users[user].index = chains[chain_id].users_list.length; // indexes are stored + 1
   }
-   
-//   function create_user(uint chain_id, address user, uint deposit, uint vesting) internal {
-//         require(user_exists(chain_id, user) == false, 'User already exists.');
-//         chains[chain_id].users_list.push(user);
-        
-//         user_entry storage entry = chains[chain_id].users[user];
-//         entry.info.deposit = deposit;
-//         entry.info.vesting = vesting;
-//         entry.index = chains[chain_id].users_list.length; // indexes are stored + 1
-//   }
-   
-//   function delete_user(uint chain_id, address user) internal {
-//         require(user_exists(chain_id, user) == true, 'User does not exist.');
-//         address[] storage users_list = chains[chain_id].users_list;
-        
-//         user_entry storage entry = chains[chain_id].users[user];
-//         require(entry.index <= users_list.length, 'Invalid index value.');
-        
-//         // Move an last element of array into the vacated key slot.
-//         uint users_list_index = entry.index - 1;
-//         uint users_list_last_index = users_list.length - 1;
-        
-//         chains[chain_id].users[users_list[users_list_last_index]].index = users_list_index + 1;
-//         users_list[users_list_index] = users_list[users_list_last_index];
-//         users_list.length--;
-        
-//         delete chains[chain_id].users[user];
-//   }
-   
-//   function user_exists(uint chain_id,address user) internal returns (bool) {
-//       return chains[chain_id].users[user].index != 0;
-//   }
 
    mapping(uint256 => chain_info) public chains;
    uint256 public next_id = 0;
