@@ -1,3 +1,19 @@
+### Actual Lition ERC20 token contract
+```
+https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
+```
+
+### Actual Lition Registry contract
+```
+https://ropsten.etherscan.io/address/0x252034a46d6376d6d2dd434909309df1b43298b0
+```
+
+### Actual Lition Validator contract
+```
+https://ropsten.etherscan.io/address/0x1ea7d6efd11ce972c9d77a8118c5abe403c9f59b
+```
+
+
 # go-lition-abi
 #### Prerequisites
 ##### solc
@@ -27,16 +43,15 @@ abigen --abi=client/abi/LitionRegistry.abi --pkg=litionScClient --out=client/lit
 ```
 
 ## How to deploy contracts
-Create Ropsten account at Metamask and mint some ethers. https://metamask.io  
-Create Etherscan account and create API key. https://etherscan.io  
-Open Solidity online IDE: https://remix.ethereum.org  
-Activate "Etherscan - Contract Verification" plugin  
-Copy your Solidity code into Remix and compile it with the latest compiler  
-When deploying, use Injected Web3 as environment + select your ropsten metamask account  
-Deploy selected contract, e.g. LitionRegistry - as constructor argument use address of contract with ERC20 LIT token. Use existing contract (0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659) or deploy new one.  
-You can interact with contract directly throught remix after clicking on LitionRegistry under Deployed contracts.   
-If you want to publish contract interface also on Etherscan, verify contract through "Contract Verification Plugin".   
-You need to provide API key from etherscan, contract name, newly deployed LitionRegistry contract address and constructor arguments in ABI encoded format. To get this format, use: https://abi.hashex.org  
-
-Copy there ABI - can by copied from compilation step in Remix. Put there also constructor argument and copy the encoded result into remix. You can now Verify Contract and contract interface will be available also on etherscan.
+- Create Ropsten account at Metamask and mint some ethers. https://metamask.io  
+- Create Etherscan account and create API key. https://etherscan.io  
+- Open Solidity online IDE: https://remix.ethereum.org  
+- Activate "Etherscan - Contract Verification" plugin  
+- Copy your Solidity code into Remix and compile it with the latest compiler  
+- When deploying, use Injected Web3 as environment + select your ropsten metamask account  
+- Deploy selected contract, e.g. LitionRegistry - as constructor argument use address of contract with ERC20 LIT token. Use existing contract (0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659) or deploy new one.  
+- You can interact with contract directly throught remix after clicking on LitionRegistry under Deployed contracts.   
+- If you want to publish contract interface also on Etherscan, verify contract through "Contract Verification Plugin".   
+  You need to provide API key from etherscan, contract name, newly deployed LitionRegistry contract address and constructor arguments in ABI encoded format. To get this format, use: https://abi.hashex.org  
+- Copy there ABI - can by copied from compilation step in Remix. Put there also constructor argument and copy the encoded result into remix. You can now Verify Contract and contract interface will be available also on etherscan.
 
