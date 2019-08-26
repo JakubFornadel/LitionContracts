@@ -28,7 +28,7 @@ var (
 )
 
 // LitionScClientABI is the input ABI used to generate the binding from.
-const LitionScClientABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"notary_block\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"miners\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocks_mined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"user_gas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largest_tx\",\"type\":\"uint32\"}],\"name\":\"get_signature_hash_from_notary\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"get_validators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"users\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"start_mining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"chains\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"last_notary\",\"type\":\"uint256\"},{\"internalType\":\"contractChainValidator\",\"name\":\"validator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"total_vesting\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"stop_mining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"vest_in_chain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"notary_block_no\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"miners\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocks_mined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"user_gas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largest_tx\",\"type\":\"uint32\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"get_allowed_to_transact\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"users\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"has_deposited\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"info\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"validator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"init_endpoint\",\"type\":\"string\"}],\"name\":\"register_chain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"has_vested\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"deposit_in_chain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"get_last_notary\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"next_id\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChainEndpoint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"depositer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"datetime\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"depositer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"datetime\",\"type\":\"uint256\"}],\"name\":\"Vesting\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"StartMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"StopMining\",\"type\":\"event\"}]"
+const LitionScClientABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"notary_block\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"miners\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocks_mined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"user_gas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largest_tx\",\"type\":\"uint32\"}],\"name\":\"get_signature_hash_from_notary\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"get_active_validators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"users\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"start_mining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"chains\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"last_notary\",\"type\":\"uint256\"},{\"internalType\":\"contractChainValidator\",\"name\":\"validator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"total_vesting\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"stop_mining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"vest_in_chain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"notary_block_no\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"miners\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocks_mined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"user_gas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largest_tx\",\"type\":\"uint32\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"get_allowed_to_transact\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"users\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"has_deposited\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"info\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"validator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"init_endpoint\",\"type\":\"string\"}],\"name\":\"register_chain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"has_vested\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"deposit_in_chain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"get_last_notary\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"next_id\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"get_allowed_to_validate\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"users\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChainEndpoint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"depositer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"datetime\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"depositer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"datetime\",\"type\":\"uint256\"}],\"name\":\"Vesting\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"StartMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chain_id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"StopMining\",\"type\":\"event\"}]"
 
 // LitionScClient is an auto generated Go binding around an Ethereum contract.
 type LitionScClient struct {
@@ -216,6 +216,42 @@ func (_LitionScClient *LitionScClientCallerSession) Chains(arg0 *big.Int) (struc
 	return _LitionScClient.Contract.Chains(&_LitionScClient.CallOpts, arg0)
 }
 
+// GetActiveValidators is a free data retrieval call binding the contract method 0x1ff7c270.
+//
+// Solidity: function get_active_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientCaller) GetActiveValidators(opts *bind.CallOpts, id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	ret := new(struct {
+		Users [100]common.Address
+		Count *big.Int
+	})
+	out := ret
+	err := _LitionScClient.contract.Call(opts, out, "get_active_validators", id, batch)
+	return *ret, err
+}
+
+// GetActiveValidators is a free data retrieval call binding the contract method 0x1ff7c270.
+//
+// Solidity: function get_active_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientSession) GetActiveValidators(id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	return _LitionScClient.Contract.GetActiveValidators(&_LitionScClient.CallOpts, id, batch)
+}
+
+// GetActiveValidators is a free data retrieval call binding the contract method 0x1ff7c270.
+//
+// Solidity: function get_active_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientCallerSession) GetActiveValidators(id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	return _LitionScClient.Contract.GetActiveValidators(&_LitionScClient.CallOpts, id, batch)
+}
+
 // GetAllowedToTransact is a free data retrieval call binding the contract method 0xb190042c.
 //
 // Solidity: function get_allowed_to_transact(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
@@ -250,6 +286,42 @@ func (_LitionScClient *LitionScClientCallerSession) GetAllowedToTransact(id *big
 	Count *big.Int
 }, error) {
 	return _LitionScClient.Contract.GetAllowedToTransact(&_LitionScClient.CallOpts, id, batch)
+}
+
+// GetAllowedToValidate is a free data retrieval call binding the contract method 0xe34c31b1.
+//
+// Solidity: function get_allowed_to_validate(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientCaller) GetAllowedToValidate(opts *bind.CallOpts, id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	ret := new(struct {
+		Users [100]common.Address
+		Count *big.Int
+	})
+	out := ret
+	err := _LitionScClient.contract.Call(opts, out, "get_allowed_to_validate", id, batch)
+	return *ret, err
+}
+
+// GetAllowedToValidate is a free data retrieval call binding the contract method 0xe34c31b1.
+//
+// Solidity: function get_allowed_to_validate(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientSession) GetAllowedToValidate(id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	return _LitionScClient.Contract.GetAllowedToValidate(&_LitionScClient.CallOpts, id, batch)
+}
+
+// GetAllowedToValidate is a free data retrieval call binding the contract method 0xe34c31b1.
+//
+// Solidity: function get_allowed_to_validate(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
+func (_LitionScClient *LitionScClientCallerSession) GetAllowedToValidate(id *big.Int, batch *big.Int) (struct {
+	Users [100]common.Address
+	Count *big.Int
+}, error) {
+	return _LitionScClient.Contract.GetAllowedToValidate(&_LitionScClient.CallOpts, id, batch)
 }
 
 // GetLastNotary is a free data retrieval call binding the contract method 0xda26501d.
@@ -302,42 +374,6 @@ func (_LitionScClient *LitionScClientSession) GetSignatureHashFromNotary(notary_
 // Solidity: function get_signature_hash_from_notary(uint32 notary_block, address[] miners, uint32[] blocks_mined, address[] users, uint32[] user_gas, uint32 largest_tx) constant returns(bytes32)
 func (_LitionScClient *LitionScClientCallerSession) GetSignatureHashFromNotary(notary_block uint32, miners []common.Address, blocks_mined []uint32, users []common.Address, user_gas []uint32, largest_tx uint32) ([32]byte, error) {
 	return _LitionScClient.Contract.GetSignatureHashFromNotary(&_LitionScClient.CallOpts, notary_block, miners, blocks_mined, users, user_gas, largest_tx)
-}
-
-// GetValidators is a free data retrieval call binding the contract method 0x1d9307a5.
-//
-// Solidity: function get_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
-func (_LitionScClient *LitionScClientCaller) GetValidators(opts *bind.CallOpts, id *big.Int, batch *big.Int) (struct {
-	Users [100]common.Address
-	Count *big.Int
-}, error) {
-	ret := new(struct {
-		Users [100]common.Address
-		Count *big.Int
-	})
-	out := ret
-	err := _LitionScClient.contract.Call(opts, out, "get_validators", id, batch)
-	return *ret, err
-}
-
-// GetValidators is a free data retrieval call binding the contract method 0x1d9307a5.
-//
-// Solidity: function get_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
-func (_LitionScClient *LitionScClientSession) GetValidators(id *big.Int, batch *big.Int) (struct {
-	Users [100]common.Address
-	Count *big.Int
-}, error) {
-	return _LitionScClient.Contract.GetValidators(&_LitionScClient.CallOpts, id, batch)
-}
-
-// GetValidators is a free data retrieval call binding the contract method 0x1d9307a5.
-//
-// Solidity: function get_validators(uint256 id, uint256 batch) constant returns(address[100] users, uint256 count)
-func (_LitionScClient *LitionScClientCallerSession) GetValidators(id *big.Int, batch *big.Int) (struct {
-	Users [100]common.Address
-	Count *big.Int
-}, error) {
-	return _LitionScClient.Contract.GetValidators(&_LitionScClient.CallOpts, id, batch)
 }
 
 // HasDeposited is a free data retrieval call binding the contract method 0xb747bb9b.
