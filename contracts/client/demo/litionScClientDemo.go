@@ -26,7 +26,7 @@ func processDeposit(event *litionScClient.LitionScClientDeposit) {
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0x252034A46d6376D6D2dd434909309df1B43298B0"
+	contractAddress := "0x1274d1c66dfb6b0cad1966bdb21511f4791dee9d"
 	privateKeyStr := ""
 	chainID := 0
 
