@@ -7,16 +7,18 @@ interface ChainValidator {
    function check_deposit(uint vesting, address participant) external returns (bool);
 }
 
-contract DummyChainValidator is ChainValidator {
+contract LitionChainValidator is ChainValidator {
    function check_vesting(uint vesting, address participant) public returns (bool) {
-      if(vesting > 100*10^18 )
-         return true;
+      if(vesting >= 1000*(uint256(10)**uint256(18)) && vesting <= 500000*(uint256(10)**uint256(18))) {
+        return true;   
+      }
       return false;
    }
 
-   function check_deposit(uint vesting, address participant) public returns (bool) {
-      if(vesting > 1*10^18 )
+   function check_deposit(uint deposit, address participant) public returns (bool) {
+      if(deposit >= 10*(uint256(10)**uint256(18))) {
          return true;
+      }
       return false;
    }
 }
@@ -42,20 +44,27 @@ contract LitionRegistry{
 
    ERC20 token;
    struct user_details{
-      bool active;
       bool mining;
       uint vesting;
       uint deposit;
       string endpoint;
    }
+   struct user_entry {
+     uint index; // index start 1 to users_list.length
+     user_details info;
+   }
 
    struct chain_info{
       bool active;
-      mapping(address => user_details) users;
-      address[] registered_users;
+      mapping(address => user_entry) users;
+      address[]                      users_list;
       uint last_notary;
       ChainValidator validator;
       uint total_vesting;
+   }
+   
+   struct signature {
+      uint8 v; bytes32 r; bytes32 s;
    }
 
    mapping(uint256 => chain_info) public chains;
@@ -64,9 +73,31 @@ contract LitionRegistry{
    constructor(ERC20 _token) public {
       token = _token;
    }
-
-   struct signature {
-      uint8 v; bytes32 r; bytes32 s;
+   
+   function users_list_add(uint chain_id, address user) internal {
+     // User is already in list, do nothing
+     if (chains[chain_id].users[user].index != 0) {
+        return;
+     }
+    
+     chains[chain_id].users_list.push(user);
+     chains[chain_id].users[user].index = chains[chain_id].users_list.length; // indexes are stored + 1
+   }
+   
+   // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+   function check_lition_min_vesting(uint vesting) internal pure returns (bool) {
+      if(vesting >= 10*(uint256(10)**uint256(18))) {
+        return true;   
+      }
+      return false;
+   }
+   
+   // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+   function check_lition_min_deposit(uint deposit) internal pure returns (bool) {
+      if(deposit >= 1*(uint256(10)**uint256(18))) {
+        return true;   
+      }
+      return false; 
    }
 
    function register_chain( string calldata info, ChainValidator validator, uint vesting, string calldata init_endpoint ) external returns ( uint256 id ){
@@ -75,8 +106,7 @@ contract LitionRegistry{
       chains[id].validator = validator;
       chains[id].active = true;
       chains[id].last_notary = 0;
-      chains[id].users[msg.sender].active = true;
-      chains[id].users[msg.sender].endpoint = init_endpoint;
+      chains[id].users[msg.sender].info.endpoint = init_endpoint;
       emit NewChain( id, info );
       _vest_in_chain( id, vesting, msg.sender );
       emit NewChainEndpoint( id, init_endpoint );
@@ -86,13 +116,17 @@ contract LitionRegistry{
    function vest_in_chain( uint id, uint vesting ) public {
       _vest_in_chain( id, vesting, msg.sender );
    }
+   
+   function deposit_in_chain( uint id, uint deposit ) public {
+      _deposit_in_chain(id, deposit, msg.sender );
+   }
 
    function has_vested( uint id, address user) view external returns (bool){
-      return chains[id].users[user].vesting > 0;
+      return chains[id].users[user].info.vesting > 0;
    }
 
    function has_deposited(uint id, address user) view external returns (bool) {
-      return chains[id].users[user].deposit > 0;
+      return chains[id].users[user].info.deposit > 0;
    }
 
    function get_signature_hash_from_notary(uint32 notary_block, address[] memory miners,
@@ -117,9 +151,11 @@ contract LitionRegistry{
      for(uint i = 0; i < users.length; i++) {
         total_gas +=user_gas[i];
         uint user_cost = (user_gas[i] / largest_tx) * largest_reward;
-        if( user_cost > chains[id].users[users[i]].deposit )
-           user_cost = chains[id].users[users[i]].deposit;
-        chains[id].users[users[i]].deposit -= user_cost;
+        if( user_cost > chains[id].users[users[i]].info.deposit ) {
+           user_cost = chains[id].users[users[i]].info.deposit;
+           emit Deposit(id, 0, users[i], now);
+        }
+        chains[id].users[users[i]].info.deposit -= user_cost;
         total_cost += user_cost;
      }
    }
@@ -156,7 +192,7 @@ contract LitionRegistry{
 
       for(uint i =0; i<v.length; i++) {
          address signer = ecrecover(signature_hash, v[i], r[i], s[i]);
-         involved_vesting += chain.users[signer].vesting;
+         involved_vesting += chain.users[signer].info.vesting;
       }
 
       require(involved_vesting * 2 >= chain.total_vesting);
@@ -168,66 +204,96 @@ contract LitionRegistry{
 
    //TODO - rework so withdrawals are not processed immediatelly but after notary window
    function _vest_in_chain( uint id, uint vesting, address user ) private {
-      if(vesting > 0 ){
+      //Validate value of vesting
+      if (vesting == 0) {
+        require( chains[id].users[user].info.vesting > 0, "Zero vesting balance. Can't withdraw any tokens" );
+        require( chains[id].users[user].info.mining == false, "Can't withdraw any tokens, stop_minig must be called first." );  
+      }
+      else {
          require( chains[id].active, "can't vest into non-existing chain" );
+         require( check_lition_min_vesting( vesting ), "user does not meet min. required chain criteria");
          require( chains[id].validator.check_vesting( vesting, user ), "user does not meet chain criteria");
       }
-      if( chains[id].users[user].vesting > vesting ){
-         uint to_withdraw = chains[id].users[user].vesting - vesting;
-         chains[id].total_vesting -= to_withdraw; //TODO - safe math here;
+      
+      if( chains[id].users[user].info.vesting > vesting ){
+         uint to_withdraw = chains[id].users[user].info.vesting - vesting;
          token.transfer( user, to_withdraw);
-      }else{
-         uint to_deposit = vesting - chains[id].users[user].vesting;
-         chains[id].total_vesting += to_deposit;
-         token.transferFrom( user, address(this), to_deposit);
+         
+         if (chains[id].users[user].info.mining == true) {
+            chains[id].total_vesting -= to_withdraw; //TODO -= safe math here;
+         }
+      } else{
+         uint to_vest = vesting - chains[id].users[user].info.vesting;
+         token.transferFrom( user, address(this), to_vest);
+         
+         if (chains[id].users[user].info.mining == true) {
+            chains[id].total_vesting += to_vest;
+         }
       }
-      chains[id].users[user].vesting = vesting;
-      chains[id].registered_users.push(user);
+      
+      chains[id].users[user].info.vesting = vesting;
+      users_list_add(id, user);
       emit Vesting( id, vesting, user, now );
-   }
-
-   function deposit_in_chain( uint id, uint deposit ) public {
-      _deposit_in_chain(id, deposit, msg.sender );
    }
 
    //TODO - rework so withdrawals are not processed immediatelly but after notary window
    function _deposit_in_chain( uint id, uint deposit, address user ) private {
-      if(deposit > 0){
-         require( chains[id].active, "can't deposit into non-existing chain" );
-         require( chains[id].validator.check_deposit( deposit, user ), "user does not meet chain criteria");
+      //Validate value of deposit
+      if (deposit == 0) {
+        require( chains[id].users[user].info.deposit > 0, "Zero deposit balance. Can't withdraw any tokens" );  
       }
-      if( chains[id].users[user].deposit > deposit ){
-         uint to_withdraw = chains[id].users[user].deposit - deposit;
+      else {
+        require( chains[id].active, "can't deposit into non-existing chain" );
+        require( check_lition_min_deposit( deposit), "user does not meet min. required chain criteria");
+        require( chains[id].validator.check_deposit( deposit, user ), "user does not meet chain criteria");
+      }
+      
+      if( chains[id].users[user].info.deposit > deposit ){
+         uint to_withdraw = chains[id].users[user].info.deposit - deposit;
          token.transfer( user, to_withdraw);
-      }else{
-         uint to_deposit = deposit - chains[id].users[user].deposit;
+      } else{
+         uint to_deposit = deposit - chains[id].users[user].info.deposit;
          token.transferFrom(user, address(this), to_deposit);
       }
-      chains[id].users[user].deposit = deposit;
-      chains[id].registered_users.push(user);
+      
+      chains[id].users[user].info.deposit = deposit;
+      users_list_add(id, user);
       emit Deposit(id, deposit, user, now);
    }
 
    function get_allowed_to_transact( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
      count = 0;
      uint j = batch * 100;
-     while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
-       address user = chains[id].registered_users[j];
-       if( chains[id].users[user].deposit > 0 ) {
-         users[count] = chains[id].registered_users[j];
+     while( j < (batch + 1)*100 && j < chains[id].users_list.length ) {
+       address user = chains[id].users_list[j];
+       if(chains[id].users[user].info.deposit > 0) {
+         users[count] = user;
          count++;
        }
        j++;
      }
    }
 
-   function get_validators( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
+   function get_allowed_to_validate( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
      count = 0;
      uint j = batch * 100;
-     while( j < (batch + 1)*100 && j < chains[id].registered_users.length ) {
-       address user = chains[id].registered_users[j];
-       if( chains[id].users[user].vesting > 0 ) {
-         users[count] = chains[id].registered_users[j];
+     while( j < (batch + 1)*100 && j < chains[id].users_list.length ) {
+       address user = chains[id].users_list[j];
+       if(chains[id].users[user].info.vesting > 0) {
+         users[count] = user;
+         count++;
+       }
+       j++;
+     }
+   }
+
+   function get_active_validators( uint id, uint batch ) view external returns (address[100] memory users, uint count) {
+     count = 0;
+     uint j = batch * 100;
+     while( j < (batch + 1)*100 && j < chains[id].users_list.length ) {
+       address user = chains[id].users_list[j];
+       if(chains[id].users[user].info.vesting > 0 && chains[id].users[user].info.mining == true) {
+         users[count] = user;
          count++;
        }
        j++;
@@ -235,16 +301,27 @@ contract LitionRegistry{
    }
 
    function start_mining(uint id) public {
-      require(chains[id].active);
-      require(chains[id].users[msg.sender].vesting > 0);
-      chains[id].users[msg.sender].mining = true;
+      require(chains[id].active == true, "Can't start mining on non-existing chain");
+      require(check_lition_min_vesting( chains[id].users[msg.sender].info.vesting) == true, "user does not meet min. required chain criteria");
+      require(chains[id].validator.check_vesting(chains[id].users[msg.sender].info.vesting, msg.sender) == true, "User does not meet chain criteria");
+      
+      if (chains[id].users[msg.sender].info.mining == false) {
+          chains[id].total_vesting += chains[id].users[msg.sender].info.vesting;
+      }
+      chains[id].users[msg.sender].info.mining = true;
+      
       emit StartMining(id, msg.sender);
    }
 
    function stop_mining(uint id) public {
-      require(chains[id].active);
-      require(chains[id].users[msg.sender].vesting > 0);
-      chains[id].users[msg.sender].mining = false;
+      require(chains[id].active == true, "Can't start mining on non-existing chain");
+      require(check_lition_min_vesting( chains[id].users[msg.sender].info.vesting) == true, "user does not meet min. required chain criteria");
+      
+      if (chains[id].users[msg.sender].info.mining == true) {
+          chains[id].total_vesting -= chains[id].users[msg.sender].info.vesting;
+      }
+      chains[id].users[msg.sender].info.mining = false;
+      
       emit StopMining(id, msg.sender);
    }
 

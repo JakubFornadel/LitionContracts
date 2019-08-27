@@ -243,6 +243,7 @@ func (contractClient *ContractClient) GetAllowedToTransact() ([]common.Address, 
 			return nil, err
 		}
 
+		log.Info("accountsList.Count: ", accountsList.Count)
 		cmpResult := accountsList.Count.Cmp(zeroCount)
 		if cmpResult == 0 {
 			break
