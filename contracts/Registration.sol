@@ -9,14 +9,14 @@ interface ChainValidator {
 
 contract LitionChainValidator is ChainValidator {
    function check_vesting(uint vesting, address participant) public returns (bool) {
-      if(vesting >= 100*(uint256(10)**uint256(18))) {
+      if(vesting >= 1000*(uint256(10)**uint256(18)) && vesting <= 500000*(uint256(10)**uint256(18))) {
         return true;   
       }
       return false;
    }
 
    function check_deposit(uint deposit, address participant) public returns (bool) {
-      if(deposit >= 1*(uint256(10)**uint256(18))) {
+      if(deposit >= 10*(uint256(10)**uint256(18))) {
          return true;
       }
       return false;
@@ -62,16 +62,10 @@ contract LitionRegistry{
       ChainValidator validator;
       uint total_vesting;
    }
-  
-  function users_list_add(uint chain_id, address user) internal {
-    // User is already in list, do nothing
-    if (chains[chain_id].users[user].index != 0) {
-        return;
-    }
-    
-    chains[chain_id].users_list.push(user);
-    chains[chain_id].users[user].index = chains[chain_id].users_list.length; // indexes are stored + 1
-  }
+   
+   struct signature {
+      uint8 v; bytes32 r; bytes32 s;
+   }
 
    mapping(uint256 => chain_info) public chains;
    uint256 public next_id = 0;
@@ -79,9 +73,31 @@ contract LitionRegistry{
    constructor(ERC20 _token) public {
       token = _token;
    }
-
-   struct signature {
-      uint8 v; bytes32 r; bytes32 s;
+   
+   function users_list_add(uint chain_id, address user) internal {
+     // User is already in list, do nothing
+     if (chains[chain_id].users[user].index != 0) {
+        return;
+     }
+    
+     chains[chain_id].users_list.push(user);
+     chains[chain_id].users[user].index = chains[chain_id].users_list.length; // indexes are stored + 1
+   }
+   
+   // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+   function check_lition_min_vesting(uint vesting) internal pure returns (bool) {
+      if(vesting >= 10*(uint256(10)**uint256(18))) {
+        return true;   
+      }
+      return false;
+   }
+   
+   // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+   function check_lition_min_deposit(uint deposit) internal pure returns (bool) {
+      if(deposit >= 1*(uint256(10)**uint256(18))) {
+        return true;   
+      }
+      return false; 
    }
 
    function register_chain( string calldata info, ChainValidator validator, uint vesting, string calldata init_endpoint ) external returns ( uint256 id ){
@@ -195,6 +211,7 @@ contract LitionRegistry{
       }
       else {
          require( chains[id].active, "can't vest into non-existing chain" );
+         require( check_lition_min_vesting( vesting ), "user does not meet min. required chain criteria");
          require( chains[id].validator.check_vesting( vesting, user ), "user does not meet chain criteria");
       }
       
@@ -227,6 +244,7 @@ contract LitionRegistry{
       }
       else {
         require( chains[id].active, "can't deposit into non-existing chain" );
+        require( check_lition_min_deposit( deposit), "user does not meet min. required chain criteria");
         require( chains[id].validator.check_deposit( deposit, user ), "user does not meet chain criteria");
       }
       
@@ -284,6 +302,7 @@ contract LitionRegistry{
 
    function start_mining(uint id) public {
       require(chains[id].active == true, "Can't start mining on non-existing chain");
+      require(check_lition_min_vesting( chains[id].users[msg.sender].info.vesting) == true, "user does not meet min. required chain criteria");
       require(chains[id].validator.check_vesting(chains[id].users[msg.sender].info.vesting, msg.sender) == true, "User does not meet chain criteria");
       
       if (chains[id].users[msg.sender].info.mining == false) {
@@ -296,7 +315,7 @@ contract LitionRegistry{
 
    function stop_mining(uint id) public {
       require(chains[id].active == true, "Can't start mining on non-existing chain");
-      require(chains[id].validator.check_vesting(chains[id].users[msg.sender].info.vesting, msg.sender) == true, "User does not meet chain criteria");
+      require(check_lition_min_vesting( chains[id].users[msg.sender].info.vesting) == true, "user does not meet min. required chain criteria");
       
       if (chains[id].users[msg.sender].info.mining == true) {
           chains[id].total_vesting -= chains[id].users[msg.sender].info.vesting;
