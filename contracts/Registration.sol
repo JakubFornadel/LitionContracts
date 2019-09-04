@@ -133,9 +133,7 @@ contract LitionRegistry{
                                  uint32[] memory blocks_mined, address[] memory users,
                                  uint32[] memory user_gas, uint32 largest_tx)
                                      public pure returns (bytes32) {
-      bytes memory encoded_notary = abi.encodePacked(notary_block, miners, blocks_mined, users, user_gas, largest_tx);
-      bytes32 notary_hash = keccak256(encoded_notary);
-      return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", notary_hash));
+      return keccak256(abi.encodePacked(notary_block, miners, blocks_mined, users, user_gas, largest_tx));
    }
 
    function get_last_notary(uint id) external view returns (uint256) {
