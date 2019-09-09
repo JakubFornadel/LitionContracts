@@ -58,7 +58,7 @@ contract LitionRegistry{
       bool active;
       mapping(address => user_entry) users;
       address[]                      users_list;
-      uint last_notary;
+      uint256 last_notary;
       ChainValidator validator;
       uint total_vesting;
    }
@@ -129,7 +129,7 @@ contract LitionRegistry{
       return chains[id].users[user].info.deposit > 0;
    }
 
-   function get_signature_hash_from_notary(uint32 notary_block, address[] memory miners,
+   function get_signature_hash_from_notary(uint256 notary_block, address[] memory miners,
                                  uint32[] memory blocks_mined, address[] memory users,
                                  uint32[] memory user_gas, uint32 largest_tx)
                                      public pure returns (bytes32) {
@@ -173,7 +173,7 @@ contract LitionRegistry{
      token.transfer( miners[miners.length - 1], lit_to_distribute );
    }
 
-   function notary(uint id, uint32 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
+   function notary(uint id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
                                  address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
                                  uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
       //first, calculate hash from miners, block_mined, users and user_gas
@@ -189,8 +189,7 @@ contract LitionRegistry{
       uint involved_vesting = 0;
 
       for(uint i =0; i<v.length; i++) {
-         address signer = ecrecover(signature_hash, v[i], r[i], s[i]);
-         involved_vesting += chain.users[signer].info.vesting;
+         involved_vesting += chain.users[ecrecover(signature_hash, v[i], r[i], s[i])].info.vesting;
       }
 
       require(involved_vesting * 2 >= chain.total_vesting);
