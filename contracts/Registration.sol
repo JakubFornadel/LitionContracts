@@ -54,67 +54,143 @@ contract LitionRegistry{
 
 
     /**************************************************************************************************************************/
-    /********************************* Structs & Functions related to the list of validators **********************************/
+    /*********************************** Structs & Functions related to the list of users *************************************/
     /**************************************************************************************************************************/
-    struct Validator_details {
-        // Actual validator vesting
+    struct Validator {
+        // Actual user's vesting
         uint96  vesting;
-        // Flag that is set in start/stop_mining
+        // Flag if user is mining -> set in start/stop_mining
         bool    mining;
     }
     
-    struct Validator_entry {
-        // index to the validators_list, indexes are shifted +1 compared to the real indexes of this list, because 0 means non-existing validator
-        uint                index;
-        // Validator details
-        Validator_details   info;   
+    struct Transactor {
+        // Actual user's deposit
+        uint96  deposit;
+        // Flag if user is whitelisted (allowed to transact) -> actual deposit must be greater than min. required deposit condition 
+        bool    whitelisted;
     }
     
-    struct Validators {
-        mapping(address => Validator_entry) accounts;
-        address[]                           list;        
+    // Optimized "User_entry" so it packs together with User_details to 256 Bits (32 Bytes) chunk of memory
+    struct User_entry {
+        // Validator's data
+        Validator    validator;
+        // Transactor's data
+        Transactor   transactor;
+        // index to the users_list, indexes are shifted +1 compared to the real indexes of this list, because 0 means non-existing user
+        uint48          index;
     }
     
-    function validator_create(uint chain_id, address acc, uint96 vesting) private {
-        require(validator_exists(chain_id, acc) == false, 'validator_create: Validator already exists.');
-        chains[chain_id].validators.list.push(acc);
-    
-        Validator_entry storage entry = chains[chain_id].validators.accounts[acc];
-        entry.info.vesting = vesting;
-        entry.info.mining = false;
-        entry.index = chains[chain_id].validators.list.length; // indexes are stored + 1
+    struct Users {
+        mapping(address => User_entry) accounts;
+        address[]                      list;        
     }
     
-    function validator_delete(uint chain_id, address acc) private {
-        require(validator_exists(chain_id, acc) == true, 'validator_delete: Validator does not exist.');
-        address[] storage validators_list = chains[chain_id].validators.list;
+    // Creates new user - does not set it's data yet as it is done after vesting/deposit_withdraw request is confirmed
+    function user_create(uint256 chain_id, address acc) private {
+        require(chains[chain_id].users.list.length < ~uint48(0), "count(users) is equal to max_count");
+        require(user_exists(chain_id, acc) == false, "Creating already-created user");
+        
+        chains[chain_id].users.list.push(acc);
+        chains[chain_id].users.accounts[acc].index = uint48(chains[chain_id].users.list.length); // indexes are stored + 1
+        
+        // TODO: move this functionality to the requests confirmation
+        // // TODO: check if ~uint96(0) is cheaper to have as constant
+        // require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
+        // require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
+        
+        // address[] storage users_list = chains[chain_id].users.list; 
+        // require(users_list.length < ~uint48(0), "count(users) is equal to max_count");
+        
+        // // Push account to the list of accounts
+        // users_list.push(acc);
+        
+        // User_entry storage new_user = chains[chain_id].users.accounts[acc];
+        
+        // // Default vesting values are vesting = 0, mining = false (it has to be set in separate call to start/stop mining); no need to expliciyl set them
+        // if (vesting > 0) {
+        //     new_user.info.vesting = uint96(vesting);
+        // }
+
+        // // Default deposit values are vesting = 0, whitelisted = false; no need to expliciyl set them
+        // if (deposit > 0) {
+        //     new_user.info.deposit = uint96(deposit);
+        //     // In case deposit > 0, min. required deposit conditions have already been checked - allow user to transact
+        //     new_user.info.whitelisted = true;    
+        // }
+        
+        // new_user.index = uint48(users_list.length); // indexes are stored + 1
+    }
     
-        Validator_entry storage entry = chains[chain_id].validators.accounts[acc];
-        require(entry.index <= validators_list.length, 'validator_delete: Invalid index value.');
+    // Deletes existing user from the internal list of users
+    // This method should never be called directly, validator_delete & transactor_delete should be called instead
+    function user_delete(uint256 chain_id, address acc) private {
+        User_entry storage entry = chains[chain_id].users.accounts[acc];
+        // user_exists(chain_id, acc) could be used instead
+        require(entry.index != 0, "User does not exist");
+        
+        address[] storage users_list = chains[chain_id].users.list;
+        require(entry.index <= users_list.length, "Invalid index value");
     
         // Move an last element of array into the vacated key slot.
-        uint found_index = entry.index - 1;
-        uint last_index = validators_list.length - 1;
+        uint48 found_index = uint48(entry.index - 1);
+        uint48 last_index = uint48(users_list.length - 1);
     
-        chains[chain_id].validators.accounts[validators_list[last_index]].index = found_index + 1;
-        validators_list[found_index] = validators_list[last_index];
-        validators_list.length--;
+        chains[chain_id].users.accounts[users_list[last_index]].index = found_index + 1;
+        users_list[found_index] = users_list[last_index];
+        users_list.length--;
     
-        delete chains[chain_id].validators.accounts[acc];
+        delete chains[chain_id].users.accounts[acc];
     }
     
-    function validator_exists(uint chain_id, address acc) internal view returns (bool) {
-      return chains[chain_id].validators.accounts[acc].index != 0;
+    // Deletes validator
+    function validator_delete(uint chain_id, address acc) private {
+        // There is no existing transactor for this account - delete whole requests struct 
+        if (chains[chain_id].users.accounts[acc].transactor.deposit == 0) {
+            user_delete(chain_id, acc);
+            return;
+        } 
+        
+        // There is exiting transactor for this account - only reset validator
+        Validator storage validator = chains[chain_id].users.accounts[acc].validator;
+        validator.vesting   = 0;
+        validator.mining    = false;
     }
+    
+    // Deletes transactor
+    function transactor_delete(uint chain_id, address acc) private {
+        // There is no existing validator for this account - delete whole requests struct 
+        if (chains[chain_id].users.accounts[acc].validator.vesting == 0) {
+            user_delete(chain_id, acc);
+            return;
+        } 
+        
+        // There is existing validator for this account - only reset transactor
+        Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
+        transactor.deposit      = 0;
+        transactor.whitelisted  = false;
+    }
+    
+    function user_exists(uint256 chain_id, address acc) internal view returns (bool) {
+      return chains[chain_id].users.accounts[acc].index != 0;
+    }
+    
+    function validator_exists(uint256 chain_id, address acc) internal view returns (bool) {
+      return chains[chain_id].users.accounts[acc].validator.vesting > 0;
+    }
+    
+    function transactor_exists(uint256 chain_id, address acc) internal view returns (bool) {
+      return chains[chain_id].users.accounts[acc].transactor.deposit > 0;
+    }
+    
     /**************************************************************************************************************************/
-    /***************************** End of Structs & Functions related to the list of validators *******************************/
+    /******************************* End of Structs & Functions related to the list of users **********************************/
     /**************************************************************************************************************************/
-   
+
 
     /**************************************************************************************************************************/
-    /********************************** Structs & Functions related to the vesting requests ***********************************/
+    /****************************** Structs & Functions related to the vesting/deposit requests *******************************/
     /**************************************************************************************************************************/
-    enum VestingRequest_state {
+    enum Request_state {
         REQUEST_CREATED,
         REQUEST_CONFIRMED
     }
@@ -129,74 +205,167 @@ contract LitionRegistry{
     }
     
     struct VestingRequest_data {
-        // Timestamp(now) when the request was accepted/created
-        uint                            timestamp;
         // Last notary block number when the request was accepted 
-        uint                            notary_block;
+        uint256                         notary_block;
+        // Timestamp(now) when the request was accepted/created
+        uint48                          timestamp;
         // In old_vesting is stored actual vesting that validator had when new VestingRequest was accepted
         uint96                          old_vesting;
         // New value of vesting to be set
         uint96                          new_vesting;
         // Actual state of the request
-        VestingRequest_state            state;
+        Request_state                   state;
         // Actual control state of the request
         VestingRequestControl_state     control_state;
     }
     
-    struct VestingRequest_entry {
-        // index to the validators_list, indexes are shifted +1 compared to the real indexes of this list, because 0 means non-existing validator
-        uint                  index;
-        // Validator details
-        VestingRequest_data   data;   
+    // Only full deposit withdrawals are saved as deposit requests - other types of deposits do not need to be confirmed
+    struct DeposiWithdrawtRequest_data {
+        // Last notary block number when the request was accepted 
+        uint256                         notary_block;
+        // Timestamp(now) when the request was accepted/created
+        uint48                          timestamp;
+        // Actual state of the request
+        Request_state                   state;
     }
     
-    struct VestingRequests {
-        mapping(address => VestingRequest_entry) accounts;
-        address[]                                list;        
+    struct Requests_entry {
+        // index to the requests_list, indexes are shifted +1 compared to the real indexes of this list, because 0 means non-existing request
+        uint48                          index;
+        // Deposit withdrawal request details
+        DeposiWithdrawtRequest_data     deposit_withdraw_request;
+        // Vesting request details
+        VestingRequest_data             vesting_request;   
     }
     
-    // Creates new vesting request and stores it in the requests list
-    // TODO: handle all requires, etc... in the vest_in_chain function !!!
-    function vesting_request_create(uint chain_id, address acc, uint96 vesting) private {
-        require(vesting_request_exists(chain_id, acc) == false, 'vesting_request_create: vesting_request already exists.');
-        chains[chain_id].vesting_requests.list.push(acc);
+    struct Requests {
+        mapping(address => Requests_entry)  accounts;
+        address[]                           list;        
+    }
     
-        VestingRequest_entry storage entry = chains[chain_id].vesting_requests.accounts[acc];
-        entry.data.timestamp = now;
-        entry.data.notary_block = chains[chain_id].last_notary.block; 
-        entry.data.old_vesting = chains[chain_id].validators.accounts[acc].info.vesting;
-        entry.data.new_vesting = vesting;
-        if (entry.data.new_vesting >= entry.data.old_vesting) { // == case should never happen as it is handled in the caller's function
-            entry.data.control_state = VestingRequestControl_state.WAIT_FOR_CONFIRMATION;
+    // Creates new vesting request
+    function vesting_request_create(uint256 chain_id, address acc, uint256 vesting) private {
+        require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
+        require(vesting <= ~uint96(0), "request: vesting is greater than uint96_max_value");
+        
+        // TODO: should already-existing vesting request be checked here or in caller's function ???
+        require(vesting_request_exists(chain_id, acc) == false, "There is already ongoing vesting request");
+        
+        Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
+        
+        requests_entry.vesting_request.old_vesting = chains[chain_id].users.accounts[acc].validator.vesting;
+        requests_entry.vesting_request.new_vesting = uint96(vesting);
+        if (requests_entry.vesting_request.new_vesting >= requests_entry.vesting_request.old_vesting) { // == case should never happen as it is handled in the caller's function
+            requests_entry.vesting_request.control_state = VestingRequestControl_state.WAIT_FOR_CONFIRMATION;
         } else {
-            entry.data.control_state = VestingRequestControl_state.REPLACE_VESTING;
+            requests_entry.vesting_request.control_state = VestingRequestControl_state.REPLACE_VESTING;
         }
         
-        entry.index = chains[chain_id].vesting_requests.list.length; // indexes are stored + 1
+        requests_entry.vesting_request.state = Request_state.REQUEST_CREATED;
+        requests_entry.vesting_request.timestamp = uint48(now);
+        requests_entry.vesting_request.notary_block = chains[chain_id].last_notary.block; 
+        
+        
+        // There is no deposit or vesting ongoing request - create new requests_entry structure
+        if (requests_entry.index == 0) { // any_request_exists(chain_id, acc) == false could be used instead
+            // There is no ongoing deposit request - create new requests pair structure
+            chains[chain_id].requests.list.push(acc);    
+            requests_entry.index = uint48(chains[chain_id].requests.list.length); // indexes are stored + 1
+        }
     }
+
+    // Creates new deposit withdrawal request
+    function deposit_withdraw_request_create(uint256 chain_id, address acc) private {
+        require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
+        
+        // TODO: should already-existing deposit withdrawal request be checked here or in caller's function ???
+        require(deposit_withdraw_request_exists(chain_id, acc) == false, "There is already ongoing deposit withdrawal request");
+        
+        Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
+        
+        requests_entry.deposit_withdraw_request.state = Request_state.REQUEST_CREATED;
+        requests_entry.deposit_withdraw_request.timestamp = uint48(now);
+        requests_entry.deposit_withdraw_request.notary_block = chains[chain_id].last_notary.block; 
+        
+        
+        // There is no deposit or vesting ongoing request - create new requests_entry structure
+        if (requests_entry.index == 0) { // any_request_exists(chain_id, acc) == false could be used instead
+            // There is no ongoing deposit request - create new requests pair structure
+            chains[chain_id].requests.list.push(acc);    
+            requests_entry.index = uint48(chains[chain_id].requests.list.length); // indexes are stored + 1
+        }
+    }
+
+        
+    // Deletes existing requests pair(vesting & deposit) from the internal list of requests
+    // This method should never be called directly, vesting_request_delete & deposit_withdraw_request_delete should be called instead
+    function requests_pair_delete(uint chain_id, address acc) private {
+        Requests_entry storage entry = chains[chain_id].requests.accounts[acc];
+        
+        // request_exists(chain_id, acc), vesting_request_exists(chain_id, acc) and deposoti_withdraw_exists(chain_id, acc) could be used instead
+        require(entry.index != 0, "Request does not exist");
+        
+        address[] storage requests_list = chains[chain_id].requests.list;
     
-    // Deletes existing vesting request from the internal list of requests
-    function vesting_request_delete(uint chain_id, address acc) private {
-        require(vesting_request_exists(chain_id, acc) == true, 'vesting_request_delete: vesting_request does not exist.');
-        address[] storage vesting_requests_list = chains[chain_id].vesting_requests.list;
-    
-        VestingRequest_entry storage entry = chains[chain_id].vesting_requests.accounts[acc];
-        require(entry.index <= vesting_requests_list.length, 'vesting_request_delete: Invalid index value.');
+        require(entry.index <= requests_list.length, "Invalid index value");
     
         // Move an last element of array into the vacated key slot.
-        uint found_index = entry.index - 1;
-        uint last_index = vesting_requests_list.length - 1;
+        uint48 found_index = uint48(entry.index - 1);
+        uint48 last_index = uint48(requests_list.length - 1);
     
-        chains[chain_id].vesting_requests.accounts[vesting_requests_list[last_index]].index = found_index + 1;
-        vesting_requests_list[found_index] = vesting_requests_list[last_index];
-        vesting_requests_list.length--;
+        chains[chain_id].requests.accounts[requests_list[last_index]].index = found_index + 1;
+        requests_list[found_index] = requests_list[last_index];
+        requests_list.length--;
     
-        delete chains[chain_id].vesting_requests.accounts[acc];
+        delete chains[chain_id].requests.accounts[acc];
+    }
+    
+    function vesting_request_delete(uint chain_id, address acc) private {
+        // There is no ongoing deposit request for this account - delete whole requests struct 
+        if (chains[chain_id].requests.accounts[acc].deposit_withdraw_request.timestamp == 0) {
+            requests_pair_delete(chain_id, acc);
+            return;
+        } 
+        
+        // There is ongoing deposit request for this account - only reset vesting request
+        VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
+        request.notary_block    = 0;
+        request.timestamp       = 0;
+        request.old_vesting     = 0;
+        request.new_vesting     = 0;
+        // First enum value is default
+        request.state           = Request_state.REQUEST_CREATED; 
+        request.control_state   = VestingRequestControl_state.WAIT_FOR_CONFIRMATION;
+    }
+    
+    function deposit_withdraw_request_delete(uint chain_id, address acc) private {
+        // There is no ongoing vesting request for this account - delete whole requests struct 
+        if (chains[chain_id].requests.accounts[acc].vesting_request.timestamp == 0) {
+            requests_pair_delete(chain_id, acc);
+            return;
+        } 
+        
+        // There is ongoing vesting request for this account - only reset vesting request
+        DeposiWithdrawtRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
+        request.notary_block    = 0;
+        request.timestamp       = 0;
+        // First enum value is default
+        request.state           = Request_state.REQUEST_CREATED; 
+    }
+    
+    // Checks if acc has any ongoing vesting or deposit request
+    function any_request_exists(uint chain_id, address acc) private view returns (bool) {
+      return chains[chain_id].requests.accounts[acc].index != 0;
     }
     
     // Checks if acc has any ongoing vesting request
     function vesting_request_exists(uint chain_id, address acc) private view returns (bool) {
-      return chains[chain_id].vesting_requests.accounts[acc].index != 0;
+      return chains[chain_id].requests.accounts[acc].vesting_request.timestamp != 0;
+    }
+    
+    // Checks if acc has any ongoing DEPOSIT WITHDRAWAL request
+    function deposit_withdraw_request_exists(uint chain_id, address acc) private view returns (bool) {
+      return chains[chain_id].requests.accounts[acc].deposit_withdraw_request.timestamp != 0;
     }
     
     /********************** Public functions visible to the callers **********************************/
@@ -215,7 +384,7 @@ contract LitionRegistry{
           }
           
           require(validator_exists(chain_id, msg.sender) == true, "Trying to withdraw vesting from non-existing validator account");
-          require(chains[chain_id].validators.accounts[msg.sender].info.mining == false, "Can't withdraw any tokens, stop_minig must be called first.");  
+          require(chains[chain_id].users.accounts[msg.sender].validator.mining == false, "Can't withdraw any tokens, stop_minig must be called first.");  
       }
       // Vest in chain or withdraw just part of vesting
       else {
@@ -225,16 +394,16 @@ contract LitionRegistry{
       }
       
       require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
-      require(chains[chain_id].validators.accounts[msg.sender].info.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
+      require(chains[chain_id].users.accounts[msg.sender].validator.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
       
-      _request_vest_in_chain( chain_id, vesting, msg.sender );
+      _request_vest_in_chain(chain_id, vesting, msg.sender);
     }
     
     // Confirms vest request, token transfer is processed during confirmation
     function confirm_vest_in_chain(uint chain_id) external {
         require(vesting_request_exists(chain_id, msg.sender) == true, "Cannot confirm non-existing vesting request.");
-        require(chains[chain_id].last_notary.block > chains[chain_id].vesting_requests.accounts[msg.sender].data.notary_block, "Request confirmation can be called in the next notary window after request was accepted.");
-        require(chains[chain_id].vesting_requests.accounts[msg.sender].data.state == VestingRequest_state.REQUEST_CREATED, "Cannot confirm already confirmed request.");
+        require(chains[chain_id].last_notary.block > chains[chain_id].requests.accounts[msg.sender].vesting_request.notary_block, "Request confirmation can be called in the next notary window after request was accepted.");
+        require(chains[chain_id].requests.accounts[msg.sender].vesting_request.state == Request_state.REQUEST_CREATED, "Cannot confirm already confirmed request.");
         
         _confirm_vest_in_chain(chain_id, msg.sender);
     }
@@ -242,7 +411,7 @@ contract LitionRegistry{
     // Cancels the existing vest request. Such request can be cancelled only if it was not already confirmed
     function cancel_vest_in_chain(uint chain_id) external {
         require(vesting_request_exists(chain_id, msg.sender) == true, "Cannot cancel non-existing vesting request.");
-        require(chains[chain_id].vesting_requests.accounts[msg.sender].data.state == VestingRequest_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
+        require(chains[chain_id].requests.accounts[msg.sender].vesting_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
         
         _cancel_vest_in_chain(chain_id, msg.sender);
     }
@@ -251,55 +420,56 @@ contract LitionRegistry{
     
     
     function _request_vest_in_chain(uint chain_id, uint96 vesting, address acc) private {
-      if (vesting != 0 && validator_exists(chain_id, acc) == false) {
-          validator_create(chain_id, acc, vesting);
+      // Internally creates new user
+      if (vesting != 0 && user_exists(chain_id, acc) == false) {
+          user_create(chain_id, acc);
       }
       
       vesting_request_create(chain_id, acc, vesting);
-      chains[chain_id].vesting_requests.accounts[acc].data.state = VestingRequest_state.REQUEST_CREATED;
       emit RequestVestInChain(chain_id, msg.sender, vesting, now);
     }
     
     function _confirm_vest_in_chain(uint chain_id, address acc) private {
-        VestingRequest_entry storage request = chains[chain_id].vesting_requests.accounts[acc];
+        VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
+        Validator storage validator = chains[chain_id].users.accounts[acc].validator;
         
         // Decreases account's vesting in chain
-        if(request.data.new_vesting < chains[chain_id].validators.accounts[acc].info.vesting) {
-            uint96 to_withdraw = chains[chain_id].validators.accounts[acc].info.vesting - request.data.new_vesting;
+        if(request.new_vesting < validator.vesting) {
+            uint96 to_withdraw = validator.vesting - request.new_vesting;
             token.transfer(acc, to_withdraw);
             
-            if (chains[chain_id].validators.accounts[acc].info.mining == true) {
+            if (validator.mining == true) {
                 chains[chain_id].total_vesting -= to_withdraw; //TODO -= safe math here;
             }
             
-            emit ConfirmVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].data.new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].data.timestamp, now);
-            emit FinishedVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].data.new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].data.timestamp, now);
+            emit ConfirmVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].timestamp, now);
+            emit FinishedVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].timestamp, now);
             vesting_request_delete(chain_id, acc);
             return;
         }
         
         // Increases account's vesting in chain
-        uint96 to_vest = request.data.new_vesting - chains[chain_id].validators.accounts[acc].info.vesting;
-        token.transferFrom( acc, address(this), to_vest);
+        uint96 to_vest = request.new_vesting - validator.info.vesting;
+        token.transferFrom(acc, address(this), to_vest);
         
-        if (chains[chain_id].validators.accounts[acc].info.mining == true) {
+        if (validator.info.mining == true) {
             chains[chain_id].total_vesting += to_vest;
         }
         
-        request.data.control_state = VestingRequestControl_state.REPLACE_VESTING;
-        request.data.state = VestingRequest_state.REQUEST_CONFIRMED;
-        emit ConfirmVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].data.new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].data.timestamp, now);
+        request.control_state  = VestingRequestControl_state.REPLACE_VESTING;
+        request.state          = Request_state.REQUEST_CONFIRMED;
+        emit ConfirmVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].timestamp, now);
     }
     
     function _cancel_vest_in_chain(uint chain_id, address acc) private {
-        VestingRequest_entry storage request = chains[chain_id].vesting_requests.accounts[acc];
+        VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
         
         // Replace back the original validator's vesting
-        if (request.data.control_state == VestingRequestControl_state.VESTING_REPLACED) {
-            chains[chain_id].validators.accounts[acc].info.vesting = request.data.old_vesting;
+        if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
+            chains[chain_id].users.accounts[acc].validator.info.vesting = request.old_vesting;
         }
         
-        emit CancelVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].data.new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].data.timestamp, now);
+        emit CancelVestInChain(chain_id, msg.sender, chains[chain_id].vesting_requests.accounts[msg.sender].new_vesting, chains[chain_id].vesting_requests.accounts[msg.sender].timestamp, now);
         vesting_request_delete(chain_id, acc);
     }
     
@@ -313,18 +483,18 @@ contract LitionRegistry{
         
         // No ongoing vesting request is present
         if (requestExists == false) {
-            to_withdraw = chains[chain_id].validators.accounts[acc].info.vesting;
+            to_withdraw = chains[chain_id].users.accounts[acc].validator.info.vesting;
         }
         // There is ongoing vesting request
         else { 
-            VestingRequest_entry storage request = chains[chain_id].vesting_requests.accounts[acc];
+            VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
             // Token transfer was not yet processed -> use saved old vesting balance as actual user's vesting balance to withdraw
-            if (request.data.state == VestingRequest_state.REQUEST_CREATED) {
-                to_withdraw = request.data.old_vesting;
+            if (request.state == Request_state.REQUEST_CREATED) {
+                to_withdraw = request.old_vesting;
             }
             // Token transfer was already processed -> use new vesting balance as actual user's vesting balance to withdraw
             else {
-                to_withdraw = request.data.new_vesting;
+                to_withdraw = request.new_vesting;
             }
         }
         
@@ -333,7 +503,7 @@ contract LitionRegistry{
         
         // Transfers all remaining tokens to the user account
         token.transfer(acc, to_withdraw);
-        chains[chain_id].validators.accounts[acc].info.vesting = 0;
+        chains[chain_id].users.accounts[acc].validator.info.vesting = 0;
         
         // If vesting request exists, delete it
         if (requestExists == true) {
@@ -342,7 +512,7 @@ contract LitionRegistry{
     }
 
     /**************************************************************************************************************************/
-    /****************************** End of Structs & Functions related to the vesting requests ********************************/
+    /************************** End of Structs & Functions related to the vesting/deppsit requests ****************************/
     /**************************************************************************************************************************/
 
    ERC20 token;
@@ -356,12 +526,12 @@ contract LitionRegistry{
 
    struct chain_info{
       bool              active;
-      string            endpoint;
       uint96            total_vesting;
       LastNotary        last_notary;
       ChainValidator    chain_validator;
-      Validators        validators;
-      VestingRequests   vesting_requests;
+      Users             users;
+      Requests          requests;
+      string            endpoint;
    }
    
    struct signature {
@@ -407,25 +577,22 @@ contract LitionRegistry{
       chains[chain_id].chain_validator          = validator;
       chains[chain_id].active                   = true;
       chains[chain_id].endpoint                 = init_endpoint;
-      chains[chain_id].last_notary.timestamp    = 0;
-      chains[chain_id].last_notary.block        = 0;
+      // Use default value (0) for timestamp and block
       
       chain_id                                  = next_id;
       
+      // Internally creates new user
+      user_create(chain_id, msg.sender);
+      
       // Transfers vesting tokens
       token.transferFrom(msg.sender, address(this), vesting);
-        
-      // Internally creates new validator
-      validator_create(chain_id, msg.sender, vesting);
-      // TODO: emit events about vesting request/confirmation/finish
+      chains[chain_id].users.accounts[msg.sender].validator.vesting = vesting;      
+      // TODO: emit events about vesting request/confirmation/finish          
       
       // Transfers deposit tokens
       token.transferFrom(msg.sender, address(this), deposit);
-        
-      // Internally creates new user
-      // TODO: create new user
-      //validator_create(chain_id, msg.sender, deposit);
-      // TODO: emit events about deposit request/confirmation/finish
+      chains[chain_id].users.accounts[msg.sender].transactor.deposit = deposit;      
+      // TODO: emit events about deposit request/confirmation        
       
       emit NewChain(chain_id, info);
       //emit NewChainEndpoint( id, init_endpoint );
