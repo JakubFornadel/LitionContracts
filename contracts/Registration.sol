@@ -1,4 +1,3 @@
-
 pragma solidity >=0.5.4;
 //pragma experimental ABIEncoderV2;
 
@@ -158,14 +157,17 @@ contract LitionRegistry{
      }
    }
 
-   function process_miners_rewards(uint id, address[] memory miners, uint32[] memory blocks_mined, uint lit_to_distribute) internal {
+   function process_miners_rewards(uint id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined, uint lit_to_distribute) internal {
      uint total_signatures = 0;
+     chain_info storage chain = chains[id];
+     uint max_blocks = notary_block_no - chain.last_notary ;
      for(uint i = 0; i < miners.length - 1; i++) {
-        total_signatures += blocks_mined[i];
+         //TODO multiplier here for white paper specifics
+        total_signatures += max_blocks / blocks_mined[i] * chain.users[miners[i]].info.vesting;
      }
 
      for(uint i = 0; i < miners.length - 1; i++) {
-        uint miner_reward = blocks_mined[i] * lit_to_distribute / total_signatures;
+        uint miner_reward = max_blocks / blocks_mined[i] * chain.users[miners[i]].info.vesting * lit_to_distribute / total_signatures;
         token.transfer( miners[i], miner_reward );
         lit_to_distribute -= miner_reward;
      }
@@ -195,7 +197,7 @@ contract LitionRegistry{
       require(involved_vesting * 2 >= chain.total_vesting);
 
       uint256 total_cost = process_users_consumptions(id, users, user_gas, largest_tx);
-      process_miners_rewards(id, miners, blocks_mined, total_cost);
+      process_miners_rewards(id, notary_block_no, miners, blocks_mined, total_cost);
       chain.last_notary = notary_block_no;
    }
 
