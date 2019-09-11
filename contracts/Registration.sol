@@ -160,20 +160,32 @@ contract LitionRegistry{
    function process_miners_rewards(uint id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined, uint lit_to_distribute) internal {
      uint total_signatures = 0;
      chain_info storage chain = chains[id];
-     uint max_blocks = notary_block_no - chain.last_notary ;
+     uint max_blocks = notary_block_no - chain.last_notary;
+     uint vesting = 0;
+
      for(uint i = 0; i < miners.length - 1; i++) {
-         //TODO multiplier here for white paper specifics
-        total_signatures += max_blocks / blocks_mined[i] * chain.users[miners[i]].info.vesting;
+         uint8 multiplier = 1;
+         vesting = chain.users[miners[i]].info.vesting;
+         if( vesting >= 500000*(uint256(10)**uint256(18)) {
+             multiplier = 2
+         }
+        total_signatures += max_blocks / blocks_mined[i] * multiplier * vesting;
      }
 
      for(uint i = 0; i < miners.length - 1; i++) {
-        uint miner_reward = max_blocks / blocks_mined[i] * chain.users[miners[i]].info.vesting * lit_to_distribute / total_signatures;
+        uint8 multiplier = 1;
+        vesting = chain.users[miners[i]].info.vesting;
+        if( vesting >= 500000*(uint256(10)**uint256(18)) {
+            multiplier = 2
+        }
+        uint miner_reward = max_blocks / blocks_mined[i] * multiplier * chain.users[miners[i]].info.vesting * lit_to_distribute / total_signatures;
         token.transfer( miners[i], miner_reward );
         lit_to_distribute -= miner_reward;
      }
 
      token.transfer( miners[miners.length - 1], lit_to_distribute );
    }
+
 
    function notary(uint id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
                                  address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
