@@ -1,10 +1,20 @@
 
-pragma solidity >=0.5.4;
-//pragma experimental ABIEncoderV2;
+pragma solidity >= 0.5.11;
 
 interface ChainValidator {
    function check_vesting(uint vesting, address participant) external returns (bool);
    function check_deposit(uint vesting, address participant) external returns (bool);
+}
+
+interface ERC20 {
+   function totalSupply() external view returns (uint);
+   function balanceOf(address tokenOwner) external view returns (uint balance);
+   function allowance(address tokenOwner, address spender) external view returns (uint remaining);
+   function transfer(address to, uint tokens) external returns (bool success);
+   function approve(address spender, uint tokens) external returns (bool success);
+   function transferFrom(address from, address to, uint tokens) external returns (bool success);
+   event Transfer(address indexed from, address indexed to, uint tokens);
+   event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 contract LitionChainValidator is ChainValidator {
@@ -16,43 +26,60 @@ contract LitionChainValidator is ChainValidator {
    }
 
    function check_deposit(uint deposit, address participant) public returns (bool) {
-      if(deposit >= 10*(10**18)) {
+      if(deposit >= 1000*(10**18)) {
          return true;
       }
       return false;
    }
 }
 
-interface ERC20{
-   function totalSupply() external view returns (uint);
-   function balanceOf(address tokenOwner) external view returns (uint balance);
-   function allowance(address tokenOwner, address spender) external view returns (uint remaining);
-   function transfer(address to, uint tokens) external returns (bool success);
-   function approve(address spender, uint tokens) external returns (bool success);
-   function transferFrom(address from, address to, uint tokens) external returns (bool success);
-   event Transfer(address indexed from, address indexed to, uint tokens);
-   event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
 contract LitionRegistry{
-    event NewChain(uint id, string description);
+    // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+    function check_lition_min_vesting(uint vesting) private pure returns (bool) {
+        if(vesting >= 1000*(10**18)) {
+            return true;   
+        }
+        return false;
+    }
     
-    // TODO: do we need this event ?
-    //event NewChainEndpoint(uint id, string endpoint);
+    // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+    function check_lition_min_deposit(uint deposit) private pure returns (bool) {
+        if(deposit >= 1000*(10**18)) {
+            return true;   
+        }
+        return false; 
+    }
     
-    // TODO: add events related to the deposit requests
+    // New chain was registered
+    event NewChain(uint256 chain_id, string description, string endpoint);
     
+    /**** Events related to the deposit requests ****/
+    // Deposit request created
+    event RequestDepositInChain(uint indexed chain_id, address indexed account, uint256 deposit, uint256 req_timestamp /* now */);
+    // Deposit request confirmed - tokens were transferred and account's deposit balance was updated
+    event ConfirmDepositInChain(uint indexed chain_id, address indexed account, uint256 deposit, uint256 req_timestamp /* request creation time */);
+    // Deposit request cancelled
+    event CancelDepositInChain(uint indexed chain_id, address indexed account, uint256 deposit, uint256 req_timestamp /* request creation time */);
+    // Whole deposit withdrawned - this is special withdrawal, which as applied after the chain validators are not able to reach consensus for 1 month 
+    event ForceWithdrawDeposit(uint indexed chain_id, address indexed account, uint timestamp /* now */);
+    
+    /**** Events related to the vesting requests ****/
+    // Vesting request created
     event RequestVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* now */);
-    //TODO: All events connected to the vesting_request(except RequestVestInChain), might trhow just req_timestamp as id of the original request and timestamp as actual time
-    event ConfirmVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* when was the request created/it's id */, uint256 timestamp /* now */);
-    event CancelVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* when was the request created/it's id */, uint256 timestamp /* now */);
-    event FinishedVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* when was the request created/it's id */, uint256 timestamp /* now */);
+    // Vesting request confirmed - tokens were transferred
+    event ConfirmVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* request creation time */);
+    // Vesting request cancelled
+    event CancelVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* request creation time */);
+    // Vesting request accepted - account's vesting balance was updated 
+    event AcceptedVestInChain(uint indexed chain_id, address indexed account, uint256 vesting, uint256 req_timestamp /* request creation time */);
+    // Whole vesting withdrawned - this is special withdrawal, which as applied after the chain validators are not able to reach consensus for 1 month 
     event ForceWithdrawVesting(uint indexed chain_id, address indexed account, uint timestamp /* now */);
     
     // if whitelist == true  - allow user to transact
     // if whitelist == false - do not allow user to transact
     event WhitelistAccount(uint indexed chain_id, address miner, bool whitelist);
     
+    // Validator start/stop mining
     event StartMining(uint indexed chain_id, address miner);
     event StopMining(uint indexed chain_id, address miner);
 
@@ -207,7 +234,7 @@ contract LitionRegistry{
          require(chains[chain_id].chain_validator.check_vesting(vesting, msg.sender), "user does not meet chain validator's min.required vesting condition");
          require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
       }
-      
+
       require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
       require(chains[chain_id].users.accounts[msg.sender].validator.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
       
@@ -232,8 +259,8 @@ contract LitionRegistry{
     }
     
     function request_deposit_in_chain(uint chain_id, uint256 deposit) external {
-      // Withdraw all deposit
-      if (deposit == 0) {
+        // Withdraw whole deposit
+        if (deposit == 0) {
           // If last notary is older than 30 days, it means that validators cannot reach consensus and side-chain is basically stuck.
           // In such case ignore multi-step deposit withdrawal process and allow users to withdraw all deposited tokens
           if (chains[chain_id].last_notary.timestamp + 30 days < now) {
@@ -242,19 +269,19 @@ contract LitionRegistry{
           }
           
           require(transactor_exists(chain_id, msg.sender) == true, "Trying to withdraw deposit from non-existing transactor account");
-      }
-      // Vest in chain or withdraw just part of vesting
-      else {
+        }
+        // Deposit in chain or withdraw just part of vesting
+        else {
          require(chains[chain_id].active, "can't deposit into non-existing chain");
          require(check_lition_min_deposit(deposit), "user does not meet Lition's min.required deposit condition");
          require(chains[chain_id].chain_validator.check_deposit(deposit, msg.sender), "user does not meet chain validator's min.required deposit condition");
          require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
-      }
-      
-      require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
-      require(chains[chain_id].users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has vested.");
-      
-      _request_deposit_in_chain(chain_id, deposit, msg.sender);
+        }
+        
+        require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
+        require(chains[chain_id].users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has vested.");
+        
+        _request_deposit_in_chain(chain_id, deposit, msg.sender);
     }
     
     // Confirms deposit withdrawal request, token transfer is processed during confirmation
@@ -266,7 +293,7 @@ contract LitionRegistry{
         _confirm_deposit_withdrawal_from_chain(chain_id, msg.sender);
     }
     
-    // Cancels the existing vest request. Such request can be cancelled only if it was not already confirmed
+    // Cancels the existing deposit request. Such request can be cancelled only if it was not already confirmed
     function cancel_deposit_in_chain(uint chain_id) external {
         require(deposit_withdraw_request_exists(chain_id, msg.sender) == true, "Cannot cancel non-existing deposit withdrawal request.");
         require(chains[chain_id].requests.accounts[msg.sender].deposit_withdraw_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
@@ -274,41 +301,51 @@ contract LitionRegistry{
         _cancel_deposit_withdrawal_from_chain(chain_id, msg.sender);
     }
     
-    // Internally creates/registers new side-chain 
+    // Internally creates/registers new side-chain. Creator must be also validator at least from the beginning as joining process take multiple steps
+    // and these steps cannot be done in the same notary window
     function register_chain(string calldata info, ChainValidator validator, uint96 vesting, uint96 deposit, string calldata init_endpoint) external returns (uint256 chain_id) {
         require(bytes(init_endpoint).length > 0);
         
+        address creator         = msg.sender;
+        uint256 timestamp       = now;
+        
+        // Inits chain data
+        chain_id                = next_id;
+        ChainInfo storage chain = chains[chain_id];
+        
+        
+        chain.chain_validator   = validator;
+        chain.active            = true;
+        chain.endpoint          = init_endpoint;
+        
         // Validates vesting
         require(check_lition_min_vesting(vesting), "chain creator does not meet Lition's min.required vesting condition");
-        require(chains[chain_id].chain_validator.check_vesting(vesting, msg.sender), "chain creator does not meet chain validator's min.required vesting condition");
+        require(chain.chain_validator.check_vesting(vesting, creator), "chain creator does not meet chain validator's min.required vesting condition");
         
         // Validates deposit
         require(check_lition_min_deposit(deposit), "chain creator does not meet Lition's min.required deposit condition");
-        require(chains[chain_id].chain_validator.check_deposit(deposit, msg.sender), "chain creator does not meet chain validator's min.required deposit condition");
-        
-        // Inits chain data
-        chains[chain_id].chain_validator          = validator;
-        chains[chain_id].active                   = true;
-        chains[chain_id].endpoint                 = init_endpoint;
-        // Use default value (0) for timestamp and block
-        
-        chain_id                                  = next_id;
+        require(chain.chain_validator.check_deposit(deposit, creator), "chain creator does not meet chain validator's min.required deposit condition");
         
         // Internally creates new user
-        user_create(chain_id, msg.sender);
+        user_create(chain_id, creator);
         
         // Transfers vesting tokens
-        token.transferFrom(msg.sender, address(this), vesting);
-        chains[chain_id].users.accounts[msg.sender].validator.vesting = vesting;      
-        // TODO: emit events about vesting request/confirmation/finish          
+        token.transferFrom(creator, address(this), vesting);
+        chain.users.accounts[creator].validator.vesting = vesting;      
         
         // Transfers deposit tokens
-        token.transferFrom(msg.sender, address(this), deposit);
-        chains[chain_id].users.accounts[msg.sender].transactor.deposit = deposit;      
-        // TODO: emit events about deposit request/confirmation        
+        token.transferFrom(creator, address(this), deposit);
+        chain.users.accounts[creator].transactor.deposit = deposit;      
+        chain.users.accounts[creator].transactor.whitelisted = true;
         
-        emit NewChain(chain_id, info);
-        //emit NewChainEndpoint( id, init_endpoint );
+        emit NewChain(chain_id, info, init_endpoint);
+        
+        emit RequestVestInChain(chain_id, creator, vesting, timestamp);
+        emit ConfirmVestInChain(chain_id, creator, vesting, timestamp);
+        emit AcceptedVestInChain(chain_id, creator, vesting, timestamp);
+        
+        emit RequestDepositInChain(chain_id, creator, deposit, timestamp);
+        emit ConfirmDepositInChain(chain_id, creator, deposit, timestamp);
         
         next_id++;
     }
@@ -335,6 +372,52 @@ contract LitionRegistry{
     function get_last_notary(uint256 chain_id) external view returns (uint256 last_notary_block, uint256 last_notary_timestamp) {
         last_notary_block = chains[chain_id].last_notary.block;
         last_notary_timestamp = chains[chain_id].last_notary.timestamp;
+    }
+    
+    function test_notary(uint256 chain_id, uint256 notary_block_no) external {
+        ChainInfo storage chain = chains[chain_id];
+        
+        // Process existing vesting/deposit withdrawals requests as these cannot be 
+        // processed automatically - math for user's usage and miner's rewards calculations would be invalid
+        process_existing_requests(chain_id);
+        
+        // TODO: remove validators(call stop_mining) who signed no block during this notary window and have mining flag == true
+        
+        // Updates info when the last notary was processed 
+        chain.last_notary.block = notary_block_no;
+        chain.last_notary.timestamp = now;
+    }
+    
+    function get_user_details(uint256 chain_id, address acc) external view returns (uint256 deposit, bool whitelisted, uint256 vesting, bool mining) {
+        deposit = chains[chain_id].users.accounts[acc].transactor.deposit;
+        whitelisted = chains[chain_id].users.accounts[acc].transactor.whitelisted;
+        
+        vesting = chains[chain_id].users.accounts[acc].validator.vesting;
+        mining = chains[chain_id].users.accounts[acc].validator.mining;  
+    }
+    
+    function get_user_requests(uint256 chain_id, address acc) external view returns (bool vesting_req_exists, uint256 vesting_req_time, uint256 vesting_req_notary, uint256 vesting_req_value, uint256 vesting_req_state, uint256 vesting_req_control_state,
+                                                                                     bool deposit_req_exists, uint256 deposit_req_time, uint256 deposit_req_notary, uint256 deposit_req_value, uint256 deposit_req_state) {
+        if (vesting_request_exists(chain_id, acc)) {
+            VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
+            
+            vesting_req_exists = true;
+            vesting_req_time = request.timestamp;
+            vesting_req_notary = request.notary_block;
+            vesting_req_value = request.new_vesting;
+            vesting_req_state = uint256(request.state);
+            vesting_req_control_state = uint256(request.control_state);
+        }
+        
+        if (deposit_withdraw_request_exists(chain_id, acc)) {
+            DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
+            
+            deposit_req_exists = true;
+            deposit_req_time = request.timestamp;
+            deposit_req_notary = request.notary_block;
+            deposit_req_value = 0;
+            deposit_req_state = uint256(request.state);
+        }
     }
     
     function notary(uint256 chain_id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
@@ -497,9 +580,6 @@ contract LitionRegistry{
     function vesting_request_create(uint256 chain_id, address acc, uint256 vesting) private {
         require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
         
-        // TODO: should already-existing vesting request be checked here or in caller's function ???
-        require(vesting_request_exists(chain_id, acc) == false, "There is already ongoing vesting request");
-        
         Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
         
         requests_entry.vesting_request.old_vesting = chains[chain_id].users.accounts[acc].validator.vesting;
@@ -526,9 +606,6 @@ contract LitionRegistry{
     // Creates new deposit withdrawal request
     function deposit_withdraw_request_create(uint256 chain_id, address acc) private {
         require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
-        
-        // TODO: should already-existing deposit withdrawal request be checked here or in caller's function ???
-        require(deposit_withdraw_request_exists(chain_id, acc) == false, "There is already ongoing deposit withdrawal request");
         
         Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
         
@@ -616,8 +693,6 @@ contract LitionRegistry{
       return chains[chain_id].requests.accounts[acc].deposit_withdraw_request.timestamp != 0;
     }
     
-    
-    
     function _request_vest_in_chain(uint chain_id, uint256 vesting, address acc) private {
       // Internally creates new user
       if (vesting != 0 && user_exists(chain_id, acc) == false) {
@@ -625,45 +700,50 @@ contract LitionRegistry{
       }
       
       vesting_request_create(chain_id, acc, vesting);
-      emit RequestVestInChain(chain_id, msg.sender, vesting, now);
+      emit RequestVestInChain(chain_id, acc, vesting, now);
     }
     
+    // Basically just transfers the tokens, validator's vesting balance update is always done at the of notary atomatically
     function _confirm_vest_in_chain(uint chain_id, address acc) private {
         VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
         Validator storage validator = chains[chain_id].users.accounts[acc].validator;
         
+        request.state = Request_state.REQUEST_CONFIRMED;
+        
         // Decreases account's vesting in chain
-        if(request.new_vesting < validator.vesting) {
-            uint96 to_withdraw = validator.vesting - request.new_vesting;
+        if(request.new_vesting < request.old_vesting) {
+            // This should never happen during normal conditions as vesting balance state is updated during notary
+            require(request.control_state == VestingRequestControl_state.VESTING_REPLACED, "Cannot withdraw vesting tokens, internal balance was not updated yet");
+            
+            uint96 to_withdraw = request.old_vesting - request.new_vesting;
             token.transfer(acc, to_withdraw);
             
             if (validator.mining == true) {
                 chains[chain_id].total_vesting -= to_withdraw;
             }
             
-            emit ConfirmVestInChain(chain_id, msg.sender, request.new_vesting, request.timestamp, now);
-            emit FinishedVestInChain(chain_id, msg.sender, request.new_vesting, request.timestamp, now);
-            vesting_request_delete(chain_id, acc);
-            
             // If it was request to withdraw whole vesting balance, delete validator
             if (request.new_vesting == 0) {
                 validator_delete(chain_id, acc);
             }
             
+            emit ConfirmVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
+            vesting_request_delete(chain_id, acc);
+            
             return;
         }
         
         // Increases account's vesting in chain
-        uint96 to_vest = request.new_vesting - validator.vesting;
+        uint96 to_vest = request.new_vesting - request.old_vesting;
         token.transferFrom(acc, address(this), to_vest);
         
         if (validator.mining == true) {
             chains[chain_id].total_vesting += to_vest;
         }
         
-        request.control_state  = VestingRequestControl_state.REPLACE_VESTING;
-        request.state          = Request_state.REQUEST_CONFIRMED;
-        emit ConfirmVestInChain(chain_id, msg.sender, request.new_vesting, request.timestamp, now);
+        request.control_state = VestingRequestControl_state.REPLACE_VESTING;
+        
+        emit ConfirmVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
     }
     
     function _cancel_vest_in_chain(uint chain_id, address acc) private {
@@ -674,11 +754,11 @@ contract LitionRegistry{
             chains[chain_id].users.accounts[acc].validator.vesting = request.old_vesting;
         }
         
-        emit CancelVestInChain(chain_id, msg.sender, request.new_vesting, request.timestamp, now);
+        emit CancelVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
         vesting_request_delete(chain_id, acc);
     }
     
-    // Forcefully withdraw all vesting from chain.
+    // Forcefully withdraw whole vesting from chain.
     // Because vesting is processed during 2(new_vest < act_vest) or even 3(new_vest > act_vest) notary windows,
     // user might end up with locked tokens in SC in case validators never reach consesnsus. In such case these tokens stay locked in
     // SC for 1 month and after that can be withdrawned. Any existing vest requests are deleted after this withdraw.
@@ -701,47 +781,55 @@ contract LitionRegistry{
             else {
                 to_withdraw = request.new_vesting;
             }
+            
+            vesting_request_delete(chain_id, acc);
         }
         
         // Stops mining
         _stop_mining(chain_id, acc);
         
+        validator_delete(chain_id, acc);
+        
         // Transfers all remaining tokens to the user account
         token.transfer(acc, to_withdraw);
-        chains[chain_id].users.accounts[acc].validator.vesting = 0;
         
-        // If vesting request exists, delete it
-        if (requestExists == true) {
-            vesting_request_delete(chain_id, acc);    
-        }
+        emit ForceWithdrawVesting(chain_id, acc, now);
     }
     
     function _request_deposit_in_chain(uint chain_id, uint256 deposit, address acc) private {
+      uint256 timestamp = now;
+      
+      // If user wants to withdraw whole deposit - create withdrawal request
+      if (deposit == 0) {
+        deposit_withdraw_request_create(chain_id, acc);
+        emit RequestDepositInChain(chain_id, acc, deposit, timestamp);  
+        
+        return;
+      }
+      
       // Internally creates new user
       if (user_exists(chain_id, acc) == false) {
           user_create(chain_id, acc);
       }
       
-      // If user wants to withdraw whole deposit - create withdrawal request
-      if (deposit == 0) {
-        deposit_withdraw_request_create(chain_id, acc);
-        // TODO: emit event
-        //emit RequestDepositInChain(chain_id, msg.sender, vesting, now);    
-        return;
-      }
-      
       // If user wants to deposit in chain, process it immediately
       Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
-      if(transactor.deposit > deposit) {
-         uint256 to_withdraw = transactor.deposit - deposit;
+      uint256 act_transactor_deposit = transactor.deposit;
+      
+      if(act_transactor_deposit > deposit) {
+         transactor.deposit = uint96(deposit);
+         
+         uint256 to_withdraw = act_transactor_deposit - deposit;
          token.transfer(acc, to_withdraw);
       } else {
-         uint to_deposit = deposit - transactor.deposit;
+         uint to_deposit = deposit - act_transactor_deposit;
          token.transferFrom(acc, address(this), to_deposit);
+         
+         transactor.deposit = uint96(deposit);
       }
-      transactor.deposit = uint96(deposit);
       
-      // TODO: emit events about request and confirmation
+      emit RequestDepositInChain(chain_id, acc, deposit, timestamp);
+      emit ConfirmDepositInChain(chain_id, acc, deposit, timestamp);
       
       if (transactor.whitelisted == false) {
         transactor.whitelisted = true;
@@ -750,35 +838,36 @@ contract LitionRegistry{
     }
     
     function _confirm_deposit_withdrawal_from_chain(uint chain_id, address acc) private {
-        //DeposiWithdrawtRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
+        DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
         
-        // Withdraw whole deposit
-        token.transfer(acc, transactor.deposit);
-        
-        // TODO: emit events about deposit request confirmation
+        uint256 to_withdraw = transactor.deposit;
         
         deposit_withdraw_request_delete(chain_id, acc);
+        transactor_delete(chain_id, acc);
         
-        if (transactor.whitelisted == true) {
-          transactor.whitelisted = false;
-          emit WhitelistAccount(chain_id, acc, false);
-        }
+        // Withdraw whole deposit
+        token.transfer(acc, to_withdraw);
+        
+        emit ConfirmDepositInChain(chain_id, acc, 0, request.timestamp);
     }
     
     function _cancel_deposit_withdrawal_from_chain(uint chain_id, address acc) private {
+        DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
         
         // If withdrawal was cancelled and transactor has >= min. required deposit, re-enable user to transact
         if (transactor.whitelisted == false && 
             check_lition_min_deposit(transactor.deposit) == true &&
             chains[chain_id].chain_validator.check_deposit(transactor.deposit, acc) == true) {
+                
           transactor.whitelisted = true;
           emit WhitelistAccount(chain_id, acc, true);
         }
         
-        // TODO: emit event about canceling deposit withdrawal request
         deposit_withdraw_request_delete(chain_id, acc);
+        
+        emit CancelDepositInChain(chain_id, acc, 0, request.timestamp);
     }
     
     // Forcefully withdraw whole deposit.
@@ -788,14 +877,18 @@ contract LitionRegistry{
     function _force_withdraw_deposit_from_chain(uint chain_id, address acc) private {
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor; 
         
-        // Transfers all remaining tokens to the user account
-        token.transfer(acc, transactor.deposit);
-        transactor.deposit = 0;
+        uint256 to_withdraw = transactor.deposit;
+        transactor_delete(chain_id, acc);
         
         // If deposit withdrawal request exists, delete it
         if (deposit_withdraw_request_exists(chain_id, acc) == true) {
             deposit_withdraw_request_delete(chain_id, acc);    
         }
+        
+        // Transfers all remaining tokens to the user account
+        token.transfer(acc, to_withdraw);
+        
+        emit ForceWithdrawDeposit(chain_id, acc, now);
     }
 
     /**************************************************************************************************************************/
@@ -805,22 +898,6 @@ contract LitionRegistry{
    constructor(ERC20 _token) public {
       token = _token;
    }
-   
-  // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
-  function check_lition_min_vesting(uint vesting) private pure returns (bool) {
-      if(vesting >= 1000*(uint256(10)**uint256(18))) {
-        return true;   
-      }
-      return false;
-  }
-   
-  // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
-  function check_lition_min_deposit(uint deposit) private pure returns (bool) {
-      if(deposit >= 1000*(uint256(10)**uint256(18))) {
-        return true;   
-      }
-      return false; 
-  }
   
   // Process users consumption based on their usage
   function process_users_consumptions(uint256 chain_id, address[] memory users, uint32[] memory user_gas, uint32 largest_tx) internal returns (uint256 total_cost) {
@@ -931,11 +1008,12 @@ contract LitionRegistry{
                     user.validator.vesting = entry.vesting_request.new_vesting;
                     entry.vesting_request.control_state = VestingRequestControl_state.VESTING_REPLACED;
                     
+                    emit AcceptedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp);
+                    
                     // If it was request to increase validator's vesting balance and we got here, it means we can delete this request
                     // request to decrease vestin balance are deleted in confirmation
                     if (entry.vesting_request.new_vesting > entry.vesting_request.old_vesting) {
                         vesting_request_delete(chain_id, acc);
-                        emit FinishedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp, now);
                     }
                 }
             }

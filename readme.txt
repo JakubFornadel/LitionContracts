@@ -5,14 +5,17 @@ https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 
 ### Actual Lition Registry contract
 ```
-https://ropsten.etherscan.io/address/0x1274d1c66dfb6b0cad1966bdb21511f4791dee9d
+https://ropsten.etherscan.io/address/0x0E2052259026Aa6EF1b1F12CE163Dc99FA9518E4
 ```
 
 ### Actual Lition Validator contract
 ```
-https://ropsten.etherscan.io/address/0xcf9a6ef2d6eba38bb6ca658547284ca49aebfa4b
+https://ropsten.etherscan.io/address/0x8950627117c5AD9e222d0f572CD3C40941449617
 ```
 
+### Contract debugging
+To get require error message, use:
+https://gist.github.com/msigwart/d3e374a64c8718f8ac5ec04b5093597f
 
 # go-lition-abi
 #### Prerequisites
