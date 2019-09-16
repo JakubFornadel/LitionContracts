@@ -530,7 +530,7 @@ contract LitionRegistry{
     function start_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered == true, "Non-registered chain");
-        
+        require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         require(chains[chain_id].chain_validator.check_vesting(chain.users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
         
@@ -540,7 +540,7 @@ contract LitionRegistry{
     function stop_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered == true, "Non-registered chain");
-        
+        require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         
         _stop_mining(chain_id, msg.sender);
@@ -791,11 +791,16 @@ contract LitionRegistry{
     
     function _cancel_vest_in_chain(uint chain_id, address acc) private {
         VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
+        Validator storage validator = chains[chain_id].users.accounts[acc].validator;
         
         // Replace back the original validator's vesting
         if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
-            chains[chain_id].users.accounts[acc].validator.vesting = request.old_vesting;
-            chains[chain_id].total_vesting += request.new_vesting - request.old_vesting;
+            validator.vesting = request.old_vesting;
+            
+            // If validator is actively mining, updates chain total_vesting
+            if (validator.mining == true) {
+                chains[chain_id].total_vesting += (request.new_vesting - request.old_vesting);
+            }
         }
         
         emit CancelVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
@@ -807,33 +812,37 @@ contract LitionRegistry{
     // user might end up with locked tokens in SC in case validators never reach consesnsus. In such case these tokens stay locked in
     // SC for 1 month and after that can be withdrawned. Any existing vest requests are deleted after this withdraw.
     function _force_withdraw_vest_from_chain(uint chain_id, address acc) private {
+        ChainInfo storage chain = chains[chain_id];
         uint96 to_withdraw = 0;
         bool requestExists = vesting_request_exists(chain_id, acc);
         
         // No ongoing vesting request is present
         if (requestExists == false) {
-            to_withdraw = chains[chain_id].users.accounts[acc].validator.vesting;
-            chains[chain_id].total_vesting -= to_withdraw;  // TODO: safe math here
+            to_withdraw = chain.users.accounts[acc].validator.vesting;
+            chain.total_vesting -= to_withdraw;  // TODO: safe math here
         }
         // There is ongoing vesting request
         else { 
-            VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
-            // Token transfer was not yet processed -> use saved old vesting balance as actual user's vesting balance to withdraw
-            if (request.state == Request_state.REQUEST_CREATED) {
-                to_withdraw = request.old_vesting;
-            }
+            VestingRequest_data storage request = chain.requests.accounts[acc].vesting_request;
             // Token transfer was already processed -> use new vesting balance as actual user's vesting balance to withdraw
-            else {
+            if (request.state == Request_state.REQUEST_CONFIRMED) {
                 to_withdraw = request.new_vesting;
             }
-            
-            // Vesting balance and chain's total_vesting were already internally updated
-            if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
-                chains[chain_id].total_vesting -= request.new_vesting;  // TODO: safe math here
-            }
-            // Vesting balance and chain's total_vesting were not yet internally updated
+            // Token transfer was not yet processed -> use saved old vesting balance as actual user's vesting balance to withdraw
             else {
-                chains[chain_id].total_vesting -= request.old_vesting;  // TODO: safe math here
+                to_withdraw = request.old_vesting;
+            }
+            
+            // If validor is actively mining update chain's total_vesting
+            if (chain.users.accounts[acc].validator.mining == true) {
+                // Vesting balance and chain's total_vesting were already internally updated
+                if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
+                    chain.total_vesting -= request.new_vesting;  // TODO: safe math here
+                }
+                // Vesting balance and chain's total_vesting were not yet internally updated
+                else {
+                    chain.total_vesting -= request.old_vesting;  // TODO: safe math here
+                }
             }
             
             vesting_request_delete(chain_id, acc);
@@ -1064,7 +1073,7 @@ contract LitionRegistry{
                     
                     // If validator is actively mining, updates also chain's total vesting
                     if (user.validator.mining == true) {
-                        chains[chain_id].total_vesting += entry.vesting_request.new_vesting - entry.vesting_request.old_vesting; // TODO: safe math here
+                        chains[chain_id].total_vesting += (entry.vesting_request.new_vesting - entry.vesting_request.old_vesting); // TODO: safe math here
                     }
                     
                     emit AcceptedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp);
