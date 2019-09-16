@@ -1061,13 +1061,16 @@ contract LitionRegistry{
                 if (entry.vesting_request.control_state == VestingRequestControl_state.REPLACE_VESTING) {
                     user.validator.vesting = entry.vesting_request.new_vesting;
                     entry.vesting_request.control_state = VestingRequestControl_state.VESTING_REPLACED;
-                    // Updates also chain's total vesting
-                    chains[chain_id].total_vesting += entry.vesting_request.new_vesting - entry.vesting_request.old_vesting; // TODO: safe math here
+                    
+                    // If validator is actively mining, updates also chain's total vesting
+                    if (user.validator.mining == true) {
+                        chains[chain_id].total_vesting += entry.vesting_request.new_vesting - entry.vesting_request.old_vesting; // TODO: safe math here
+                    }
                     
                     emit AcceptedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp);
                     
-                    // If it was request to increase validator's vesting balance and we got here, it means we can delete this request
-                    // request to decrease vestin balance are deleted in confirmation
+                    // If it was request to increase validator's vesting balance and we got here, it means we can delete this request.
+                    // Requests to decrease vesting balance are deleted in confirmation
                     if (entry.vesting_request.new_vesting > entry.vesting_request.old_vesting) {
                         vesting_request_delete(chain_id, acc);
                     }
