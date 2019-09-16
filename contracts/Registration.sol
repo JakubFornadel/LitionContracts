@@ -799,7 +799,7 @@ contract LitionRegistry{
             
             // If validator is actively mining, updates chain total_vesting
             if (validator.mining == true) {
-                chains[chain_id].total_vesting += (request.new_vesting - request.old_vesting);
+                chains[chain_id].total_vesting -= (request.new_vesting - request.old_vesting); // TODO: safe math here
             }
         }
         
