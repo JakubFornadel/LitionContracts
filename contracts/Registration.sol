@@ -221,6 +221,8 @@ contract LitionRegistry{
       
       // Withdraw all vesting
       if (vesting == 0) {
+          require(validator_exists(chain_id, msg.sender) == true, "Trying to withdraw vesting from non-existing validator account");
+          
           // If last notary is older than 30 days, it means that validators cannot reach consensus and side-chain is basically stuck.
           // In such case ignore multi-step vesting process and allow users to withdraw all vested tokens
           if (chain.last_notary.timestamp + 30 days < now) {
@@ -228,7 +230,6 @@ contract LitionRegistry{
               return;
           }
           
-          require(validator_exists(chain_id, msg.sender) == true, "Trying to withdraw vesting from non-existing validator account");
           require(chain.users.accounts[msg.sender].validator.mining == false, "Can't withdraw any tokens, stop_minig must be called first.");  
       }
       // Vest in chain or withdraw just part of vesting
@@ -273,6 +274,8 @@ contract LitionRegistry{
         
         // Withdraw whole deposit
         if (deposit == 0) {
+          require(transactor_exists(chain_id, msg.sender) == true, "Non-existing transactor account");
+          
           // If last notary is older than 30 days, it means that validators cannot reach consensus and side-chain is basically stuck.
           // In such case ignore multi-step deposit withdrawal process and allow users to withdraw all deposited tokens
           if (chain.last_notary.timestamp + 30 days < now) {
@@ -280,7 +283,6 @@ contract LitionRegistry{
               return;
           }
           
-          require(transactor_exists(chain_id, msg.sender) == true, "Trying to withdraw deposit from non-existing transactor account");
         }
         // Deposit in chain or withdraw just part of vesting
         else {
@@ -416,7 +418,7 @@ contract LitionRegistry{
                                                                         uint256 last_notary_block, uint256 last_notary_timestamp) {
         ChainInfo storage chain = chains[chain_id];
         
-        registered              = chain.active;
+        registered              = chain.registered;
         active                  = chain.active;
         endpoint                = chain.endpoint;
         total_vesting           = chain.total_vesting;
@@ -425,13 +427,15 @@ contract LitionRegistry{
     }
     
     function get_user_details(uint256 chain_id, address acc) external view returns (bool exists, uint256 deposit, bool whitelisted, uint256 vesting, bool mining) {
-        exists = chains[chain_id].users.accounts[acc].index > 0;
-         
-        deposit = chains[chain_id].users.accounts[acc].transactor.deposit;
-        whitelisted = chains[chain_id].users.accounts[acc].transactor.whitelisted;
+        ChainInfo storage chain = chains[chain_id];
         
-        vesting = chains[chain_id].users.accounts[acc].validator.vesting;
-        mining = chains[chain_id].users.accounts[acc].validator.mining;  
+        exists = chain.users.accounts[acc].index > 0;
+         
+        deposit = chain.users.accounts[acc].transactor.deposit;
+        whitelisted = chain.users.accounts[acc].transactor.whitelisted;
+        
+        vesting = chain.users.accounts[acc].validator.vesting;
+        mining = chain.users.accounts[acc].validator.mining;  
     }
     
     function get_user_requests(uint256 chain_id, address acc) external view returns (bool vesting_req_exists, uint256 vesting_req_time, uint256 vesting_req_notary, uint256 vesting_req_value, uint256 vesting_req_state, uint256 vesting_req_control_state,
@@ -525,7 +529,7 @@ contract LitionRegistry{
     
     function start_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
-        require(chain.active == true, "Non-active chain");
+        require(chain.registered == true, "Non-registered chain");
         
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         require(chains[chain_id].chain_validator.check_vesting(chain.users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
@@ -535,7 +539,7 @@ contract LitionRegistry{
   
     function stop_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
-        require(chain.active == true, "Non-active chain");
+        require(chain.registered == true, "Non-registered chain");
         
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         
@@ -652,19 +656,20 @@ contract LitionRegistry{
 
     // Creates new deposit withdrawal request
     function deposit_withdraw_request_create(uint256 chain_id, address acc) private {
-        require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
         
-        Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
+        Requests_entry storage requests_entry = chain.requests.accounts[acc];
         
         requests_entry.deposit_withdraw_request.state = Request_state.REQUEST_CREATED;
         requests_entry.deposit_withdraw_request.timestamp = uint48(now);
-        requests_entry.deposit_withdraw_request.notary_block = chains[chain_id].last_notary.block; 
+        requests_entry.deposit_withdraw_request.notary_block = chain.last_notary.block; 
         
         // There is no deposit or vesting ongoing request - create new requests_entry structure
         if (requests_entry.index == 0) { // any_request_exists(chain_id, acc) == false could be used instead
             // There is no ongoing deposit request - create new requests pair structure
-            chains[chain_id].requests.list.push(acc);    
-            requests_entry.index = uint48(chains[chain_id].requests.list.length); // indexes are stored + 1
+            chain.requests.list.push(acc);    
+            requests_entry.index = uint48(chain.requests.list.length); // indexes are stored + 1
         }
     }
 
