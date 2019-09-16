@@ -195,6 +195,7 @@ contract LitionRegistry{
     
     struct ChainInfo {
         bool              registered;
+        bool              active;
         uint96            total_vesting;
         LastNotary        last_notary;
         ChainValidator    chain_validator;
@@ -215,8 +216,8 @@ contract LitionRegistry{
     //      * 2 notary windows - in case new vesting < actual vesting
     //      * 3 notary windows - in case new vesting > actual vesting
     function request_vest_in_chain(uint chain_id, uint256 vesting) external {
-      require(chain_active(chain_id), "Non-active chain");
       ChainInfo storage chain = chains[chain_id];
+      require(chain.active == true, "Non-active chain");
       
       // Withdraw all vesting
       if (vesting == 0) {
@@ -245,8 +246,8 @@ contract LitionRegistry{
     
     // Confirms vest request, token transfer is processed during confirmation
     function confirm_vest_in_chain(uint chain_id) external {
-        require(chain_active(chain_id), "Non-active chain");
         ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
         
         require(vesting_request_exists(chain_id, msg.sender) == true, "Cannot confirm non-existing vesting request.");
         require(chain.last_notary.block > chains[chain_id].requests.accounts[msg.sender].vesting_request.notary_block, "Request confirmation can be called in the next notary window after request was accepted.");
@@ -257,16 +258,18 @@ contract LitionRegistry{
     
     // Cancels the existing vest request. Such request can be cancelled only if it was not already confirmed
     function cancel_vest_in_chain(uint chain_id) external {
-        require(chain_active(chain_id), "Non-active chain");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
+      
         require(vesting_request_exists(chain_id, msg.sender) == true, "Cannot cancel non-existing vesting request.");
-        require(chains[chain_id].requests.accounts[msg.sender].vesting_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
+        require(chain.requests.accounts[msg.sender].vesting_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
         
         _cancel_vest_in_chain(chain_id, msg.sender);
     }
     
     function request_deposit_in_chain(uint chain_id, uint256 deposit) external {
-        require(chain_active(chain_id), "Non-active chain");
         ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
         
         // Withdraw whole deposit
         if (deposit == 0) {
@@ -281,7 +284,7 @@ contract LitionRegistry{
         }
         // Deposit in chain or withdraw just part of vesting
         else {
-         require(chain_active(chain_id), "can't deposit into non-existing chain");
+         require(chain.active, "can't deposit into non-existing chain");
          require(check_lition_min_deposit(deposit), "user does not meet Lition's min.required deposit condition");
          require(chain.chain_validator.check_deposit(deposit, msg.sender), "user does not meet chain validator's min.required deposit condition");
          require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
@@ -295,8 +298,8 @@ contract LitionRegistry{
     
     // Confirms deposit withdrawal request, token transfer is processed during confirmation
     function confirm_deposit_withdrawal_from_chain(uint chain_id) external {
-        require(chain_active(chain_id), "Non-active chain");
         ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
         
         require(deposit_withdraw_request_exists(chain_id, msg.sender) == true, "Cannot confirm non-existing deposit withdrawal request.");
         require(chain.last_notary.block > chains[chain_id].requests.accounts[msg.sender].deposit_withdraw_request.notary_block, "Request confirmation can be called in the next notary window after request was accepted.");
@@ -307,9 +310,11 @@ contract LitionRegistry{
     
     // Cancels the existing deposit request. Such request can be cancelled only if it was not already confirmed
     function cancel_deposit_in_chain(uint chain_id) external {
-        require(chain_active(chain_id), "Non-active chain");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
+        
         require(deposit_withdraw_request_exists(chain_id, msg.sender) == true, "Cannot cancel non-existing deposit withdrawal request.");
-        require(chains[chain_id].requests.accounts[msg.sender].deposit_withdraw_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
+        require(chain.requests.accounts[msg.sender].deposit_withdraw_request.state == Request_state.REQUEST_CREATED, "Cannot cancel already confirmed request." );
         
         _cancel_deposit_withdrawal_from_chain(chain_id, msg.sender);
     }
@@ -400,18 +405,23 @@ contract LitionRegistry{
         // Updates info when the last notary was processed 
         chain.last_notary.block = notary_block_no;
         chain.last_notary.timestamp = now;
+        
+        if (chain.active == false) {
+            chain.active = true;
+        }
     }
     
 
-    function get_chain_details(uint256 chain_id) external view returns (bool active, string memory endpoint, uint256 total_vesting,
+    function get_chain_details(uint256 chain_id) external view returns (bool registered, bool active, string memory endpoint, uint256 total_vesting,
                                                                         uint256 last_notary_block, uint256 last_notary_timestamp) {
         ChainInfo storage chain = chains[chain_id];
         
-        active = chain_active(chain_id);
-        endpoint = chain.endpoint;
-        total_vesting = chain.total_vesting;
-        last_notary_block = chain.last_notary.block;
-        last_notary_timestamp = chain.last_notary.timestamp;
+        registered              = chain.active;
+        active                  = chain.active;
+        endpoint                = chain.endpoint;
+        total_vesting           = chain.total_vesting;
+        last_notary_block       = chain.last_notary.block;
+        last_notary_timestamp   = chain.last_notary.timestamp;
     }
     
     function get_user_details(uint256 chain_id, address acc) external view returns (bool exists, uint256 deposit, bool whitelisted, uint256 vesting, bool mining) {
@@ -491,6 +501,10 @@ contract LitionRegistry{
         // Updates info when the last notary was processed 
         chain.last_notary.block = notary_block_no;
         chain.last_notary.timestamp = now;
+        
+        if (chain.active == false) {
+            chain.active = true;
+        }
     }
     
     
@@ -510,16 +524,20 @@ contract LitionRegistry{
     }
     
     function start_mining(uint chain_id) external {
-        require(chain_active(chain_id) == true, "Non-active chain");
-        require(check_lition_min_vesting(chains[chain_id].users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
-        require(chains[chain_id].chain_validator.check_vesting(chains[chain_id].users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
+        
+        require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
+        require(chains[chain_id].chain_validator.check_vesting(chain.users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
         
         _start_mining(chain_id, msg.sender);
     }
   
     function stop_mining(uint chain_id) external {
-        require(chain_active(chain_id) == true, "Non-active chain");
-        require(check_lition_min_vesting(chains[chain_id].users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.active == true, "Non-active chain");
+        
+        require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         
         _stop_mining(chain_id, msg.sender);
     }
