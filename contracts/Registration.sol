@@ -1123,7 +1123,7 @@ contract LitionRegistry{
       j++;
      }
      
-     if (j+1 == users_total_count) {
+     if (j == users_total_count) {
          end = true;
      }
      else {
