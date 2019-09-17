@@ -33,7 +33,7 @@ contract LitionChainValidator is ChainValidator {
    }
 }
 
-contract LitionRegistry{
+contract LitionRegistry {
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function check_lition_min_vesting(uint256 vesting) private pure returns (bool) {
         if(vesting >= 1000*(10**18)) {
@@ -189,7 +189,6 @@ contract LitionRegistry{
     }
     
     struct LastNotary {
-        // Timestamp, when the last notary was accepted
         uint256 timestamp;
         // Actual block number, when the last notary was accepted
         uint256 block;
@@ -510,7 +509,8 @@ contract LitionRegistry{
         }
         
         // There must be at least 50% out of total possible vesting involved
-        require(involved_vesting.mul(2) >= chain.total_vesting);
+        involved_vesting = involved_vesting.mul(2);
+        require(involved_vesting >= chain.total_vesting);
         
         // Calculates total cost based on user's usage durint current notary window
         uint256 total_cost = process_users_consumptions(chain_id, users, user_gas, largest_tx);
@@ -839,7 +839,7 @@ contract LitionRegistry{
             
             // If validator is actively mining, updates chain total_vesting
             if (validator.mining == true) {
-                chain.total_vesting.sub(request.new_vesting - request.old_vesting);
+                chain.total_vesting = chain.total_vesting.sub(request.new_vesting - request.old_vesting);
             }
         }
         
@@ -859,7 +859,7 @@ contract LitionRegistry{
         // No ongoing vesting request is present
         if (requestExists == false) {
             to_withdraw = chain.users.accounts[acc].validator.vesting;
-            chain.total_vesting.sub(to_withdraw);
+            chain.total_vesting = chain.total_vesting.sub(to_withdraw);
         }
         // There is ongoing vesting request
         else { 
@@ -877,11 +877,11 @@ contract LitionRegistry{
             if (chain.users.accounts[acc].validator.mining == true) {
                 // Vesting balance and chain's total_vesting were already internally updated
                 if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
-                    chain.total_vesting.sub(request.new_vesting);
+                    chain.total_vesting = chain.total_vesting.sub(request.new_vesting);
                 }
                 // Vesting balance and chain's total_vesting were not yet internally updated
                 else {
-                    chain.total_vesting.sub(request.old_vesting);
+                    chain.total_vesting = chain.total_vesting.sub(request.old_vesting);
                 }
             }
             
@@ -1103,7 +1103,7 @@ contract LitionRegistry{
             total_involved_vesting += (max_blocks_mined / blocks_mined[i]) * validator_vesting;
         }
         else {
-            total_involved_vesting.add((max_blocks_mined / blocks_mined[i]) * validator_vesting);
+            total_involved_vesting = total_involved_vesting.add((max_blocks_mined / blocks_mined[i]) * validator_vesting);
         }
      }
 
@@ -1160,7 +1160,7 @@ contract LitionRegistry{
                     
                     // If validator is actively mining, updates also chain's total vesting
                     if (user.validator.mining == true) {
-                        chains[chain_id].total_vesting.add(entry.vesting_request.new_vesting - entry.vesting_request.old_vesting);
+                        chains[chain_id].total_vesting = chains[chain_id].total_vesting.add(entry.vesting_request.new_vesting - entry.vesting_request.old_vesting);
                     }
                     
                     emit AcceptedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp);
@@ -1225,7 +1225,7 @@ contract LitionRegistry{
       Validator storage validator = chain.users.accounts[acc].validator;
       
       if (validator.mining == false) {
-          chain.total_vesting.add(validator.vesting);
+          chain.total_vesting = chain.total_vesting.add(validator.vesting);
       }
       validator.mining = true;
       
@@ -1237,7 +1237,7 @@ contract LitionRegistry{
       Validator storage validator = chain.users.accounts[acc].validator;
       
       if (validator.mining == true) {
-          chain.total_vesting.sub(validator.vesting);
+          chain.total_vesting = chain.total_vesting.sub(validator.vesting);
       }
       validator.mining = false;
       
@@ -1353,39 +1353,5 @@ library SafeMath {
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
         return c;
-    }
-
-    /**
-     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts when dividing by zero.
-     *
-     * Counterpart to Solidity's `%` operator. This function uses a `revert`
-     * opcode (which leaves remaining gas untouched) while Solidity uses an
-     * invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     * - The divisor cannot be zero.
-     */
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        return mod(a, b, "SafeMath: modulo by zero");
-    }
-
-    /**
-     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts with custom message when dividing by zero.
-     *
-     * Counterpart to Solidity's `%` operator. This function uses a `revert`
-     * opcode (which leaves remaining gas untouched) while Solidity uses an
-     * invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     * - The divisor cannot be zero.
-     *
-     * NOTE: This is a feature of the next version of OpenZeppelin Contracts.
-     * @dev Get it via `npm install @openzeppelin/contracts@next`.
-     */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b != 0, errorMessage);
-        return a % b;
     }
 }
