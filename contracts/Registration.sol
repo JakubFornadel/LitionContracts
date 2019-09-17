@@ -234,9 +234,9 @@ contract LitionRegistry{
       }
       // Vest in chain or withdraw just part of vesting
       else {
+         require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
          require(check_lition_min_vesting(vesting), "user does not meet Lition's min.required vesting condition");
          require(chain.chain_validator.check_vesting(vesting, msg.sender), "user does not meet chain validator's min.required vesting condition");
-         require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
       }
 
       require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
@@ -284,7 +284,7 @@ contract LitionRegistry{
           }
           
         }
-        // Deposit in chain or withdraw just part of vesting
+        // Deposit in chain or withdraw just part of deposit
         else {
          require(chain.active, "can't deposit into non-existing chain");
          require(check_lition_min_deposit(deposit), "user does not meet Lition's min.required deposit condition");
@@ -554,7 +554,6 @@ contract LitionRegistry{
     // Creates new user - does not set it's data yet as it is done after vesting/deposit_withdraw request is confirmed
     function user_create(uint256 chain_id, address acc) private {
         require(chains[chain_id].users.list.length < ~uint48(0), "count(users) is equal to max_count");
-        require(user_exists(chain_id, acc) == false, "Creating already-created user");
         
         chains[chain_id].users.list.push(acc);
         chains[chain_id].users.accounts[acc].index = uint48(chains[chain_id].users.list.length); // indexes are stored + 1
@@ -767,7 +766,6 @@ contract LitionRegistry{
             require(request.control_state == VestingRequestControl_state.VESTING_REPLACED, "Cannot withdraw vesting tokens, internal balance was not updated yet");
             
             uint96 to_withdraw = request.old_vesting - request.new_vesting;
-            token.transfer(acc, to_withdraw);
             
             // If it was request to withdraw whole vesting balance, delete validator
             if (request.new_vesting == 0) {
@@ -776,6 +774,8 @@ contract LitionRegistry{
             
             emit ConfirmVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
             vesting_request_delete(chain_id, acc);
+            
+            token.transfer(acc, to_withdraw);
             
             return;
         }
@@ -1129,10 +1129,6 @@ contract LitionRegistry{
      else {
          end = false;
      }
-  }
-  
-  function chain_active(uint256 chain_id) internal view returns (bool) {
-      return chains[chain_id].last_notary.timestamp > 0;
   }
       
   function _start_mining(uint256 chain_id, address acc) private {      
