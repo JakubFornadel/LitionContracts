@@ -215,6 +215,13 @@ contract LitionRegistry{
     // Requests vest in chain. It will be processed and applied to the actual user state after next:
     //      * 2 notary windows - in case new vesting < actual vesting
     //      * 3 notary windows - in case new vesting > actual vesting
+    //
+    // 
+    // In case new vesting < actual vesting, user first creates request, his balance is internally updated, he should confirm this request as soon as possible(next window)
+    // ann tokens are transferred back to his account. It takes 2 notary windows to finish this process. 
+    //
+    // In case new vesting > actual vesting, user first creates request, than he must confirm this request, tokens are transferred to the sc and his internal balance is updated 
+    // in the next notary window after the one, in which confirm was called. It takes 3 notary windows to finish this process. 
     function request_vest_in_chain(uint chain_id, uint256 vesting) external {
       ChainInfo storage chain = chains[chain_id];
       require(chain.active == true, "Non-active chain");
@@ -271,6 +278,8 @@ contract LitionRegistry{
     // Requests deposit in chain. It will be processed and applied to the actual user state after next:
     //      * 1 notary window - in case new deposit != 0
     //      * emmidiately     - in case new deposit == 0
+    // We need to handle only whole deposit withdrawals as it would allow users to send unlimited amount of txs to the sidechain and 
+    // withdraw whole deposit right before notary function, in which user's comsumption is calculated and tokens are transferred. He would pay nothing...
     function request_deposit_in_chain(uint chain_id, uint256 deposit) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.active == true, "Non-active chain");
