@@ -841,7 +841,7 @@ contract LitionRegistry{
             
             // If validator is actively mining, updates chain total_vesting
             if (validator.mining == true) {
-                chain.total_vesting -= (request.new_vesting - request.old_vesting); // TODO: safe math here
+                chain.total_vesting.sub(request.new_vesting - request.old_vesting);
             }
         }
         
@@ -861,7 +861,7 @@ contract LitionRegistry{
         // No ongoing vesting request is present
         if (requestExists == false) {
             to_withdraw = chain.users.accounts[acc].validator.vesting;
-            chain.total_vesting -= to_withdraw;  // TODO: safe math here
+            chain.total_vesting.sub(to_withdraw);
         }
         // There is ongoing vesting request
         else { 
@@ -879,11 +879,11 @@ contract LitionRegistry{
             if (chain.users.accounts[acc].validator.mining == true) {
                 // Vesting balance and chain's total_vesting were already internally updated
                 if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
-                    chain.total_vesting -= request.new_vesting;  // TODO: safe math here
+                    chain.total_vesting.sub(request.new_vesting);
                 }
                 // Vesting balance and chain's total_vesting were not yet internally updated
                 else {
-                    chain.total_vesting -= request.old_vesting;  // TODO: safe math here
+                    chain.total_vesting.sub(request.old_vesting);
                 }
             }
             
@@ -1016,13 +1016,18 @@ contract LitionRegistry{
      
      // Individual user's usage cost in LIT tokens
      uint256 user_cost;
+     
+     // Use uint256 transactor_deposit instead of stored uint96 transactor.deposit because of simplified math  
+     uint256 transactor_deposit;
+     address acc;
      for(uint256 i = 0; i < users.length; i++) {
-        address acc = users[i];
+        acc = users[i];
         Transactor storage transactor = chain.users.accounts[acc].transactor;
+        transactor_deposit = transactor.deposit;
         
         // This can happen only if there is non-registered user in statistics, which means there is probably ongoing coordinated attack
         // This if should ideally never evaluate to true
-        if (transactor.deposit == 0) {
+        if (transactor_deposit == 0) {
             // Ignores non-registred user and let nodes know he is not allowed to transact
             emit WhitelistAccount(chain_id, users[i], false);
             continue;
@@ -1032,25 +1037,29 @@ contract LitionRegistry{
         
         // This should never happen as it is handled by 2-step deposit withdrawal system and
         // by checking user's deposit balance is >= min. required deposit conditions
-        if(user_cost > transactor.deposit ) {
-           user_cost = transactor.deposit;
+        if(user_cost > transactor_deposit ) {
+           user_cost = transactor_deposit;
            
            transactor.whitelisted = false;
            emit WhitelistAccount(chain_id, users[i], false);
         }
         
-        // Updates user's current deposit balance based on his usage
-        transactor.deposit -= uint96(user_cost);
+        transactor_deposit -= user_cost;
+        
+        // Updates user's stored deposit balance based on his usage
+        transactor.deposit = uint96(transactor_deposit);
         
         // Check if user's deposit balance is >= min. required deposit conditions
-        if (check_lition_min_deposit(transactor.deposit) == false || chain.chain_validator.check_deposit(transactor.deposit, acc) == false) {
+        if (check_lition_min_deposit(transactor_deposit) == false || chain.chain_validator.check_deposit(transactor_deposit, acc) == false) {
             // If not, do not allow him to transact anymore
             transactor.whitelisted = false;
             emit WhitelistAccount(chain_id, acc, false);
         }
         
         // Adds user's cost to the total cost
-        total_cost += user_cost;
+        // No need for safe math as we internally allow max 10^48 users(even if there is theoretically more users in statistics, they are ignored here)
+        // max possible user_cost is 10^32 * 10^17, so max possible total_cost is 10^48 * 10^32 * 10^17 = 10^97, which will never overfloww uint256
+        total_cost += user_cost;  
      }
    }
 
@@ -1070,12 +1079,16 @@ contract LitionRegistry{
      // Selected validator's vesting balance
      uint256 validator_vesting;
      
+     // Max number of miners for which we do not need to worry about uin256 overflow in math
+     uint256 overflow_max_miners = 10**20;
+     
      // Runs through all miners and calculates total involved vesting based on:
      for(uint256 i = 0; i < miners.length; i++) {
         validator_vesting = chain.users.accounts[miners[i]].validator.vesting;
         
         // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
         if (validator_vesting >= min_trust_node_vesting) {
+            // Validator's stored vesting is max uint96
             validator_vesting *= 2;
         }
         // This can happen only if there is non-registered validator in statistics, which means there is probably ongoing coordinated attack
@@ -1085,7 +1098,15 @@ contract LitionRegistry{
             continue;
         }
 
-        total_involved_vesting += (max_blocks_mined / blocks_mined[i]) * validator_vesting;
+        // No need for safe math as we internally allow max 10^48 users(even if there is theoretically more validators in statistics, they are ignored here)
+        // max possible (max_blocks_mined / blocks_mined[i]) valuse is 10^32, max possible validator_vesting value is 10^96, when virtually doubled it is 10^192, 
+        // so max possible total_involved_vesting value is 10^48 * 10^32 * 10^192 = 10^272, which can possibly overfloww uint256 only if there is more than 2^20 miners
+        if (i < overflow_max_miners) { 
+            total_involved_vesting += (max_blocks_mined / blocks_mined[i]) * validator_vesting;
+        }
+        else {
+            total_involved_vesting.add((max_blocks_mined / blocks_mined[i]) * validator_vesting);
+        }
      }
 
      
@@ -1097,6 +1118,7 @@ contract LitionRegistry{
         
         // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
         if (validator_vesting >= min_trust_node_vesting) {
+            // Validator's stored vesting is max uint96
             validator_vesting *= 2;
         }
         // This can happen only if there is non-registered validator in statistics, which means there is probably ongoing coordinated attack
@@ -1106,9 +1128,12 @@ contract LitionRegistry{
             continue;
         }
         
+        // No need for safe math as max value of (max_blocks_mined / blocks_mined[i]) is 10^32, max value of (validator_vesting / total_involved_vesting) is 1 and 
+        // max value of lit_to_distribute(calculated in process_users_consumptions) is 10^97, so max possible miner reward is 10^32 * 1 * 10^97 = 10^129
         uint256 miner_reward = (max_blocks_mined / blocks_mined[i]) * (validator_vesting / total_involved_vesting) * lit_to_distribute;
         token.transfer(miners[i], miner_reward);
         
+        // No need for safe math as miner reward is calculated as fraction of total lit_to_distribute and all miners rewards must always be <= lit_to_distribute
         lit_to_distribute -= miner_reward;
      }
 
@@ -1137,7 +1162,7 @@ contract LitionRegistry{
                     
                     // If validator is actively mining, updates also chain's total vesting
                     if (user.validator.mining == true) {
-                        chains[chain_id].total_vesting += (entry.vesting_request.new_vesting - entry.vesting_request.old_vesting);
+                        chains[chain_id].total_vesting.add(entry.vesting_request.new_vesting - entry.vesting_request.old_vesting);
                     }
                     
                     emit AcceptedVestInChain(chain_id, acc, entry.vesting_request.new_vesting, entry.vesting_request.timestamp);
@@ -1202,7 +1227,7 @@ contract LitionRegistry{
       Validator storage validator = chain.users.accounts[acc].validator;
       
       if (validator.mining == false) {
-          chain.total_vesting += validator.vesting;
+          chain.total_vesting.add(validator.vesting);
       }
       validator.mining = true;
       
@@ -1214,7 +1239,7 @@ contract LitionRegistry{
       Validator storage validator = chain.users.accounts[acc].validator;
       
       if (validator.mining == true) {
-          chain.total_vesting -= validator.vesting;
+          chain.total_vesting.div(validator.vesting);
       }
       validator.mining = false;
       
