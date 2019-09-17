@@ -1,6 +1,8 @@
 
 pragma solidity >= 0.5.11;
 
+import "github.com/OpenZeppelin/zeppelin-solidity/contracts/math/SafeMath.sol";
+
 interface ChainValidator {
    function check_vesting(uint vesting, address participant) external returns (bool);
    function check_deposit(uint vesting, address participant) external returns (bool);
@@ -18,14 +20,14 @@ interface ERC20 {
 }
 
 contract LitionChainValidator is ChainValidator {
-   function check_vesting(uint vesting, address participant) public returns (bool) {
+   function check_vesting(uint256 vesting, address participant) public returns (bool) {
       if(vesting >= 1000*(10**18) && vesting <= 500000*(10**18)) {
         return true;   
       }
       return false;
    }
 
-   function check_deposit(uint deposit, address participant) public returns (bool) {
+   function check_deposit(uint256 deposit, address participant) public returns (bool) {
       if(deposit >= 1000*(10**18)) {
          return true;
       }
@@ -35,7 +37,7 @@ contract LitionChainValidator is ChainValidator {
 
 contract LitionRegistry{
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
-    function check_lition_min_vesting(uint vesting) private pure returns (bool) {
+    function check_lition_min_vesting(uint256 vesting) private pure returns (bool) {
         if(vesting >= 1000*(10**18)) {
             return true;   
         }
@@ -43,12 +45,14 @@ contract LitionRegistry{
     }
     
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
-    function check_lition_min_deposit(uint deposit) private pure returns (bool) {
+    function check_lition_min_deposit(uint256 deposit) private pure returns (bool) {
         if(deposit >= 1000*(10**18)) {
             return true;   
         }
         return false; 
     }
+    
+    using SafeMath for uint256;
     
     // New chain was registered
     event NewChain(uint256 chain_id, string description, string endpoint);
@@ -196,7 +200,7 @@ contract LitionRegistry{
     struct ChainInfo {
         bool              registered;
         bool              active;
-        uint96            total_vesting;
+        uint256           total_vesting;
         LastNotary        last_notary;
         ChainValidator    chain_validator;
         Users             users;
@@ -337,6 +341,8 @@ contract LitionRegistry{
     // and these steps cannot be done in the same notary window
     function register_chain(string calldata info, ChainValidator validator, uint96 vesting, uint96 deposit, string calldata init_endpoint) external returns (uint256 chain_id) {
         require(bytes(init_endpoint).length > 0);
+        require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
+        require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
         
         address creator         = msg.sender;
         uint256 timestamp       = now;
@@ -345,10 +351,7 @@ contract LitionRegistry{
         chain_id                = next_id;
         ChainInfo storage chain = chains[chain_id];
         
-        
         chain.chain_validator   = validator;
-        chain.registered        = true;
-        chain.endpoint          = init_endpoint;
         
         // Validates vesting
         require(check_lition_min_vesting(vesting), "chain creator does not meet Lition's min.required vesting condition");
@@ -369,6 +372,9 @@ contract LitionRegistry{
         token.transferFrom(creator, address(this), deposit);
         chain.users.accounts[creator].transactor.deposit = deposit;      
         chain.users.accounts[creator].transactor.whitelisted = true;
+        
+        chain.registered        = true;
+        chain.endpoint          = init_endpoint;
         
         emit NewChain(chain_id, info, init_endpoint);
         
@@ -488,12 +494,12 @@ contract LitionRegistry{
         require(chain.registered, "Non-registered chain");
     
         // Validates statistics data
-        require(v.length == r.length,                       "Invalid data: v.length != r.length");
-        require(v.length == s.length,                       "Invalid data: v.length != s.length");
+        require(v.length        == r.length,                "Invalid data: v.length != r.length");
+        require(v.length        == s.length,                "Invalid data: v.length != s.length");
         require(notary_block_no > chain.last_notary.block,  "Invalid data: notary_block from statistics must be greater than the last known notary block");
-        require(largest_tx > 0,                             "Invalid data: Largest tx must be greater than zero");
-        require(miners.length == blocks_mined.length,       "Invalid data: num of miners != num of block mined");
-        require(users.length == user_gas.length,            "Invalid data: num of users != num of users gas");
+        require(largest_tx      > 0,                        "Invalid data: Largest tx must be greater than zero");
+        require(miners.length   == blocks_mined.length,     "Invalid data: num of miners != num of block mined");
+        require(users.length    == user_gas.length,         "Invalid data: num of users != num of users gas");
         
         
         bytes32 signature_hash = get_signature_hash_from_notary(notary_block_no, miners, blocks_mined, users, user_gas, largest_tx);
@@ -575,27 +581,29 @@ contract LitionRegistry{
     
     // Creates new user - does not set it's data yet as it is done after vesting/deposit_withdraw request is confirmed
     function user_create(uint256 chain_id, address acc) private {
-        require(chains[chain_id].users.list.length < ~uint48(0), "count(users) is equal to max_count");
+        ChainInfo storage chain = chains[chain_id];
+        require(chain.users.list.length < ~uint48(0), "count(users) is equal to max_count");
         
-        chains[chain_id].users.list.push(acc);
-        chains[chain_id].users.accounts[acc].index = uint48(chains[chain_id].users.list.length); // indexes are stored + 1
+        chain.users.list.push(acc);
+        chain.users.accounts[acc].index = uint48(chains[chain_id].users.list.length); // indexes are stored + 1
     }
     
     // Deletes existing user from the internal list of users
     // This method should never be called directly, validator_delete & transactor_delete should be called instead
     function user_delete(uint256 chain_id, address acc) private {
-        User_entry storage entry = chains[chain_id].users.accounts[acc];
+        ChainInfo storage chain = chains[chain_id];
+        User_entry storage entry = chain.users.accounts[acc];
         // user_exists(chain_id, acc) could be used instead
         require(entry.index != 0, "User does not exist");
         
-        address[] storage users_list = chains[chain_id].users.list;
+        address[] storage users_list = chain.users.list;
         require(entry.index <= users_list.length, "Invalid index value");
     
         // Move an last element of array into the vacated key slot.
         uint48 found_index = uint48(entry.index - 1);
         uint48 last_index = uint48(users_list.length - 1);
     
-        chains[chain_id].users.accounts[users_list[last_index]].index = found_index + 1;
+        chain.users.accounts[users_list[last_index]].index = found_index + 1;
         users_list[found_index] = users_list[last_index];
         users_list.length--;
     
@@ -604,28 +612,32 @@ contract LitionRegistry{
     
     // Deletes validator
     function validator_delete(uint chain_id, address acc) private {
+        ChainInfo storage chain = chains[chain_id];
+        
         // There is no existing transactor for this account - delete whole requests struct 
-        if (chains[chain_id].users.accounts[acc].transactor.deposit == 0) {
+        if (chain.users.accounts[acc].transactor.deposit == 0) {
             user_delete(chain_id, acc);
             return;
         } 
         
         // There is exiting transactor for this account - only reset validator
-        Validator storage validator = chains[chain_id].users.accounts[acc].validator;
+        Validator storage validator = chain.users.accounts[acc].validator;
         validator.vesting   = 0;
         validator.mining    = false;
     }
     
     // Deletes transactor
     function transactor_delete(uint chain_id, address acc) private {
+        ChainInfo storage chain = chains[chain_id];
+        
         // There is no existing validator for this account - delete whole requests struct 
-        if (chains[chain_id].users.accounts[acc].validator.vesting == 0) {
+        if (chain.users.accounts[acc].validator.vesting == 0) {
             user_delete(chain_id, acc);
             return;
         } 
         
         // There is existing validator for this account - only reset transactor
-        Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
+        Transactor storage transactor = chain.users.accounts[acc].transactor;
         transactor.deposit      = 0;
         transactor.whitelisted  = false;
     }
@@ -650,11 +662,13 @@ contract LitionRegistry{
     
     // Creates new vesting request
     function vesting_request_create(uint256 chain_id, address acc, uint256 vesting) private {
-        require(chains[chain_id].requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
+        ChainInfo storage chain = chains[chain_id];
         
-        Requests_entry storage requests_entry = chains[chain_id].requests.accounts[acc];
+        require(chain.requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
         
-        requests_entry.vesting_request.old_vesting = chains[chain_id].users.accounts[acc].validator.vesting;
+        Requests_entry storage requests_entry = chain.requests.accounts[acc];
+        
+        requests_entry.vesting_request.old_vesting = chain.users.accounts[acc].validator.vesting;
         requests_entry.vesting_request.new_vesting = uint96(vesting);
         if (requests_entry.vesting_request.new_vesting >= requests_entry.vesting_request.old_vesting) { // == case should never happen as it is handled in the caller's function
             requests_entry.vesting_request.control_state = VestingRequestControl_state.WAIT_FOR_CONFIRMATION;
@@ -664,14 +678,14 @@ contract LitionRegistry{
         
         requests_entry.vesting_request.state = Request_state.REQUEST_CREATED;
         requests_entry.vesting_request.timestamp = uint48(now);
-        requests_entry.vesting_request.notary_block = chains[chain_id].last_notary.block; 
+        requests_entry.vesting_request.notary_block = chain.last_notary.block; 
         
         
         // There is no deposit or vesting ongoing request - create new requests_entry structure
         if (requests_entry.index == 0) { // any_request_exists(chain_id, acc) == false could be used instead
             // There is no ongoing deposit request - create new requests pair structure
-            chains[chain_id].requests.list.push(acc);    
-            requests_entry.index = uint48(chains[chain_id].requests.list.length); // indexes are stored + 1
+            chain.requests.list.push(acc);    
+            requests_entry.index = uint48(chain.requests.list.length); // indexes are stored + 1
         }
     }
 
@@ -698,12 +712,13 @@ contract LitionRegistry{
     // Deletes existing requests pair(vesting & deposit) from the internal list of requests
     // This method should never be called directly, vesting_request_delete & deposit_withdraw_request_delete should be called instead
     function requests_pair_delete(uint chain_id, address acc) private {
-        Requests_entry storage entry = chains[chain_id].requests.accounts[acc];
+        ChainInfo storage chain = chains[chain_id];
+        Requests_entry storage entry = chain.requests.accounts[acc];
         
         // request_exists(chain_id, acc), vesting_request_exists(chain_id, acc) and deposoti_withdraw_exists(chain_id, acc) could be used instead
         require(entry.index != 0, "Request does not exist");
         
-        address[] storage requests_list = chains[chain_id].requests.list;
+        address[] storage requests_list = chain.requests.list;
     
         require(entry.index <= requests_list.length, "Invalid index value");
     
@@ -711,22 +726,24 @@ contract LitionRegistry{
         uint48 found_index = uint48(entry.index - 1);
         uint48 last_index = uint48(requests_list.length - 1);
     
-        chains[chain_id].requests.accounts[requests_list[last_index]].index = found_index + 1;
+        chain.requests.accounts[requests_list[last_index]].index = found_index + 1;
         requests_list[found_index] = requests_list[last_index];
         requests_list.length--;
     
-        delete chains[chain_id].requests.accounts[acc];
+        delete chain.requests.accounts[acc];
     }
     
     function vesting_request_delete(uint chain_id, address acc) private {
+        ChainInfo storage chain = chains[chain_id];
+        
         // There is no ongoing deposit request for this account - delete whole requests struct 
-        if (chains[chain_id].requests.accounts[acc].deposit_withdraw_request.timestamp == 0) {
+        if (chain.requests.accounts[acc].deposit_withdraw_request.timestamp == 0) {
             requests_pair_delete(chain_id, acc);
             return;
         } 
         
         // There is ongoing deposit request for this account - only reset vesting request
-        VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
+        VestingRequest_data storage request = chain.requests.accounts[acc].vesting_request;
         request.notary_block    = 0;
         request.timestamp       = 0;
         request.old_vesting     = 0;
@@ -737,14 +754,16 @@ contract LitionRegistry{
     }
     
     function deposit_withdraw_request_delete(uint chain_id, address acc) private {
+        ChainInfo storage chain = chains[chain_id];
+        
         // There is no ongoing vesting request for this account - delete whole requests struct 
-        if (chains[chain_id].requests.accounts[acc].vesting_request.timestamp == 0) {
+        if (chain.requests.accounts[acc].vesting_request.timestamp == 0) {
             requests_pair_delete(chain_id, acc);
             return;
         } 
         
         // There is ongoing vesting request for this account - only reset vesting request
-        DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
+        DepositWithdrawRequest_data storage request = chain.requests.accounts[acc].deposit_withdraw_request;
         request.notary_block    = 0;
         request.timestamp       = 0;
         // First enum value is default
@@ -812,8 +831,9 @@ contract LitionRegistry{
     }
     
     function _cancel_vest_in_chain(uint chain_id, address acc) private {
-        VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
-        Validator storage validator = chains[chain_id].users.accounts[acc].validator;
+        ChainInfo storage chain = chains[chain_id];
+        VestingRequest_data storage request = chain.requests.accounts[acc].vesting_request;
+        Validator storage validator = chain.users.accounts[acc].validator;
         
         // Replace back the original validator's vesting
         if (request.control_state == VestingRequestControl_state.VESTING_REPLACED) {
@@ -821,7 +841,7 @@ contract LitionRegistry{
             
             // If validator is actively mining, updates chain total_vesting
             if (validator.mining == true) {
-                chains[chain_id].total_vesting -= (request.new_vesting - request.old_vesting); // TODO: safe math here
+                chain.total_vesting -= (request.new_vesting - request.old_vesting); // TODO: safe math here
             }
         }
         
@@ -986,6 +1006,8 @@ contract LitionRegistry{
   
   // Process users consumption based on their usage
   function process_users_consumptions(uint256 chain_id, address[] memory users, uint32[] memory user_gas, uint32 largest_tx) internal returns (uint256 total_cost) {
+     ChainInfo storage chain = chains[chain_id];
+     
      // Total usage cost in LIT tokens
      total_cost = 0;
      
@@ -996,7 +1018,7 @@ contract LitionRegistry{
      uint256 user_cost;
      for(uint256 i = 0; i < users.length; i++) {
         address acc = users[i];
-        Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
+        Transactor storage transactor = chain.users.accounts[acc].transactor;
         
         // This can happen only if there is non-registered user in statistics, which means there is probably ongoing coordinated attack
         // This if should ideally never evaluate to true
@@ -1021,7 +1043,7 @@ contract LitionRegistry{
         transactor.deposit -= uint96(user_cost);
         
         // Check if user's deposit balance is >= min. required deposit conditions
-        if (check_lition_min_deposit(transactor.deposit) == false || chains[chain_id].chain_validator.check_deposit(transactor.deposit, acc) == false) {
+        if (check_lition_min_deposit(transactor.deposit) == false || chain.chain_validator.check_deposit(transactor.deposit, acc) == false) {
             // If not, do not allow him to transact anymore
             transactor.whitelisted = false;
             emit WhitelistAccount(chain_id, acc, false);
@@ -1140,24 +1162,26 @@ contract LitionRegistry{
     }
 
   function _get_users(uint chain_id, uint batch, bool validators, bool active) private view returns (address[100] memory users, uint count, bool end) {
+     ChainInfo storage chain = chains[chain_id];
+     
      count = 0;
      uint256 j = batch * 100;
-     uint256 users_total_count = chains[chain_id].users.list.length;
+     uint256 users_total_count = chain.users.list.length;
      
      while(j < (batch + 1)*100 && j < users_total_count) {
-      address acc = chains[chain_id].users.list[j];
+      address acc = chain.users.list[j];
       // Get validators
       if(validators == true) {
         // if active == true, get only those validators who are also mining
         // if active == false, get those who are allowed to mine based on their vesting
-        if (chains[chain_id].users.accounts[acc].validator.mining == active) {
+        if (chain.users.accounts[acc].validator.mining == active) {
           users[count] = acc;
           count++;
         }
       }
       // Get transactors
       else {
-        if (chains[chain_id].users.accounts[acc].transactor.whitelisted == true) {
+        if (chain.users.accounts[acc].transactor.whitelisted == true) {
           users[count] = acc;
           count++;
         } 
@@ -1174,9 +1198,11 @@ contract LitionRegistry{
   }
       
   function _start_mining(uint256 chain_id, address acc) private {      
-      Validator storage validator = chains[chain_id].users.accounts[acc].validator;
+      ChainInfo storage chain = chains[chain_id];
+      Validator storage validator = chain.users.accounts[acc].validator;
+      
       if (validator.mining == false) {
-          chains[chain_id].total_vesting += validator.vesting;
+          chain.total_vesting += validator.vesting;
       }
       validator.mining = true;
       
@@ -1184,9 +1210,11 @@ contract LitionRegistry{
   }
       
   function _stop_mining(uint256 chain_id, address acc) private {      
-      Validator storage validator = chains[chain_id].users.accounts[acc].validator;
+      ChainInfo storage chain = chains[chain_id];
+      Validator storage validator = chain.users.accounts[acc].validator;
+      
       if (validator.mining == true) {
-          chains[chain_id].total_vesting -= validator.vesting; // TODO: safe math here
+          chain.total_vesting -= validator.vesting; // TODO: safe math here
       }
       validator.mining = false;
       
