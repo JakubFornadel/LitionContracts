@@ -1,8 +1,6 @@
 
 pragma solidity >= 0.5.11;
 
-import "github.com/OpenZeppelin/zeppelin-solidity/contracts/math/SafeMath.sol";
-
 interface ChainValidator {
    function check_vesting(uint256 vesting, address participant) external returns (bool);
    function check_deposit(uint256 vesting, address participant) external returns (bool);
@@ -502,7 +500,6 @@ contract LitionRegistry{
         require(miners.length       == blocks_mined.length,     "Invalid data: num of miners != num of block mined");
         require(users.length        == user_gas.length,         "Invalid data: num of users != num of users gas");
         
-        
         bytes32 signature_hash = get_signature_hash_from_notary(notary_end_block, miners, blocks_mined, users, user_gas, largest_tx);
         
         // Involved vesting based on validator's, who signed statistics for this notary window. 
@@ -581,7 +578,7 @@ contract LitionRegistry{
     /**************************************************************************************************************************/
     
     // Creates new user - does not set it's data yet as it is done after vesting/deposit_withdraw request is confirmed
-    function user_create(uint256 chain_id, address acc) private {
+    function user_create(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         require(chain.users.list.length < ~uint48(0), "count(users) is equal to max_count");
         
@@ -591,7 +588,7 @@ contract LitionRegistry{
     
     // Deletes existing user from the internal list of users
     // This method should never be called directly, validator_delete & transactor_delete should be called instead
-    function user_delete(uint256 chain_id, address acc) private {
+    function user_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         User_entry storage entry = chain.users.accounts[acc];
         // user_exists(chain_id, acc) could be used instead
@@ -612,7 +609,7 @@ contract LitionRegistry{
     }
     
     // Deletes validator
-    function validator_delete(uint256 chain_id, address acc) private {
+    function validator_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         
         // There is no existing transactor for this account - delete whole requests struct 
@@ -628,7 +625,7 @@ contract LitionRegistry{
     }
     
     // Deletes transactor
-    function transactor_delete(uint256 chain_id, address acc) private {
+    function transactor_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         
         // There is no existing validator for this account - delete whole requests struct 
@@ -662,7 +659,7 @@ contract LitionRegistry{
     /**************************************************************************************************************************/
     
     // Creates new vesting request
-    function vesting_request_create(uint256 chain_id, address acc, uint256 vesting) private {
+    function vesting_request_create(uint256 chain_id, address acc, uint256 vesting) internal {
         ChainInfo storage chain = chains[chain_id];
         
         require(chain.requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
@@ -691,7 +688,7 @@ contract LitionRegistry{
     }
 
     // Creates new deposit withdrawal request
-    function deposit_withdraw_request_create(uint256 chain_id, address acc) private {
+    function deposit_withdraw_request_create(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         require(chain.requests.list.length < ~uint48(0), "count(requests) is equal to max_count");
         
@@ -712,7 +709,7 @@ contract LitionRegistry{
         
     // Deletes existing requests pair(vesting & deposit) from the internal list of requests
     // This method should never be called directly, vesting_request_delete & deposit_withdraw_request_delete should be called instead
-    function requests_pair_delete(uint256 chain_id, address acc) private {
+    function requests_pair_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         Requests_entry storage entry = chain.requests.accounts[acc];
         
@@ -734,7 +731,7 @@ contract LitionRegistry{
         delete chain.requests.accounts[acc];
     }
     
-    function vesting_request_delete(uint256 chain_id, address acc) private {
+    function vesting_request_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         
         // There is no ongoing deposit request for this account - delete whole requests struct 
@@ -754,7 +751,7 @@ contract LitionRegistry{
         request.control_state   = VestingRequestControl_state.WAIT_FOR_CONFIRMATION;
     }
     
-    function deposit_withdraw_request_delete(uint256 chain_id, address acc) private {
+    function deposit_withdraw_request_delete(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         
         // There is no ongoing vesting request for this account - delete whole requests struct 
@@ -772,21 +769,21 @@ contract LitionRegistry{
     }
     
     // Checks if acc has any ongoing vesting or deposit request
-    function any_request_exists(uint256 chain_id, address acc) private view returns (bool) {
+    function any_request_exists(uint256 chain_id, address acc) internal view returns (bool) {
       return chains[chain_id].requests.accounts[acc].index != 0;
     }
     
     // Checks if acc has any ongoing vesting request
-    function vesting_request_exists(uint256 chain_id, address acc) private view returns (bool) {
+    function vesting_request_exists(uint256 chain_id, address acc) internal view returns (bool) {
       return chains[chain_id].requests.accounts[acc].vesting_request.timestamp != 0;
     }
     
     // Checks if acc has any ongoing DEPOSIT WITHDRAWAL request
-    function deposit_withdraw_request_exists(uint256 chain_id, address acc) private view returns (bool) {
+    function deposit_withdraw_request_exists(uint256 chain_id, address acc) internal view returns (bool) {
       return chains[chain_id].requests.accounts[acc].deposit_withdraw_request.timestamp != 0;
     }
     
-    function _request_vest_in_chain(uint256 chain_id, uint256 vesting, address acc) private {
+    function _request_vest_in_chain(uint256 chain_id, uint256 vesting, address acc) internal {
       // Internally creates new user
       if (vesting != 0 && user_exists(chain_id, acc) == false) {
           user_create(chain_id, acc);
@@ -797,7 +794,7 @@ contract LitionRegistry{
     }
     
     // Basically just transfers the tokens, validator's vesting balance update is always done at the of notary atomatically
-    function _confirm_vest_in_chain(uint256 chain_id, address acc) private {
+    function _confirm_vest_in_chain(uint256 chain_id, address acc) internal {
         VestingRequest_data storage request = chains[chain_id].requests.accounts[acc].vesting_request;
         
         request.state = Request_state.REQUEST_CONFIRMED;
@@ -831,7 +828,7 @@ contract LitionRegistry{
         emit ConfirmVestInChain(chain_id, acc, request.new_vesting, request.timestamp);
     }
     
-    function _cancel_vest_in_chain(uint256 chain_id, address acc) private {
+    function _cancel_vest_in_chain(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         VestingRequest_data storage request = chain.requests.accounts[acc].vesting_request;
         Validator storage validator = chain.users.accounts[acc].validator;
@@ -854,7 +851,7 @@ contract LitionRegistry{
     // Because vesting is processed during 2(new_vest < act_vest) or even 3(new_vest > act_vest) notary windows,
     // user might end up with locked tokens in SC in case validators never reach consesnsus. In such case these tokens stay locked in
     // SC for 1 month and after that can be withdrawned. Any existing vest requests are deleted after this withdraw.
-    function _force_withdraw_vest_from_chain(uint256 chain_id, address acc) private {
+    function _force_withdraw_vest_from_chain(uint256 chain_id, address acc) internal {
         ChainInfo storage chain = chains[chain_id];
         uint96 to_withdraw = 0;
         bool requestExists = vesting_request_exists(chain_id, acc);
@@ -902,7 +899,7 @@ contract LitionRegistry{
         emit ForceWithdrawVesting(chain_id, acc, now);
     }
     
-    function _request_deposit_in_chain(uint256 chain_id, uint256 deposit, address acc) private {
+    function _request_deposit_in_chain(uint256 chain_id, uint256 deposit, address acc) internal {
       uint256 timestamp = now;
       
       // If user wants to withdraw whole deposit - create withdrawal request
@@ -943,7 +940,7 @@ contract LitionRegistry{
       }
     }
     
-    function _confirm_deposit_withdrawal_from_chain(uint256 chain_id, address acc) private {
+    function _confirm_deposit_withdrawal_from_chain(uint256 chain_id, address acc) internal {
         DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
         
@@ -958,7 +955,7 @@ contract LitionRegistry{
         emit ConfirmDepositInChain(chain_id, acc, 0, request.timestamp);
     }
     
-    function _cancel_deposit_withdrawal_from_chain(uint256 chain_id, address acc) private {
+    function _cancel_deposit_withdrawal_from_chain(uint256 chain_id, address acc) internal {
         DepositWithdrawRequest_data storage request = chains[chain_id].requests.accounts[acc].deposit_withdraw_request;
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
         
@@ -980,7 +977,7 @@ contract LitionRegistry{
     // Because deposit withdrawal is processed during 2 notary windows,
     // user might end up with locked tokens in SC in case validators never reach consesnsus. In such case these tokens stay locked in
     // SC for 1 month and after that can be withdrawned. Any existing deposit requests are deleted after this withdraw.
-    function _force_withdraw_deposit_from_chain(uint256 chain_id, address acc) private {
+    function _force_withdraw_deposit_from_chain(uint256 chain_id, address acc) internal {
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor; 
         
         uint256 to_withdraw = transactor.deposit;
@@ -1187,7 +1184,7 @@ contract LitionRegistry{
         }
     }
 
-  function _get_users(uint256 chain_id, uint256 batch, bool validators, bool active) private view returns (address[100] memory users, uint256 count, bool end) {
+  function _get_users(uint256 chain_id, uint256 batch, bool validators, bool active) internal view returns (address[100] memory users, uint256 count, bool end) {
      ChainInfo storage chain = chains[chain_id];
      
      count = 0;
@@ -1223,7 +1220,7 @@ contract LitionRegistry{
      }
   }
       
-  function _start_mining(uint256 chain_id, address acc) private {      
+  function _start_mining(uint256 chain_id, address acc) internal {      
       ChainInfo storage chain = chains[chain_id];
       Validator storage validator = chain.users.accounts[acc].validator;
       
@@ -1235,7 +1232,7 @@ contract LitionRegistry{
       emit StartMining(chain_id, acc);
   }
       
-  function _stop_mining(uint256 chain_id, address acc) private {      
+  function _stop_mining(uint256 chain_id, address acc) internal {      
       ChainInfo storage chain = chains[chain_id];
       Validator storage validator = chain.users.accounts[acc].validator;
       
@@ -1246,4 +1243,149 @@ contract LitionRegistry{
       
       emit StopMining(chain_id, acc);
   }
+}
+
+// SafeMath library from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return sub(a, b, "SafeMath: subtraction overflow");
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     *
+     * NOTE: This is a feature of the next version of OpenZeppelin Contracts.
+     * @dev Get it via `npm install @openzeppelin/contracts@next`.
+     */
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        require(b <= a, errorMessage);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, "SafeMath: division by zero");
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     * NOTE: This is a feature of the next version of OpenZeppelin Contracts.
+     * @dev Get it via `npm install @openzeppelin/contracts@next`.
+     */
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return mod(a, b, "SafeMath: modulo by zero");
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts with custom message when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     *
+     * NOTE: This is a feature of the next version of OpenZeppelin Contracts.
+     * @dev Get it via `npm install @openzeppelin/contracts@next`.
+     */
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        require(b != 0, errorMessage);
+        return a % b;
+    }
 }
