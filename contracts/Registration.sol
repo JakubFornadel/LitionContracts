@@ -33,7 +33,12 @@ contract LitionChainValidator is ChainValidator {
    }
 }
 
-contract LitionRegistry {
+contract LitionRegistry is Stoppable {
+    function migrateTokens(address upgradedContract) public onlyOwner onlyIfStopped {
+        tokensHeld = token.balanceOf(this);
+        token.transfer(upgradedContract, tokensHeld);
+    }
+
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function check_lition_min_vesting(uint256 vesting) private pure returns (bool) {
         if(vesting >= 1000*(10**18)) {
@@ -1000,6 +1005,7 @@ contract LitionRegistry {
 
    constructor(ERC20 _token) public {
       token = _token;
+      super();
    }
   
   // Process users consumption based on their usage
@@ -1353,5 +1359,57 @@ library SafeMath {
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
         return c;
+    }
+}
+
+contract Ownable {
+    address public owner;
+
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred( address indexed previousOwner, address indexed newOwner);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        _transferOwnership(_newOwner);
+    }
+
+    function _transferOwnership(address _newOwner) internal {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+}
+
+contract Stoppable is Ownable {
+
+    bool public isRunning;
+    event Stopped();
+
+    modifier onlyIfRunning {
+        require(isRunning);
+        _;
+    }
+
+    modifier onlyIfStopped {
+        require(!isRunning);
+        _;
+    }
+
+    constructor() internal {
+        isRunning = true;
+        super();
+    }
+
+    function stop() public onlyOwner { 
+        isRunning = false;
+        emit Stopped();
     }
 }
