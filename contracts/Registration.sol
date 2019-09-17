@@ -486,23 +486,24 @@ contract LitionRegistry{
     // then, do ec_recover of the signatures to determine signers
     // check if there is enough signers (total vesting of signers > 50% of all vestings)
     // then, calculate reward
-    function notary(uint256 chain_id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
-              address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
-              uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
+    function notary(uint256 chain_id, uint256 notary_start_block, uint256 notary_end_block, address[] memory miners, uint32[] memory blocks_mined,
+                    address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
+                    uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
                   
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered, "Non-registered chain");
     
         // Validates statistics data
-        require(v.length        == r.length,                "Invalid data: v.length != r.length");
-        require(v.length        == s.length,                "Invalid data: v.length != s.length");
-        require(notary_block_no > chain.last_notary.block,  "Invalid data: notary_block from statistics must be greater than the last known notary block");
-        require(largest_tx      > 0,                        "Invalid data: Largest tx must be greater than zero");
-        require(miners.length   == blocks_mined.length,     "Invalid data: num of miners != num of block mined");
-        require(users.length    == user_gas.length,         "Invalid data: num of users != num of users gas");
+        require(v.length            == r.length,                "Invalid data: v.length != r.length");
+        require(v.length            == s.length,                "Invalid data: v.length != s.length");
+        require(notary_start_block  >  chain.last_notary.block, "Invalid data: notary_block_start from statistics must be greater than the last known notary block");
+        require(notary_end_block    >  notary_start_block,      "Invalid data: notary_end_block must be greater than notary_start_block");
+        require(largest_tx          >  0,                       "Invalid data: Largest tx must be greater than zero");
+        require(miners.length       == blocks_mined.length,     "Invalid data: num of miners != num of block mined");
+        require(users.length        == user_gas.length,         "Invalid data: num of users != num of users gas");
         
         
-        bytes32 signature_hash = get_signature_hash_from_notary(notary_block_no, miners, blocks_mined, users, user_gas, largest_tx);
+        bytes32 signature_hash = get_signature_hash_from_notary(notary_end_block, miners, blocks_mined, users, user_gas, largest_tx);
         
         // Involved vesting based on validator's, who signed statistics for this notary window. 
         // These statistics are used for calculating usage cost and miner rewards are calculated
@@ -518,7 +519,7 @@ contract LitionRegistry{
         uint256 total_cost = process_users_consumptions(chain_id, users, user_gas, largest_tx);
         
         // Calculates and process validator's rewards based on their participation rate and vesting balance
-        process_miners_rewards(chain_id, notary_block_no, miners, blocks_mined, total_cost);
+        process_miners_rewards(chain_id, notary_end_block, miners, blocks_mined, total_cost);
         
         // Process existing vesting/deposit withdrawals requests as these cannot be 
         // processed automatically - math for user's usage and miner's rewards calculations would be invalid
@@ -527,7 +528,7 @@ contract LitionRegistry{
         // TODO: remove validators(call stop_mining) who signed no block during this notary window and have mining flag == true
         
         // Updates info when the last notary was processed 
-        chain.last_notary.block = notary_block_no;
+        chain.last_notary.block = notary_end_block;
         chain.last_notary.timestamp = now;
         
         if (chain.active == false) {
@@ -1239,7 +1240,7 @@ contract LitionRegistry{
       Validator storage validator = chain.users.accounts[acc].validator;
       
       if (validator.mining == true) {
-          chain.total_vesting.div(validator.vesting);
+          chain.total_vesting.sub(validator.vesting);
       }
       validator.mining = false;
       
