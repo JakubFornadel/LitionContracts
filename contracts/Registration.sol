@@ -268,6 +268,9 @@ contract LitionRegistry{
         _cancel_vest_in_chain(chain_id, msg.sender);
     }
     
+    // Requests deposit in chain. It will be processed and applied to the actual user state after next:
+    //      * 1 notary window - in case new deposit != 0
+    //      * emmidiately     - in case new deposit == 0
     function request_deposit_in_chain(uint chain_id, uint256 deposit) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.active == true, "Non-active chain");
@@ -462,6 +465,12 @@ contract LitionRegistry{
         }
     }
     
+    
+    // Notarization function - calculates user consumption as well as miner rewards
+    // First, calculate hash from miners, block_mined, users and user_gas
+    // then, do ec_recover of the signatures to determine signers
+    // check if there is enough signers (total vesting of signers > 50% of all vestings)
+    // then, calculate reward
     function notary(uint256 chain_id, uint256 notary_block_no, address[] memory miners, uint32[] memory blocks_mined,
               address[] memory users, uint32[] memory user_gas, uint32 largest_tx,
               uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
@@ -469,16 +478,16 @@ contract LitionRegistry{
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered, "Non-registered chain");
     
-        // First, calculate hash from miners, block_mined, users and user_gas
-        // then, do ec_recover of the signatures to determine signers
-        // check if there is enough signers (total vesting of signers > 50% of all vestings)
-        // then, calculate reward
-        require(v.length == r.length);
-        require(v.length == s.length);
+        // Validates statistics data
+        require(v.length == r.length,                       "Invalid data: v.length != r.length");
+        require(v.length == s.length,                       "Invalid data: v.length != s.length");
+        require(notary_block_no > chain.last_notary.block,  "Invalid data: notary_block from statistics must be greater than the last known notary block");
+        require(largest_tx > 0,                             "Invalid data: Largest tx must be greater than zero");
+        require(miners.length == blocks_mined.length,       "Invalid data: num of miners != num of block mined");
+        require(users.length == user_gas.length,            "Invalid data: num of users != num of users gas");
+        
         
         bytes32 signature_hash = get_signature_hash_from_notary(notary_block_no, miners, blocks_mined, users, user_gas, largest_tx);
-        
-        // TODO: check all other required stuff
         
         // Involved vesting based on validator's, who signed statistics for this notary window. 
         // These statistics are used for calculating usage cost and miner rewards are calculated
@@ -527,9 +536,11 @@ contract LitionRegistry{
         return _get_users(chain_id, batch, true, true);
     }
     
+    // Sets mining validator's mining flag to true and emit event so other nodes vote him
     function start_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered == true, "Non-registered chain");
+        require(validator_exists(chain_id, msg.sender) == true, "Non-existing validator");
         require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         require(chains[chain_id].chain_validator.check_vesting(chain.users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
@@ -537,9 +548,11 @@ contract LitionRegistry{
         _start_mining(chain_id, msg.sender);
     }
   
+    // Sets mining validator's mining flag to false and emit event so other nodes unvote
     function stop_mining(uint chain_id) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered == true, "Non-registered chain");
+        require(validator_exists(chain_id, msg.sender) == true, "Non-existing validator");
         require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
         require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         
@@ -976,6 +989,14 @@ contract LitionRegistry{
         address acc = users[i];
         Transactor storage transactor = chains[chain_id].users.accounts[acc].transactor;
         
+        // This can happen only if there is non-registered user in statistics, which means there is probably ongoing coordinated attack
+        // This if should ideally never evaluate to true
+        if (transactor.deposit == 0) {
+            // Ignores non-registred user and let nodes know he is not allowed to transact
+            emit WhitelistAccount(chain_id, users[i], false);
+            continue;
+        }
+        
         user_cost = (user_gas[i] / largest_tx) * largest_reward;
         
         // This should never happen as it is handled by 2-step deposit withdrawal system and
@@ -1026,6 +1047,12 @@ contract LitionRegistry{
         if (validator_vesting >= min_trust_node_vesting) {
             validator_vesting *= 2;
         }
+        // This can happen only if there is non-registered validator in statistics, which means there is probably ongoing coordinated attack
+        // This if should ideally never evaluate to true
+        else if (validator_vesting == 0) {
+            // Ignores non-registred miner
+            continue;
+        }
 
         total_involved_vesting += (max_blocks_mined / blocks_mined[i]) * validator_vesting;
      }
@@ -1040,6 +1067,12 @@ contract LitionRegistry{
         // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
         if (validator_vesting >= min_trust_node_vesting) {
             validator_vesting *= 2;
+        }
+        // This can happen only if there is non-registered validator in statistics, which means there is probably ongoing coordinated attack
+        // This if should ideally never evaluate to true
+        else if (validator_vesting == 0) {
+            // Ignores non-registred miner
+            continue;
         }
         
         uint256 miner_reward = (max_blocks_mined / blocks_mined[i]) * (validator_vesting / total_involved_vesting) * lit_to_distribute;
