@@ -11,26 +11,26 @@ import (
 	"gitlab.com/lition/lition/event"
 )
 
-type DepositEventListener struct {
+type WhitelistAccEventListener struct {
 	initialized    bool
 	listening      bool
 	scClient       *LitionScClient
-	eventChannel   chan *LitionScClientDeposit
+	eventChannel   chan *LitionScClientWhitelistAccount
 	eventSubs      event.Subscription
-	filterChainId  []*big.Int
+	filterChainID  []*big.Int
 	stopChannel    chan struct{}
 	stoppedChannel chan struct{}
 	mutex          sync.Mutex
 }
 
-func NewDepositEventListener(scClient *LitionScClient, chainId *big.Int) (*DepositEventListener, error) {
-	p := new(DepositEventListener)
+func NewWhitelistAccEventListener(scClient *LitionScClient, chainId *big.Int) (*WhitelistAccEventListener, error) {
+	p := new(WhitelistAccEventListener)
 
 	p.initialized = false
 	p.listening = false
 	p.mutex = sync.Mutex{}
 	p.scClient = scClient
-	p.filterChainId = []*big.Int{chainId}
+	p.filterChainID = []*big.Int{chainId}
 	err := p.Init()
 	if err == nil {
 		return p, nil
@@ -39,7 +39,7 @@ func NewDepositEventListener(scClient *LitionScClient, chainId *big.Int) (*Depos
 	return nil, err
 }
 
-func (listener *DepositEventListener) Init() error {
+func (listener *WhitelistAccEventListener) Init() error {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -48,12 +48,11 @@ func (listener *DepositEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionScClientDeposit)
-	listener.eventSubs, err = listener.scClient.WatchDeposit(
+	listener.eventChannel = make(chan *LitionScClientWhitelistAccount)
+	listener.eventSubs, err = listener.scClient.WatchWhitelistAccount(
 		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
-		listener.filterChainId,
-		nil)
+		listener.filterChainID)
 
 	if err != nil {
 		log.Error(err)
@@ -68,7 +67,7 @@ func (listener *DepositEventListener) Init() error {
 	return nil
 }
 
-func (listener *DepositEventListener) DeInit() {
+func (listener *WhitelistAccEventListener) DeInit() {
 	listener.Stop()
 
 	listener.mutex.Lock()
@@ -85,23 +84,23 @@ func (listener *DepositEventListener) DeInit() {
 	listener.initialized = false
 }
 
-func (listener *DepositEventListener) ReInit() error {
+func (listener *WhitelistAccEventListener) ReInit() error {
 	listener.DeInit()
 	return listener.Init()
 }
 
-func (listener *DepositEventListener) Start(f func(*LitionScClientDeposit)) error {
+func (listener *WhitelistAccEventListener) Start(f func(*LitionScClientWhitelistAccount)) error {
 	if listener.initialized == false {
-		return errors.New("Trying to Start 'DepositEventListener' without previous initialization")
+		return errors.New("Trying to Start 'WhitelistAccEventListener' without previous initialization")
 	}
 	if listener.listening == true {
-		log.Warning("Trying to Start 'DepositEventListener', which is already listening.")
+		log.Warning("Trying to Start 'WhitelistAccEventListener', which is already listening.")
 		return nil
 	}
 
 	listener.stoppedChannel = make(chan struct{})
 	listener.listening = true
-	log.Info("DepositEventListener start listening")
+	log.Info("WhitelistAccEventListener start listening")
 
 	// close the stoppedchan when this func exits
 	defer func() {
@@ -112,18 +111,18 @@ func (listener *DepositEventListener) Start(f func(*LitionScClientDeposit)) erro
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'Deposit' event received.")
+			log.Info("New 'WhitelistAccount' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
 		case <-listener.stopChannel:
-			log.Info("Signal to stop DepositEventListener received.")
+			log.Info("Signal to stop WhitelistAccEventListener received.")
 			return nil
 		}
 	}
 }
 
-func (listener *DepositEventListener) Stop() {
+func (listener *WhitelistAccEventListener) Stop() {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -135,5 +134,5 @@ func (listener *DepositEventListener) Stop() {
 	// wait for it to have stopped
 	<-listener.stoppedChannel
 	listener.stopChannel = make(chan struct{})
-	log.Info("DepositEventListener successfully stopped")
+	log.Info("WhitelistAccEventListener successfully stopped")
 }
