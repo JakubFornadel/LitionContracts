@@ -20,13 +20,13 @@ func processStopMining(event *litionScClient.LitionScClientStopMining) {
 	log.Info("processStopMining. Acc: ", event.Miner.String())
 }
 
-func processDeposit(event *litionScClient.LitionScClientDeposit) {
-	log.Info("processDeposit. Acc: ", event.Depositer.String(), "Amount: ", event.Deposit)
+func processWhitelistAcc(event *litionScClient.LitionScClientWhitelistAccount) {
+	log.Info("processWhitelistAcc. Acc: ", event.Miner.String(), ", Whitelisted: ", event.Whitelist)
 }
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0x1274d1c66dfb6b0cad1966bdb21511f4791dee9d"
+	contractAddress := "0x13BC9D19d886189d0EA12257b2B1B13A77506F94"
 	privateKeyStr := ""
 	chainID := 0
 
@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to init 'StopMining' event listeners")
 	}
-	err = litionScClient.InitDepositEventListener()
+	err = litionScClient.InitWhitelistAccEventListener()
 	if err != nil {
 		log.Fatal("Unable to init 'Deposit' event listeners")
 	}
@@ -62,7 +62,7 @@ func main() {
 	// Start standalone event listeners
 	go litionScClient.Start_StartMiningEventListener(processStartMining)
 	go litionScClient.Start_StopMiningEventListener(processStopMining)
-	go litionScClient.Start_DepositEventListener(processDeposit)
+	go litionScClient.Start_WhitelistAccEventListener(processWhitelistAcc)
 
 	if privateKeyStr != "" {
 		err = litionScClient.StartMining(auth)

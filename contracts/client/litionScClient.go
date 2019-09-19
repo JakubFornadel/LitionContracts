@@ -12,13 +12,13 @@ import (
 
 // ContractClient contains variables needed for communication with lition smart contract
 type ContractClient struct {
-	ethClient                *ethclient.Client
-	scAddress                common.Address
-	scClient                 *LitionScClient
-	chainID                  *big.Int // chainID on top of which all sc calls are made
-	startMiningEventListener *StartMiningEventListener
-	stopMiningEventListener  *StopMiningEventListener
-	depositEventListener     *DepositEventListener
+	ethClient                 *ethclient.Client
+	scAddress                 common.Address
+	scClient                  *LitionScClient
+	chainID                   *big.Int // chainID on top of which all sc calls are made
+	startMiningEventListener  *StartMiningEventListener
+	stopMiningEventListener   *StopMiningEventListener
+	whitelistAccEventListener *WhitelistAccEventListener
 }
 
 func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
@@ -41,7 +41,7 @@ func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*Contra
 
 	contractClient.startMiningEventListener = nil
 	contractClient.stopMiningEventListener = nil
-	contractClient.depositEventListener = nil
+	contractClient.whitelistAccEventListener = nil
 
 	return contractClient, nil
 }
@@ -66,9 +66,9 @@ func (contractClient *ContractClient) InitStoptMiningEventListener() error {
 	return nil
 }
 
-func (contractClient *ContractClient) InitDepositEventListener() error {
+func (contractClient *ContractClient) InitWhitelistAccEventListener() error {
 	var err error
-	contractClient.depositEventListener, err = NewDepositEventListener(contractClient.scClient, contractClient.chainID)
+	contractClient.whitelistAccEventListener, err = NewWhitelistAccEventListener(contractClient.scClient, contractClient.chainID)
 	if err != nil {
 		return err
 	}
@@ -83,14 +83,14 @@ func (contractClient *ContractClient) DeInit() {
 	if contractClient.stopMiningEventListener != nil {
 		contractClient.stopMiningEventListener.DeInit()
 	}
-	if contractClient.depositEventListener != nil {
-		contractClient.depositEventListener.DeInit()
+	if contractClient.whitelistAccEventListener != nil {
+		contractClient.whitelistAccEventListener.DeInit()
 	}
 
 	contractClient.chainID = nil
 	contractClient.startMiningEventListener = nil
 	contractClient.stopMiningEventListener = nil
-	contractClient.depositEventListener = nil
+	contractClient.whitelistAccEventListener = nil
 	contractClient.ethClient.Close()
 }
 
@@ -160,8 +160,8 @@ func (contractClient *ContractClient) Start_StopMiningEventListener(f func(*Liti
 	}
 }
 
-func (contractClient *ContractClient) Start_DepositEventListener(f func(*LitionScClientDeposit)) {
-	listener := contractClient.depositEventListener
+func (contractClient *ContractClient) Start_WhitelistAccEventListener(f func(*LitionScClientWhitelistAccount)) {
+	listener := contractClient.whitelistAccEventListener
 	if listener == nil {
 		log.Fatal("Trying to start Deposit listener without previous initialization")
 		return
@@ -238,35 +238,37 @@ func (contractClient *ContractClient) GetAllowedToTransact() ([]common.Address, 
 	zeroCount := big.NewInt(0)
 
 	for batchID := big.NewInt(0); ; batchID.Add(batchID, big.NewInt(1)) {
-		accountsList, err := contractClient.scClient.GetAllowedToTransact(&bind.CallOpts{}, contractClient.chainID, batchID)
+		accountsList, count, end, err := contractClient.scClient.GetAllowedToTransact(&bind.CallOpts{}, contractClient.chainID, batchID)
 		if err != nil {
 			return nil, err
 		}
 
-		log.Info("accountsList.Count: ", accountsList.Count)
-		cmpResult := accountsList.Count.Cmp(zeroCount)
-		if cmpResult == 0 {
-			break
+		cmpResult := count.Cmp(zeroCount)
+		if cmpResult == 1 {
+			accountsWhitelist = append(accountsWhitelist, accountsList[0:count.Int64()]...)
 		}
 
-		accountsWhitelist = append(accountsWhitelist, accountsList.Users[0:accountsList.Count.Int64()]...)
+		if end == true {
+			break
+		}
 	}
 
 	return accountsWhitelist, nil
 }
 
-func (contractClient *ContractClient) Notary(auth *bind.TransactOpts, notary_block_no int64, miners []common.Address, blocks_mined []uint32, users []common.Address, user_gas []uint32, largest_tx uint32, v []uint8, r [][32]byte, s [][32]byte) error {
-	_, err := contractClient.scClient.Notary(auth, contractClient.chainID, big.NewInt(notary_block_no), miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
+func (contractClient *ContractClient) Notary(auth *bind.TransactOpts, notary_start_block *big.Int, notary_end_block *big.Int, miners []common.Address, blocks_mined []uint32, users []common.Address, user_gas []uint32, largest_tx uint32, v []uint8, r [][32]byte, s [][32]byte) error {
+	_, err := contractClient.scClient.Notary(auth, contractClient.chainID, notary_start_block, notary_end_block, miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (contractClient *ContractClient) GetLastNotary() (int64, error) {
-	number, err := contractClient.scClient.GetLastNotary(&bind.CallOpts{}, contractClient.chainID)
+func (contractClient *ContractClient) GetLastNotary() (*big.Int, *big.Int, error) {
+	lastNotary, err := contractClient.scClient.GetLastNotary(&bind.CallOpts{}, contractClient.chainID)
 	if err != nil {
-		return 0, err
+		return nil, nil, err
 	}
-	return number.Int64(), nil
+
+	return lastNotary.LastNotaryBlock, lastNotary.LastNotaryTimestamp, nil
 }
