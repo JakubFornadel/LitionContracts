@@ -229,6 +229,7 @@ contract LitionRegistry {
     function request_vest_in_chain(uint256 chain_id, uint256 vesting) external {
       ChainInfo storage chain = chains[chain_id];
       require(chain.active == true, "Non-active chain");
+      require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
       
       // Withdraw all vesting
       if (vesting == 0) {
@@ -246,13 +247,11 @@ contract LitionRegistry {
       // Vest in chain or withdraw just part of vesting
       else {
          require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
+         require(chain.users.accounts[msg.sender].validator.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
          require(check_lition_min_vesting(vesting), "user does not meet Lition's min.required vesting condition");
          require(chain.chain_validator.check_vesting(vesting, msg.sender), "user does not meet chain validator's min.required vesting condition");
-      }
-
-      require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
-      require(chain.users.accounts[msg.sender].validator.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
-      
+      }    
+        
       _request_vest_in_chain(chain_id, vesting, msg.sender);
     }
     
@@ -287,6 +286,7 @@ contract LitionRegistry {
     function request_deposit_in_chain(uint256 chain_id, uint256 deposit) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.active == true, "Non-active chain");
+        require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
         
         // Withdraw whole deposit
         if (deposit == 0) {
@@ -302,15 +302,12 @@ contract LitionRegistry {
         }
         // Deposit in chain or withdraw just part of deposit
         else {
-         require(chain.active, "can't deposit into non-existing chain");
+         require(chain.users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has vested.");
          require(check_lition_min_deposit(deposit), "user does not meet Lition's min.required deposit condition");
          require(chain.chain_validator.check_deposit(deposit, msg.sender), "user does not meet chain validator's min.required deposit condition");
          require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
         }
-        
-        require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
-        require(chain.users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has vested.");
-        
+                
         _request_deposit_in_chain(chain_id, deposit, msg.sender);
     }
     
@@ -558,7 +555,6 @@ contract LitionRegistry {
         require(chain.registered == true, "Non-registered chain");
         require(validator_exists(chain_id, msg.sender) == true, "Non-existing validator");
         require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
-        require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         require(chains[chain_id].chain_validator.check_vesting(chain.users.accounts[msg.sender].validator.vesting, msg.sender) == true, "User does not meet chain validator's min.required vesting condition");
         
         _start_mining(chain_id, msg.sender);
@@ -569,8 +565,6 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chain_id];
         require(chain.registered == true, "Non-registered chain");
         require(validator_exists(chain_id, msg.sender) == true, "Non-existing validator");
-        require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot start mining - there is ongoing vesting request.");
-        require(check_lition_min_vesting(chain.users.accounts[msg.sender].validator.vesting) == true, "user does not meet Lition's min.required vesting condition");
         
         _stop_mining(chain_id, msg.sender);
     }
