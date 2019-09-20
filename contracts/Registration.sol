@@ -1,4 +1,3 @@
-
 pragma solidity >= 0.5.11;
 
 interface ChainValidator {
@@ -229,7 +228,6 @@ contract LitionRegistry {
     function request_vest_in_chain(uint256 chain_id, uint256 vesting) external {
       ChainInfo storage chain = chains[chain_id];
       require(chain.active == true, "Non-active chain");
-      require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
       
       // Withdraw all vesting
       if (vesting == 0) {
@@ -250,7 +248,9 @@ contract LitionRegistry {
          require(chain.users.accounts[msg.sender].validator.vesting != vesting, "Cannot vest the same amount of tokens as you already has vested.");
          require(check_lition_min_vesting(vesting), "user does not meet Lition's min.required vesting condition");
          require(chain.chain_validator.check_vesting(vesting, msg.sender), "user does not meet chain validator's min.required vesting condition");
-      }    
+      }
+      
+      require(vesting_request_exists(chain_id, msg.sender) == false, "Cannot vest in chain. There is already ongoing request being processed for this acc.");
         
       _request_vest_in_chain(chain_id, vesting, msg.sender);
     }
@@ -286,7 +286,6 @@ contract LitionRegistry {
     function request_deposit_in_chain(uint256 chain_id, uint256 deposit) external {
         ChainInfo storage chain = chains[chain_id];
         require(chain.active == true, "Non-active chain");
-        require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
         
         // Withdraw whole deposit
         if (deposit == 0) {
@@ -307,6 +306,8 @@ contract LitionRegistry {
          require(chain.chain_validator.check_deposit(deposit, msg.sender), "user does not meet chain validator's min.required deposit condition");
          require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
         }
+        
+        require(deposit_withdraw_request_exists(chain_id, msg.sender) == false, "Cannot deposit in chain. There is ongoing withdrawal request being processed for this acc.");
                 
         _request_deposit_in_chain(chain_id, deposit, msg.sender);
     }
