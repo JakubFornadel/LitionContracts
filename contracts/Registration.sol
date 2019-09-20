@@ -301,7 +301,7 @@ contract LitionRegistry {
         }
         // Deposit in chain or withdraw just part of deposit
         else {
-         require(chain.users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has vested.");
+         require(chain.users.accounts[msg.sender].transactor.deposit != deposit, "Cannot deposit the same amount of tokens as you already has deposited.");
          require(check_lition_min_deposit(deposit), "user does not meet Lition's min.required deposit condition");
          require(chain.chain_validator.check_deposit(deposit, msg.sender), "user does not meet chain validator's min.required deposit condition");
          require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
