@@ -395,9 +395,9 @@ contract LitionRegistry {
         return chains[chainId].users.accounts[acc].transactor.whitelisted;
     }
     
-    function getLastNotary(uint256 chainId) external view returns (uint256 blockno, uint256 timestamp) {
-        blockno = chains[chainId].lastNotary.block;
-        timestamp = chains[chainId].lastNotary.timestamp;
+    function getLastNotary(uint256 chainId) external view returns (uint256 notaryBlock, uint256 notaryTimestamp) {
+        notaryBlock = chains[chainId].lastNotary.block;
+        notaryTimestamp = chains[chainId].lastNotary.timestamp;
     }
     
     function testNotary(uint256 chainId, uint256 notaryBlockNo) external {
