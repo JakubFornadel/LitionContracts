@@ -78,11 +78,11 @@ contract LitionRegistry {
     
     // if whitelist == true  - allow user to transact
     // if whitelist == false - do not allow user to transact
-    event WhitelistAccount(uint256 indexed chainId, address miner, bool whitelist);
+    event WhitelistAccount(uint256 indexed chainId, address indexed account, bool whitelist);
     
     // Validator start/stop mining
-    event StartMining(uint256 indexed chainId, address miner);
-    event StopMining(uint256 indexed chainId, address miner);
+    event StartMining(uint256 indexed chainId, address indexed account);
+    event StopMining(uint256 indexed chainId, address indexed account);
 
 
     /**************************************************************************************************************************/
@@ -194,14 +194,15 @@ contract LitionRegistry {
     }
     
     struct ChainInfo {
+        string            description;
+        string            endpoint;
         bool              registered;
         bool              active;
         uint256           totalVesting;
         LastNotary        lastNotary;
-        ChainValidator    chainValidator;
         Users             users;
         Requests          requests;
-        string            endpoint;
+        ChainValidator    chainValidator;
     }
     
     mapping(uint256 => ChainInfo) private chains;
@@ -334,19 +335,20 @@ contract LitionRegistry {
     
     // Internally creates/registers new side-chain. Creator must be also validator at least from the beginning as joining process take multiple steps
     // and these steps cannot be done in the same notary window
-    function registerChain(string calldata info, ChainValidator validator, uint96 vesting, uint96 deposit, string calldata initEndpoint) external returns (uint256 chainId) {
-        require(bytes(initEndpoint).length > 0);
-        require(deposit <= ~uint96(0), "deposit is greater than uint96_max_value");
-        require(vesting <= ~uint96(0), "vesting is greater than uint96_max_value");
+    function registerChain(string calldata description, ChainValidator validator, uint96 vesting, uint96 deposit, string calldata initEndpoint) external returns (uint256 chainId) {
+        require(bytes(description).length   > 0,            "Chain description cannot be empty");
+        require(bytes(initEndpoint).length  > 0,            "Chain endpoint cannot be empty");
+        require(deposit                     <= ~uint96(0),  "deposit is greater than uint96_max_value");
+        require(vesting                     <= ~uint96(0),  "vesting is greater than uint96_max_value");
         
         address creator         = msg.sender;
         uint256 timestamp       = now;
         
         // Inits chain data
-        chainId                = nextId;
+        chainId                 = nextId;
         ChainInfo storage chain = chains[chainId];
         
-        chain.chainValidator   = validator;
+        chain.chainValidator    = validator;
         
         // Validates vesting
         require(checkLitionMinVesting(vesting), "chain creator does not meet Lition's min.required vesting condition");
@@ -368,10 +370,11 @@ contract LitionRegistry {
         chain.users.accounts[creator].transactor.deposit = deposit;      
         chain.users.accounts[creator].transactor.whitelisted = true;
         
+        chain.description       = description;
         chain.registered        = true;
         chain.endpoint          = initEndpoint;
         
-        emit NewChain(chainId, info, initEndpoint);
+        emit NewChain(chainId, description, initEndpoint);
         
         emit RequestVestInChain(chainId, creator, vesting, timestamp);
         emit ConfirmVestInChain(chainId, creator, vesting, timestamp);
