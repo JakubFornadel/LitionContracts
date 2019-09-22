@@ -52,7 +52,8 @@ func (listener *StopMiningEventListener) Init() error {
 	listener.eventSubs, err = listener.scClient.WatchStopMining(&bind.WatchOpts{
 		Context: context.Background(), Start: nil},
 		listener.eventChannel,
-		listener.filterChainId)
+		listener.filterChainId,
+		nil)
 
 	if err != nil {
 		log.Error(err)

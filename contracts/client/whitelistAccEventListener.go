@@ -52,7 +52,8 @@ func (listener *WhitelistAccEventListener) Init() error {
 	listener.eventSubs, err = listener.scClient.WatchWhitelistAccount(
 		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
-		listener.filterChainID)
+		listener.filterChainID,
+		nil)
 
 	if err != nil {
 		log.Error(err)

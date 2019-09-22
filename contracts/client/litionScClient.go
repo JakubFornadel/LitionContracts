@@ -264,11 +264,9 @@ func (contractClient *ContractClient) Notary(auth *bind.TransactOpts, notary_sta
 	return nil
 }
 
-func (contractClient *ContractClient) GetLastNotary() (*big.Int, *big.Int, error) {
-	lastNotary, err := contractClient.scClient.GetLastNotary(&bind.CallOpts{}, contractClient.chainID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return lastNotary.LastNotaryBlock, lastNotary.LastNotaryTimestamp, nil
+func (contractClient *ContractClient) GetLastNotary() (struct {
+	NotaryBlock     *big.Int
+	NotaryTimestamp *big.Int
+}, error) {
+	return contractClient.scClient.GetLastNotary(&bind.CallOpts{}, contractClient.chainID)
 }

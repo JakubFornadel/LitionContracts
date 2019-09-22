@@ -13,20 +13,20 @@ import (
 )
 
 func processStartMining(event *litionScClient.LitionScClientStartMining) {
-	log.Info("processStartMining. Acc: ", event.Miner.String())
+	log.Info("processStartMining. Acc: ", event.Account.String())
 }
 
 func processStopMining(event *litionScClient.LitionScClientStopMining) {
-	log.Info("processStopMining. Acc: ", event.Miner.String())
+	log.Info("processStopMining. Acc: ", event.Account.String())
 }
 
 func processWhitelistAcc(event *litionScClient.LitionScClientWhitelistAccount) {
-	log.Info("processWhitelistAcc. Acc: ", event.Miner.String(), ", Whitelisted: ", event.Whitelist)
+	log.Info("processWhitelistAcc. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelist)
 }
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0x13BC9D19d886189d0EA12257b2B1B13A77506F94"
+	contractAddress := "0xFdF20223c0b10f7281Fc00ef6Afc29aE2a9c043d"
 	privateKeyStr := ""
 	chainID := 0
 
@@ -44,6 +44,14 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to init Lition smart contract client")
 	}
+
+	lastNotary, err := litionScClient.GetLastNotary()
+	if err != nil {
+		log.Error("err: ", err)
+	}
+
+	log.Info("lastNotaryBlock: ", lastNotary.NotaryBlock)
+	log.Info("lastNotaryTime: ", lastNotary.NotaryTimestamp)
 
 	// Init Lition Smartcontract event listeners
 	err = litionScClient.InitStartMiningEventListener()
