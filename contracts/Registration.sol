@@ -1125,9 +1125,11 @@ contract LitionRegistry {
         // No need for safe math as miner reward is calculated as fraction of total litToDistribute and all miners rewards must always be <= litToDistribute
         litToDistribute -= minerReward;
      }
-
-     // Sends the rest(math rounding) to the miner, who called notary function
-     token.transfer(msg.sender, litToDistribute);
+    
+    if(litToDistribute > 0) {
+         // Sends the rest(math rounding) to the miner, who called notary function
+         token.transfer(msg.sender, litToDistribute);
+     }
    }
 
     // Process existing vesting/deposit withdrawals requests as these cannot be 
