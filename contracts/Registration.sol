@@ -100,11 +100,10 @@ contract LitionRegistry {
     
     // if whitelist == true  - allow user to transact
     // if whitelist == false - do not allow user to transact
-    event WhitelistAccount(uint256 indexed chainId, address indexed account, bool whitelist);
+    event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist);
     
     // Validator start/stop mining
-    event StartMining(uint256 indexed chainId, address indexed account);
-    event StopMining(uint256 indexed chainId, address indexed account);
+    event AccountMining(uint256 indexed chainId, address indexed account, bool mining);
 
     /**************************************************************************************************************************/
     /***************************************** Structs related to the list of users *******************************************/
@@ -409,7 +408,8 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         require(chain.registered, "Non-registered chain");
         
-        // TODO: remove validators(call stopMining) who signed no block during this notary window and have mining flag == true
+        // Remove validators who signed no block during this notary window and have mining flag == true
+        removeInactiveValidators(chainId);
         
         // Updates info when the last notary was processed 
         chain.lastNotary.block = notaryBlock;
@@ -530,7 +530,8 @@ contract LitionRegistry {
         // Calculates and process validator's rewards based on their participation rate and vesting balance
         processMinersRewards(chainId, notaryStartBlock, notaryEndBlock, miners, blocksMined, totalCost);
         
-        // TODO: remove validators(call stopMining) who signed no block during this notary window and have mining flag == true
+        // Remove validators who signed no block during this notary window and have mining flag == true
+        removeInactiveValidators(chainId);
         
         // Updates info when the last notary was processed 
         chain.lastNotary.block = notaryEndBlock;
@@ -545,13 +546,41 @@ contract LitionRegistry {
     
     
     // Returns list of user's addresses that are allowed to transact - their deposit >= min. required deposit
-    function getAllowedToTransact(uint256 chainId, uint256 batch) view external returns (address[100] memory, uint256, bool) {
+    function getAllowedToTransact(uint256 chainId, uint256 batch) external view returns (address[100] memory users, uint256 count, bool end) {
+        ChainInfo storage chain = chains[chainId];
         
+        count = 0;
+        uint256 i = batch * 100;
+        uint256 usersTotalCount = chain.users.list.length;
+        address acc;
+        while(i < (batch + 1)*100 && i < usersTotalCount) {
+            acc = chain.transactors.list[i];
+            
+            // Get transactors
+            if (chain.users.accounts[acc].transactor.whitelisted == true) {
+                users[count] = acc;
+                count++;
+            } 
+            i++;
+        }
+        
+        if (i == usersTotalCount) {
+            end = true;
+        }
+        else {
+            end = false;
+        }
     }
     
     // Returns list of addresses of active validators
-    function getActiveValidators(uint256 chainId, uint256 batch) view external returns (address[100] memory, uint256, bool) {
+    function getActiveValidators(uint256 chainId) view external returns (address[MAX_NUM_OF_VALIDATORS] memory validators, uint256 count) {
+        ChainInfo storage chain = chains[chainId];
         
+        count = 0;
+        for (uint256 i = 0; i < chain.validators.list.length; i++) {
+            validators[count] = chain.validators.list[i];
+            count++;
+        }
     }
     
     // Sets mining validator's mining flag to true and emit event so other nodes vote him
@@ -634,11 +663,19 @@ contract LitionRegistry {
     // Inserts validator into the list of actively mining validators
     function validatorInsert(uint256 chainId, address acc) internal {
         insertAcc(chains[chainId].validators, acc);   
+        
+        // TODO: update lastValidatorIndex
+        
+        emit MiningAccount(chainId, acc, true);
     }
     
     // Removes validator from the list of actively mining validators
     function validatorRemove(uint256 chainId, address acc, uint) internal {
         removeAcc(chains[chainId].validators, acc);   
+        
+        // TODO: update lastValidatorIndex
+        
+        emit MiningAccount(chainId, acc, false);
     }
     
     // Returns true, if acc is in the list of actively mining validators, otherwise false
@@ -882,8 +919,6 @@ contract LitionRegistry {
         if (activeValidatorExist(acc) == true) {
             validatorRemove(chainId, acc);
             chain.totalVesting = chain.totalVesting.sub(toDecreaseChainVesting);
-            
-            emit StopMining(chainId, acc);
         }
         
         validatorDelete(chainId, acc);
@@ -933,7 +968,7 @@ contract LitionRegistry {
       
       if (transactor.whitelisted == false) {
         transactor.whitelisted = true;
-        emit WhitelistAccount(chainId, acc, true);
+        emit AccountWhitelist(chainId, acc, true);
       }
     }
     
@@ -1005,7 +1040,7 @@ contract LitionRegistry {
         // This if should ideally never evaluate to true
         if (transactorDeposit == 0) {
             // Ignores non-registred user and let nodes know he is not allowed to transact
-            emit WhitelistAccount(chainId, users[i], false);
+            emit AccountWhitelist(chainId, users[i], false);
             continue;
         }
         
@@ -1017,7 +1052,7 @@ contract LitionRegistry {
            userCost = transactorDeposit;
            
            transactor.whitelisted = false;
-           emit WhitelistAccount(chainId, users[i], false);
+           emit AccountWhitelist(chainId, users[i], false);
         }
         
         transactorDeposit -= userCost;
@@ -1029,7 +1064,7 @@ contract LitionRegistry {
         if (checkLitionMinDeposit(transactorDeposit) == false || chain.chainValidator.checkDeposit(transactorDeposit, acc) == false) {
             // If not, do not allow him to transact anymore
             transactor.whitelisted = false;
-            emit WhitelistAccount(chainId, acc, false);
+            emit AccountWhitelist(chainId, acc, false);
         }
         
         // Adds user's cost to the total cost
@@ -1055,11 +1090,7 @@ contract LitionRegistry {
      // Selected validator's vesting balance
      uint256 validatorVesting;
      
-     // Max number of miners for which we do not need to worry about uin256 overflow in math
-     uint256 overflowMaxMiners = 10**20;
-     
-     address actMiner;
-     
+     address actMinerAcc;
      // Runs through all miners and calculates total involved vesting.
      // in the statistics
      for(uint256 i = 0; i < miners.length; i++) {
@@ -1085,15 +1116,10 @@ contract LitionRegistry {
             validatorVesting *= 2;
         }
 
-        // No need for safe math as we internally allow max 10^48 users(even if there is theoretically more validators in statistics, they are ignored here)
+        // No need for safe math
         // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, 
-        // so max possible totalInvolvedVesting value is 10^48 * 10^32 * 10^192 = 10^272, which can possibly overfloww uint256 only if there is more than 2^20 miners
-        if (i < overflowMaxMiners) { 
-            totalInvolvedVesting += (maxBlocksMined / blocksMined[i]) * validatorVesting;
-        }
-        else {
-            totalInvolvedVesting = totalInvolvedVesting.add((maxBlocksMined / blocksMined[i]) * validatorVesting);
-        }
+        // so max possible totalInvolvedVesting value is 2*MAX_NUM_OF_VALIDATORS(24) * 10^32 * 10^192 = 42*10^224, which cannot overfloww uint256
+        totalInvolvedVesting += (maxBlocksMined / blocksMined[i]) * validatorVesting;
      }
      
      // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
@@ -1101,6 +1127,7 @@ contract LitionRegistry {
      require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active miners left in the chain");
 
      
+     uint256 minerReward;
      // Runs through all miners and calculates their reward based on:
      //     1. How many blocks out of max_blocks_mined each miner signed
      //     2. How many token each miner vested
@@ -1123,10 +1150,10 @@ contract LitionRegistry {
         
         // No need for safe math as max value of (maxBlocksMined / blocksMined[i]) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
         // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible miner reward is 10^32 * 1 * 10^97 = 10^129
-        uint256 minerReward = (maxBlocksMined / blocksMined[i]) * (validatorVesting / totalInvolvedVesting) * litToDistribute;
+        minerReward = (maxBlocksMined / blocksMined[i]) * (validatorVesting / totalInvolvedVesting) * litToDistribute;
         token.transfer(miners[i], minerReward);
         
-        // No need for safe math as miner reward is calculated as fraction of total litToDistribute and all miners rewards must always be <= litToDistribute
+        // No need for safe math as miner reward is calculated as fraction of total litToDistribute and sum of all miners rewards must always be <= litToDistribute
         litToDistribute -= minerReward;
      }
 
@@ -1136,41 +1163,22 @@ contract LitionRegistry {
      }
    }
    
-  function getUsers(uint256 chainId, uint256 batch, bool validators, bool active) internal view returns (address[100] memory users, uint256 count, bool end) {
-     ChainInfo storage chain = chains[chainId];
-     
-     count = 0;
-     uint256 j = batch * 100;
-     uint256 usersTotalCount = chain.users.list.length;
-     
-     while(j < (batch + 1)*100 && j < usersTotalCount) {
-      address acc = chain.users.list[j];
-      // Get validators
-      if(validators == true) {
-        // if active == true, get only those validators who are also mining
-        // if active == false, get those who are allowed to mine based on their vesting
-        if (chain.users.accounts[acc].validator.mining == active) {
-          users[count] = acc;
-          count++;
-        }
-      }
-      // Get transactors
-      else {
-        if (chain.users.accounts[acc].transactor.whitelisted == true) {
-          users[count] = acc;
-          count++;
-        } 
-      }
-      j++;
-     }
-     
-     if (j == usersTotalCount) {
-         end = true;
-     }
-     else {
-         end = false;
-     }
-  }
+   // Removes validators that did not mine at all during the last 3 notary windows
+   function removeInactiveValidators(uint256 chainId) internal {
+       ChainInfo storage chain = chains[chainId];
+       
+       address validatorAcc;
+       for (uint256 i = 0; i < chain.validators.list.length; i++) {
+           validatorAcc = chain.validators.list[i];
+           Validator storage validator = chain.users[validatorAcc];
+           
+           if (validator.currentNotaryMined || validator.prevNotaryMined || validator.secondPrevNotaryMined) {
+               continue;
+           }
+           
+           validatorRemove(chainId, validatorAcc);
+       } 
+   }
       
   function _startMining(uint256 chainId, address acc) internal {      
       ChainInfo storage chain = chains[chainId];
@@ -1180,8 +1188,6 @@ contract LitionRegistry {
           chain.totalVesting = chain.totalVesting.add(validator.vesting);
       }
       validator.mining = true;
-      
-      emit StartMining(chainId, acc);
   }
       
   function _stopMining(uint256 chainId, address acc) internal {      
@@ -1192,8 +1198,6 @@ contract LitionRegistry {
           chain.totalVesting = chain.totalVesting.sub(validator.vesting);
       }
       validator.mining = false;
-      
-      emit StopMining(chainId, acc);
   }
 }
 
