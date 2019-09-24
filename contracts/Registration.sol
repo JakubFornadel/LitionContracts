@@ -1167,7 +1167,7 @@ contract LitionRegistry {
             continue;
         }
         
-        userCost = (userGas[i] / largestTx) * largestReward;
+        userCost = userGas[i] * largestReward / largestTx;
         
         // This can happen only if user runs out of tokens(which should never happen due to min.required deposit)
         if(userCost > transactorDeposit ) {
@@ -1241,7 +1241,7 @@ contract LitionRegistry {
         // No need for safe math
         // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, 
         // so max possible totalInvolvedVesting value is 2*MAX_NUM_OF_VALIDATORS(24) * 10^32 * 10^192 = 42*10^224, which cannot overfloww uint256
-        totalInvolvedVesting += (maxBlocksMined / blocksMined[i]) * validatorVesting;
+        totalInvolvedVesting += maxBlocksMined * validatorVesting / blocksMined[i];
      }
      
      // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
@@ -1272,7 +1272,7 @@ contract LitionRegistry {
         
         // No need for safe math as max value of (maxBlocksMined / blocksMined[i]) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
         // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible miner reward is 10^32 * 1 * 10^97 = 10^129
-        minerReward = (maxBlocksMined / blocksMined[i]) * (validatorVesting / totalInvolvedVesting) * litToDistribute;
+        minerReward = validatorVesting * maxBlocksMined * litToDistribute / blocksMined[i] / totalInvolvedVesting;
         token.transfer(miners[i], minerReward);
         
         // No need for safe math as miner reward is calculated as fraction of total litToDistribute and sum of all miners rewards must always be <= litToDistribute
