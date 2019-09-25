@@ -52,7 +52,7 @@ contract LitionRegistry {
     uint256 constant MAX_NUM_OF_VALIDATORS  = 21;
     
     // Max number of unique users allowed to be processed during notary
-    uint256 constant MAX_NUM_OF_USERS       = 250;
+    uint256 constant MAX_NUM_OF_PROCESSED_USERS       = 250;
     
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function checkLitionMinVesting(uint256 vesting) private pure returns (bool) {
@@ -422,7 +422,6 @@ contract LitionRegistry {
         emit Notary(chainId, notaryBlock);
     }
     
-
     // Returns chain details
     function getChainDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, bool active, uint256 totalVesting,
                                                                      uint256 validatorsCount, uint256 lastValidatorVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp) {
@@ -431,6 +430,13 @@ contract LitionRegistry {
         description          = chain.description;
         endpoint             = chain.endpoint;
         registered           = chain.registered;
+        (active, totalVesting, validatorsCount, lastValidatorVesting, lastNotaryBlock, lastNotaryTimestamp) = getDynamicChainDetails(chainId);
+    }
+    
+    function getDynamicChainDetails(uint256 chainId) public view returns (bool active, uint256 totalVesting, uint256 validatorsCount,
+                                                                          uint256 lastValidatorVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp) {
+        ChainInfo storage chain = chains[chainId];
+        
         active               = chain.active;
         totalVesting         = chain.totalVesting;
         validatorsCount      = chain.validators.list.length;
@@ -486,25 +492,25 @@ contract LitionRegistry {
         require(chain.registered    == true,    "Invalid chain data: Non-registered chain");
         require(chain.totalVesting  > 0,        "Invalid chain data: current chain total_vesting == 0");
         
-        require(miners.length       > 0,                        "Invalid statistics data: miners.length == 0");
+        require(miners.length       > 0,                            "Invalid statistics data: miners.length == 0");
         // There is upper limit of max num of validators == MAX_NUM_OF_VALIDATORS, but
         // loop can run up to MAX_NUM_OF_VALIDATORS*2 times as there is an edge case where during one window: validator mines a few blocks, then withdraws whole vesting, 
         // he is removed from validators list and new validator joins sidechain as there is empty space now. As a result there can be theoretically up to MAX_NUM_OF_VALIDATORS*2 validators 
         // in the statistics
-        require(miners.length       < MAX_NUM_OF_VALIDATORS*2,  "Invalid statistics data: miners.length >= MAX_NUM_OF_VALIDATORS*2");
-        require(miners.length       == blocksMined.length,      "Invalid statistics data: miners.length != num of block mined");
+        require(miners.length       < MAX_NUM_OF_VALIDATORS*2,      "Invalid statistics data: miners.length >= MAX_NUM_OF_VALIDATORS*2");
+        require(miners.length       == blocksMined.length,          "Invalid statistics data: miners.length != num of block mined");
         
-        require(users.length        > 0,                        "Invalid statistics data: users.length == 0");
-        require(users.length        < MAX_NUM_OF_USERS,         "Invalid statistics data: users.length >= MAX_NUM_OF_USERS");
-        require(users.length        == userGas.length,          "Invalid statistics data: users.length != usersGas.length");
+        require(users.length        > 0,                            "Invalid statistics data: users.length == 0");
+        require(users.length        < MAX_NUM_OF_PROCESSED_USERS,   "Invalid statistics data: users.length >= MAX_NUM_OF_PROCESSED_USERS");
+        require(users.length        == userGas.length,              "Invalid statistics data: users.length != usersGas.length");
         
-        require(v.length            < MAX_NUM_OF_VALIDATORS*2,  "Invalid statistics data: v.length >= MAX_NUM_OF_VALIDATORS*2");
-        require(v.length            == r.length,                "Invalid statistics data: v.length != r.length");
-        require(v.length            == s.length,                "Invalid statistics data: v.length != s.length");
+        require(v.length            < MAX_NUM_OF_VALIDATORS*2,      "Invalid statistics data: v.length >= MAX_NUM_OF_VALIDATORS*2");
+        require(v.length            == r.length,                    "Invalid statistics data: v.length != r.length");
+        require(v.length            == s.length,                    "Invalid statistics data: v.length != s.length");
         
-        require(notaryStartBlock    >  chain.lastNotary.block,  "Invalid statistics data: notaryBlock_start <= last known notary block");
-        require(notaryEndBlock      >  notaryStartBlock,        "Invalid statistics data: notaryEndBlock <= notaryStartBlock");
-        require(largestTx           >  0,                       "Invalid statistics data: Largest tx <= 0");
+        require(notaryStartBlock    >  chain.lastNotary.block,      "Invalid statistics data: notaryBlock_start <= last known notary block");
+        require(notaryEndBlock      >  notaryStartBlock,            "Invalid statistics data: notaryEndBlock <= notaryStartBlock");
+        require(largestTx           >  0,                           "Invalid statistics data: Largest tx <= 0");
         
         bytes32 signatureHash = keccak256(abi.encodePacked(notaryEndBlock, miners, blocksMined, users, userGas, largestTx));
         
@@ -1190,8 +1196,8 @@ contract LitionRegistry {
         }
         
         // Adds user's cost to the total cost
-        // No need for safe math as we internally allow max MAX_NUM_OF_USERS users to be proceesed
-        // max possible userCost is 10^32 * 10^17, so max possible totalCost is MAX_NUM_OF_USERS(250) * 10^32 * 10^17 = 10^49, which will never overfloww uint256
+        // No need for safe math as we internally allow max MAX_NUM_OF_PROCESSED_USERS users to be proceesed
+        // max possible userCost is 10^32 * 10^17, so max possible totalCost is MAX_NUM_OF_PROCESSED_USERS(250) * 10^32 * 10^17 = 10^49, which will never overfloww uint256
         totalCost += userCost;  
      }
    }
