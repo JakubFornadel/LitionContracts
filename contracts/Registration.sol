@@ -664,7 +664,7 @@ contract LitionRegistry {
         address acc;
         uint256 i;
         for(i = batch * 100; i < (batch + 1)*100 && i < validatorsTotalCount; i++) {
-            acc = chain.transactors.list[i];
+            acc = chain.validators.list[i];
             
             validators[count] = acc;
             count++;
