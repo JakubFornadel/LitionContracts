@@ -18,14 +18,14 @@ interface ERC20 {
 
 contract LitionChainValidator is ChainValidator {
    function checkVesting(uint256 vesting, address acc, uint256 actNumOfValidators) public returns (bool) {
-      if(vesting >= 1000*(10**18) && vesting <= 500000*(10**18)) {
+      if(vesting >= 10000*(10**18) && vesting <= 500000*(10**18)) {
         return true;   
       }
       return false;
    }
 
    function checkDeposit(uint256 deposit, address acc, uint256 actNumOfTransactors) public returns (bool) {
-      if(deposit >= 1000*(10**18)) {
+      if(deposit >= 2000*(10**18)) {
          return true;
       }
       return false;
@@ -47,13 +47,6 @@ contract LitionRegistry {
     
     // Max vesting value
     uint256 constant MAX_VESTING                 = ~uint96(0);
-    
-    // Max number of active validators allowed to be registered in one chain is set by chain creator
-    // This is upper limit of what creator can specify
-    uint256 constant MAX_NUM_OF_VALIDATORS_LIMIT = 101;
-    
-    // Max number of unique users allowed to be processed during notary
-    uint256 constant MAX_NUM_OF_PROCESSED_USERS  = 500;
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
     // Users can then increase their vesting instantly and bypass 2-step process. For instant full deposit withdrawal users must wait 2*CHAIN_INACTIVITY_TIMEOUT
@@ -235,10 +228,16 @@ contract LitionRegistry {
         
         // Max number of active validators for chain. There is no limit to how many users can vest.
         // Tthis is limit for active validators (startMining function) 
+        // 0  means unlimited
+        // It must be some reasonable value together with min. required vesting condition as 
+        // too small num of validators limit with too low min. required vesting condition might lead to chain being stuck
         uint256                         maxNumOfValidators;
         
         // Max number of users(transactors) for chain.
         // Tthis is limit for whitelisted transactors (their current depost > min.required deposit)
+        // 0  means unlimited
+        // It must be some reasonable value together with min. required deposit condition as 
+        // too small num of validators limit with too low min. required deposit condition might lead to chain being stuck
         uint256                         maxNumOfTransactors;
         
         // Flag for condition to be checked during notary:
@@ -345,6 +344,11 @@ contract LitionRegistry {
             require(checkLitionMinDeposit(deposit), "user does not meet Lition's min.required deposit condition");
             require(chain.chainValidator.checkDeposit(deposit, msg.sender, chain.actNumOfTransactors), "user does not meet chain validator's min.required deposit condition");
             require(deposit <= MAX_DEPOSIT, "deposit is greater than uint96_max_value");
+            
+            // Upper limit of transactors reached
+            if (chain.maxNumOfTransactors != 0 && isAllowedToTransact(chainId, msg.sender) == false) {
+                require(chain.actNumOfTransactors < chain.maxNumOfTransactors, "Upper limit of transactors reached");
+            }
         }
                 
         requestDeposit(chainId, deposit, msg.sender);
@@ -377,12 +381,13 @@ contract LitionRegistry {
                            uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= 200,           "Chain description cannot be empty");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= 100,         "Chain endpoint cannot be empty");
-        require(maxNumOfValidators > 0 && maxNumOfValidators <= MAX_NUM_OF_VALIDATORS_LIMIT, "Specified max num of validators out of limits");
-        require(maxNumOfTransactors > 0,                                                     "Specified max num of transactors out of limits");
-        require(maxNumOfValidators <= maxNumOfTransactors,                                   "Max num of validators must be less or equal to max num of transactors");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,        "At least on notary condition must be specified");
         require(deposit <= MAX_DEPOSIT,                                                      "deposit is greater than uint96_max_value");
         require(vesting <= MAX_VESTING,                                                      "vesting is greater than uint96_max_value");
+        
+        if (maxNumOfTransactors != 0) {
+            require(maxNumOfValidators <= maxNumOfTransactors,                               "Max num of validators must be less or equal to max num of transactors");
+        }
         
         address creator         = msg.sender;
         
@@ -434,7 +439,7 @@ contract LitionRegistry {
     }
     
     // Returns true if user's remaining deposit balance >= min. required deposit and is allowed to transact
-    function isAllowedToTransact(uint256 chainId, address acc) view external returns (bool) {
+    function isAllowedToTransact(uint256 chainId, address acc) view public returns (bool) {
         // No need to check deposit balance as whitelisted flag should be alwyas set accordingly
         return chains[chainId].users[acc].transactor.whitelisted;
     }
@@ -538,7 +543,6 @@ contract LitionRegistry {
         require(miners.length       == blocksMined.length,          "Invalid statistics data: miners.length != num of block mined");
         
         require(users.length        > 0,                            "Invalid statistics data: users.length == 0");
-        require(users.length        < MAX_NUM_OF_PROCESSED_USERS,   "Invalid statistics data: users.length >= MAX_NUM_OF_PROCESSED_USERS");
         require(users.length        == userGas.length,              "Invalid statistics data: users.length != usersGas.length");
         
         require(v.length            < chain.maxNumOfValidators*2,      "Invalid statistics data: v.length >= maxNumOfValidators*2");
@@ -626,18 +630,20 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         count = 0;
-        uint256 i = batch * 100;
         uint256 usersTotalCount = chain.transactors.list.length;
+        
         address acc;
-        while(i < (batch + 1)*100 && i < usersTotalCount) {
+        uint256 i;
+        for(i = batch * 100; i < (batch + 1)*100 && i < usersTotalCount; i++) {
             acc = chain.transactors.list[i];
             
             // Get transactors
-            if (chain.users[acc].transactor.whitelisted == true) {
-                users[count] = acc;
-                count++;
+            if (chain.users[acc].transactor.whitelisted == false) {
+                continue;
             } 
-            i++;
+            
+            users[count] = acc;
+            count++;
         }
         
         if (i >= usersTotalCount) {
@@ -649,13 +655,26 @@ contract LitionRegistry {
     }
     
     // Returns list of addresses of active validators
-    function getValidators(uint256 chainId) view external returns (address[MAX_NUM_OF_VALIDATORS_LIMIT] memory validators, uint256 count) {
+    function getValidators(uint256 chainId, uint256 batch) view external returns (address[100] memory validators, uint256 count, bool end) {
         ChainInfo storage chain = chains[chainId];
         
         count = 0;
-        for (uint256 i = 0; i < chain.validators.list.length; i++) {
-            validators[count] = chain.validators.list[i];
+        uint256 validatorsTotalCount = chain.validators.list.length;
+        
+        address acc;
+        uint256 i;
+        for(i = batch * 100; i < (batch + 1)*100 && i < validatorsTotalCount; i++) {
+            acc = chain.transactors.list[i];
+            
+            validators[count] = acc;
             count++;
+        }
+        
+        if (i >= validatorsTotalCount) {
+            end = true;
+        }
+        else {
+            end = false;
         }
     }
     
@@ -676,6 +695,11 @@ contract LitionRegistry {
             emit AccountMining(chainId, acc, true);
             
             return;
+        }
+        
+        // Upper limit of transactors reached
+        if (chain.maxNumOfTransactors != 0 && isAllowedToTransact(chainId, msg.sender) == false) {
+            require(chain.actNumOfTransactors < chain.maxNumOfTransactors, "Upper limit of transactors reached. Validator cannot start minig without being also transactor");
         }
             
         // Upper limit of validators reached
@@ -1219,8 +1243,7 @@ contract LitionRegistry {
         }
         
         // Adds user's cost to the total cost
-        // No need for safe math as we internally allow max MAX_NUM_OF_PROCESSED_USERS users to be proceesed
-        // max possible userCost is 10^32 * 10^17, so max possible totalCost is MAX_NUM_OF_PROCESSED_USERS(250) * 10^32 * 10^17 = 10^49, which will never overfloww uint256
+        // No need for safe math as max possible userCost is 10^32 * 10^17 allows 10^207 users to ovewflow uint256 and that is impossible because of gas 
         totalCost += userCost;  
      }
    }
