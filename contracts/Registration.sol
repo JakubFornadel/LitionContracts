@@ -535,17 +535,24 @@ contract LitionRegistry {
         require(chain.totalVesting  > 0,        "Invalid chain data: current chain total_vesting == 0");
         
         require(miners.length       > 0,                            "Invalid statistics data: miners.length == 0");
-        // There is upper limit of max num of validators == chain.maxNumOfValidators, but
-        // loop can run up to chain.maxNumOfValidators*2 times as there is an edge case where during one window: validator mines a few blocks, then withdraws whole vesting, 
-        // he is removed from validators list and new validator joins sidechain as there is empty space now. As a result there can be theoretically up to chain.maxNumOfValidators*2 validators 
-        // in the statistics
-        require(miners.length       < chain.maxNumOfValidators*2,   "Invalid statistics data: miners.length >= maxNumOfValidators*2");
+        
+        if (chain.maxNumOfValidators != 0) {
+            // There is upper limit of max num of validators == chain.maxNumOfValidators, but
+            // loop can run up to chain.maxNumOfValidators*2 times as there is an edge case where during one window: validator mines a few blocks, then withdraws whole vesting, 
+            // he is removed from validators list and new validator joins sidechain as there is empty space now. As a result there can be theoretically up to chain.maxNumOfValidators*2 validators 
+            // in the statistics
+            require(miners.length   <= chain.maxNumOfValidators*2,   "Invalid statistics data: miners.length > maxNumOfValidators*2");
+            require(v.length        <= chain.maxNumOfValidators*2,    "Invalid statistics data: signatures.length > maxNumOfValidators*2");
+        }
         require(miners.length       == blocksMined.length,          "Invalid statistics data: miners.length != num of block mined");
         
+        if (chain.maxNumOfTransactors != 0) {
+            require(users.length    <= chain.maxNumOfTransactors,   "Invalid statistics data: users.length > maxNumOfTransactors");
+        }
         require(users.length        > 0,                            "Invalid statistics data: users.length == 0");
         require(users.length        == userGas.length,              "Invalid statistics data: users.length != usersGas.length");
         
-        require(v.length            < chain.maxNumOfValidators*2,      "Invalid statistics data: v.length >= maxNumOfValidators*2");
+        
         require(v.length            == r.length,                    "Invalid statistics data: v.length != r.length");
         require(v.length            == s.length,                    "Invalid statistics data: v.length != s.length");
         
@@ -703,7 +710,7 @@ contract LitionRegistry {
         }
             
         // Upper limit of validators reached
-        if (chain.validators.list.length >= chain.maxNumOfValidators) {
+        if (chain.maxNumOfValidators != 0 && chain.validators.list.length >= chain.maxNumOfValidators) {
             require(validatorVesting > chain.users[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to replace him.");
             validatorReplace(chainId, acc);
         }
@@ -1291,8 +1298,8 @@ contract LitionRegistry {
         }
 
         // No need for safe math
-        // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, 
-        // so max possible totalInvolvedVesting value is 2*chain.maxNumOfValidators(24) * 10^32 * 10^192 = 42*10^224, which cannot overfloww uint256
+        // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
+        // so to overflow uint256 there would have to be 10^32 validators, which is impossible because of gas
         totalInvolvedVesting += (maxBlocksMined * validatorVesting) / blocksMined[i];
      }
      
