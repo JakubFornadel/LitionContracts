@@ -17,14 +17,14 @@ interface ERC20 {
 }
 
 contract LitionChainValidator is ChainValidator {
-   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) public returns (bool) {
+   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
       if(vesting >= 10000*(10**18) && vesting <= 500000*(10**18)) {
         return true;   
       }
       return false;
    }
 
-   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) public returns (bool) {
+   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool) {
       if(deposit >= 2000*(10**18)) {
          return true;
       }
