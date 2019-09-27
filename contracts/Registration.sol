@@ -755,6 +755,7 @@ contract LitionRegistry {
         
         require(chain.registered == true, "Non-registered chain");
         require(validatorExist(chainId, acc) == true, "Non-existing validator (0 vesting balance)");
+        require(isAllowedToTransact(chainId, acc) == true, "Cannot start mining without being also whitelisted transactor");
         require(vestingIncreaseRequestExist(chainId, acc) == false, "Cannot start mining - there is ongoing vesting request");
         
         if (chain.chainValidator != ChainValidator(0)) {
@@ -767,11 +768,6 @@ contract LitionRegistry {
             emit AccountMining(chainId, acc, true);
             
             return;
-        }
-        
-        // Upper limit of transactors reached
-        if (chain.maxNumOfTransactors != 0 && isAllowedToTransact(chainId, acc) == false) {
-            require(chain.actNumOfTransactors <= chain.maxNumOfTransactors, "Upper limit of transactors reached. Validator cannot start minig without being also transactor");
         }
             
         // Upper limit of validators reached
