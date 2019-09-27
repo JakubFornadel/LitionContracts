@@ -287,10 +287,7 @@ contract LitionRegistry {
         // Full vesting withdrawal
         if (vesting == 0) {
             require(validatorExist(chainId, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
-            
-            if (chain.active == true) {
-                require(activeValidatorExist(chainId, msg.sender) == false, "StopMinig must be called first.");  
-            }
+            require(activeValidatorExist(chainId, msg.sender) == false, "StopMinig must be called first.");  
         }
         // Vest in chain or withdraw just part of vesting
         else {
