@@ -393,9 +393,9 @@ contract LitionRegistry {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
-        
-        chainId                 = nextId;
-        ChainInfo storage chain = chains[chainId];
+    
+        chainId                         = nextId;
+        ChainInfo storage chain         = chains[chainId];
         
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
@@ -414,10 +414,16 @@ contract LitionRegistry {
         nextId++;
     }
     
-    // Returns true, if user has vested enough tokensto become validator, othervise false
+    // Returns true, if user has vested enough tokens to become validator, othervise false
     function isAllowedToValidate(uint256 chainId, address acc) view external returns (bool) {
         // No need to check vesting balance as it cannot be lover than min. required
         return validatorExist(chainId, acc);
+    }
+    
+    // Returns true, if user has vested enough tokens to become validator and is actively mining, othervise false
+    function isActiveValidator(uint256 chainId, address acc) view external returns (bool) {
+        // No need to check vesting balance as it cannot be lover than min. required
+        return activeValidatorExist(chainId, acc);
     }
     
     // Returns true if user's remaining deposit balance >= min. required deposit and is allowed to transact
@@ -1342,7 +1348,7 @@ contract LitionRegistry {
      for(uint256 i = 0; i < validators.length; i++) {
         actValidatorAcc = validators[i];
         
-        // This can happen only if there is non-registered validator in statistics, which means for 99% that the validator withdrawed whole vesting during current notary window
+        // This can happen only if there is non-registered in statistics, which means for 99% that the validator withdrawed whole vesting during current notary window
         // or there is ongoing coordinated attack based on invalid statistics sent to the notary
         if (activeValidatorExist(chainId, actValidatorAcc) == false || blocksMined[i] == 0) {
             continue;

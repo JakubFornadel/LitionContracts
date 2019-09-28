@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gitlab.com/lition/lition/accounts/abi/bind"
 	"gitlab.com/lition/lition/common"
+	"gitlab.com/lition/lition/core/types"
 	"gitlab.com/lition/lition/ethclient"
 )
 
@@ -144,44 +145,30 @@ func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*Li
 	}
 }
 
-func (contractClient *ContractClient) StartMining(auth *bind.TransactOpts) error {
-	tx, err := contractClient.scClient.StartMining(auth, contractClient.chainID)
-	if err != nil {
-		return err
-	}
-	log.Info("Transaction 'startMining' TX: ", tx.Hash().String())
-	return nil
+func (contractClient *ContractClient) StartMining(auth *bind.TransactOpts) (*types.Transaction, error) {
+	return contractClient.scClient.StartMining(auth, contractClient.chainID)
 }
 
-func (contractClient *ContractClient) StopMining(auth *bind.TransactOpts) error {
-	tx, err := contractClient.scClient.StopMining(auth, contractClient.chainID)
-	if err != nil {
-		return err
-	}
-	log.Info("Transaction 'stopMining' TX: ", tx.Hash().String())
-	return nil
+func (contractClient *ContractClient) StopMining(auth *bind.TransactOpts) (*types.Transaction, error) {
+	return contractClient.scClient.StopMining(auth, contractClient.chainID)
 }
 
 func (contractClient *ContractClient) IsAllowedToValidate(userAddressStr string) (bool, error) {
 	userAddress := common.HexToAddress(userAddressStr)
 
-	hasVested, err := contractClient.scClient.IsAllowedToValidate(&bind.CallOpts{}, contractClient.chainID, userAddress)
-	if err != nil {
-		return false, err
-	}
+	return contractClient.scClient.IsAllowedToValidate(&bind.CallOpts{}, contractClient.chainID, userAddress)
+}
 
-	return hasVested, nil
+func (contractClient *ContractClient) IsActiveValidator(userAddressStr string) (bool, error) {
+	userAddress := common.HexToAddress(userAddressStr)
+
+	return contractClient.scClient.IsActiveValidator(&bind.CallOpts{}, contractClient.chainID, userAddress)
 }
 
 func (contractClient *ContractClient) IsAllowedToTransact(userAddressStr string) (bool, error) {
 	userAddress := common.HexToAddress(userAddressStr)
 
-	hasDeposited, err := contractClient.scClient.IsAllowedToTransact(&bind.CallOpts{}, contractClient.chainID, userAddress)
-	if err != nil {
-		return false, err
-	}
-
-	return hasDeposited, nil
+	return contractClient.scClient.IsAllowedToTransact(&bind.CallOpts{}, contractClient.chainID, userAddress)
 }
 
 func (contractClient *ContractClient) GetTransactors() ([]common.Address, error) {
@@ -230,12 +217,19 @@ func (contractClient *ContractClient) GetValidators() ([]common.Address, error) 
 	return activeValidators, nil
 }
 
-func (contractClient *ContractClient) Notary(auth *bind.TransactOpts, notary_start_block *big.Int, notary_end_block *big.Int, miners []common.Address, blocks_mined []uint32, users []common.Address, user_gas []uint32, largest_tx uint32, v []uint8, r [][32]byte, s [][32]byte) error {
-	_, err := contractClient.scClient.Notary(auth, contractClient.chainID, notary_start_block, notary_end_block, miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
-	if err != nil {
-		return err
-	}
-	return nil
+func (contractClient *ContractClient) Notary(auth *bind.TransactOpts,
+	notary_start_block *big.Int,
+	notary_end_block *big.Int,
+	miners []common.Address,
+	blocks_mined []uint32,
+	users []common.Address,
+	user_gas []uint32,
+	largest_tx uint32,
+	v []uint8,
+	r [][32]byte,
+	s [][32]byte) (*types.Transaction, error) {
+
+	return contractClient.scClient.Notary(auth, contractClient.chainID, notary_start_block, notary_end_block, miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
 }
 
 func (contractClient *ContractClient) GetChainStaticDetails() (struct {

@@ -22,7 +22,7 @@ func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelist) {
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0x25A74c7692cE2F3CA5a7847FE5E4F2C698f3b0a0"
+	contractAddress := "0x8bb543Ba8B8D17367e99C97B52d7e848cCb85F76"
 	privateKeyStr := ""
 	chainID := 0
 
@@ -64,8 +64,10 @@ func main() {
 	go litionScClient.Start_accWhitelistEventListener(processAccWhitelist)
 
 	if privateKeyStr != "" {
-		err = litionScClient.StartMining(auth)
-		if err != nil {
+		tx, err := litionScClient.StartMining(auth)
+		if err == nil {
+			log.Info("'StartMining' tx hash: ", tx.Hash().String())
+		} else {
 			log.Fatal("Unable to send 'StartMining' tx. Err: ", err)
 		}
 	}
@@ -89,8 +91,10 @@ func main() {
 	<-c
 
 	if privateKeyStr != "" {
-		err = litionScClient.StopMining(auth)
-		if err != nil {
+		tx, err := litionScClient.StopMining(auth)
+		if err == nil {
+			log.Info("'StopMining' tx hash: ", tx.Hash().String())
+		} else {
 			log.Fatal("Unable to send 'StopMining' tx. Err: ", err)
 		}
 	}
