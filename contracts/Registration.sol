@@ -552,12 +552,17 @@ contract LitionRegistry {
             if (actNumOfValidators >= 4) {
                 uint256 minRequiredSignaturesCount = ((2 * actNumOfValidators) / 3) + 1;
                 
-                require(signaturesVesting >= minRequiredSignaturesCount, "Invalid statistics data: Not enough signatures provided (2/3 + 1 cond)");
+                require(signaturesCount >= minRequiredSignaturesCount, "Invalid statistics data: Not enough signatures provided (2/3 + 1 cond)");
             }
             // if there is less than 4 active validators, everyone has to sign statistics
             else {
                 require(signaturesCount == actNumOfValidators, "Invalid statistics data: Not enough signatures provided (involvedSignatures == activeValidatorsCount)");
             }
+        }
+        
+        if (chain.involvedVestingNotaryCond == true) {
+            // There must be more than 50% out of total possible vesting involved
+            require(signaturesVesting*2 > chain.totalVesting, "Invalid statistics data: involvedVesting <= 50% of chain.totalVesting");
         }
         
         // Calculates total cost based on user's usage durint current notary window
