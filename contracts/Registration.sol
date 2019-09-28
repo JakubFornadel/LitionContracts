@@ -278,8 +278,9 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         // Enable users to vest into registered (but non-active) chain and start minig so it becomes active
-        require(chain.registered == true, "Non-registered chain");
-        require(vestingIncreaseRequestExist(chainId, msg.sender) == false, "There is already one vesting increase request being processed for this acc.");
+        require(chain.registered == true,                                   "Non-registered chain");
+        require(transactorExist(chainId, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
+        require(vestingIncreaseRequestExist(chainId, msg.sender) == false,  "There is already one vesting increase request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chainId);
@@ -287,12 +288,12 @@ contract LitionRegistry {
         // Full vesting withdrawal
         if (vesting == 0) {
             require(validatorExist(chainId, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
-            require(activeValidatorExist(chainId, msg.sender) == false,     "StopMinig must be called first.");  
+            require(activeValidatorExist(chainId, msg.sender) == false,     "StopMinig must be called first");  
         }
         // Vest in chain or withdraw just part of vesting
         else {
             require(vesting <= MAX_VESTING,                                 "vesting is greater than uint96_max_value");
-            require(chain.users[msg.sender].validator.vesting != vesting,   "Cannot vest the same amount of tokens as you already has vested.");
+            require(chain.users[msg.sender].validator.vesting != vesting,   "Cannot vest the same amount of tokens as you already has vested");
             require(checkLitionMinVesting(vesting) == true,                 "user does not meet Lition's min.required vesting condition");
             
             if (chain.chainValidator != ChainValidator(0)) {
@@ -309,14 +310,14 @@ contract LitionRegistry {
         
         // Enable users to confirm vesting request into registered (but non-active) chain and start minig so it becomes active
         require(chain.registered == true, "Non-registered chain");
-        require(vestingIncreaseRequestExist(chainId, msg.sender) == true, "Non-existing vesting request.");
+        require(vestingIncreaseRequestExist(chainId, msg.sender) == true, "Non-existing vesting request");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chainId);
         
         // Chain is active
         if (chain.active == true) {
-            require(chain.lastNotary.block > chain.requests.accounts[msg.sender].vestingIncreaseRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted.");    
+            require(chain.lastNotary.block > chain.requests.accounts[msg.sender].vestingIncreaseRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");    
         }
         
         confirmVestIncrease(chainId, msg.sender);
@@ -330,24 +331,26 @@ contract LitionRegistry {
     function requestDepositInChain(uint256 chainId, uint256 deposit) external {
         ChainInfo storage chain = chains[chainId];
         
-        require(chain.registered == true, "Non-registered chain");
-        require(depositWithdrawalRequestExist(chainId, msg.sender) == false, "There is already existing withdrawal request being processed for this acc");
+        require(chain.registered == true,                                               "Non-registered chain");
+        require(validatorExist(chainId, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
+        require(depositWithdrawalRequestExist(chainId, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
+        
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chainId);
         
         // Withdraw whole deposit
         if (deposit == 0) {
-            require(transactorExist(chainId, msg.sender) == true, "Non-existing transactor account (0 deposit balance)");
+            require(transactorExist(chainId, msg.sender) == true,                       "Non-existing transactor account (0 deposit balance)");
             
             if (chain.active == false) {
-                require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now, "Chain is inactive, for instant full deposit withdrawal wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
+                require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now,  "Chain is inactive, for instant full deposit withdrawal wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
             }
         }
         // Deposit in chain or withdraw just part of deposit
         else {
-            require(chain.users[msg.sender].transactor.deposit != deposit,  "Cannot deposit the same amount of tokens as you already has deposited");
-            require(checkLitionMinDeposit(deposit),                         "user does not meet Lition's min.required deposit condition");
-            require(deposit <= MAX_DEPOSIT,                                 "deposit is greater than uint96_max_value");
+            require(chain.users[msg.sender].transactor.deposit != deposit,              "Cannot deposit the same amount of tokens as you already has deposited");
+            require(checkLitionMinDeposit(deposit),                                     "user does not meet Lition's min.required deposit condition");
+            require(deposit <= MAX_DEPOSIT,                                             "deposit is greater than uint96_max_value");
             
             if (chain.chainValidator != ChainValidator(0)) {
                 require(chain.chainValidator.validateNewTransactor(deposit, msg.sender, chain.actNumOfTransactors), "Transactor not allowed by external chainvalidator SC");
@@ -374,7 +377,7 @@ contract LitionRegistry {
         
         // Chain is active or it's been inactive for less than 2*CHAIN_INACTIVITY_TIMEOUT
         if (chain.active == true) {
-            require(chain.lastNotary.block > chains[chainId].requests.accounts[msg.sender].depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted.");
+            require(chain.lastNotary.block > chains[chainId].requests.accounts[msg.sender].depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
         }
         // Chain is inactive
         else {
@@ -385,47 +388,14 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 vesting, uint256 deposit, 
-                           uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
-        require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description cannot be empty");
-        require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint cannot be empty");
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 maxNumOfValidators,
+                           uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
+        require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
+        require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
         
         chainId                 = nextId;
         ChainInfo storage chain = chains[chainId];
-        
-        bool chainValidatorProvided = false;
-        if (chainValidator != ChainValidator(0)) {
-            chain.chainValidator   = chainValidator;
-            chainValidatorProvided = true;
-        }
-        
-        // Validates deposit, if set
-        if (deposit != 0) {
-            require(deposit <= MAX_DEPOSIT, "deposit is greater than uint96_max_value");
-            require(checkLitionMinDeposit(deposit), "chain creator does not meet Lition's min.required deposit condition");    
-            
-            if (chainValidatorProvided == true) {
-                require(chain.chainValidator.validateNewTransactor(deposit, msg.sender, chain.actNumOfTransactors) == true, "chain creator not allowed by external chainvalidator SC (deposit)");
-            }
-            
-            // Transfers deposit tokens
-            token.transferFrom(msg.sender, address(this), deposit);
-        }
-        
-        // Validates vesting, if set
-        if (vesting != 0) {
-            require(vesting <= MAX_VESTING, "vesting is greater than uint96_max_value");
-            require(checkLitionMinVesting(vesting), "chain creator does not meet Lition's min.required vesting condition");
-            
-            if (chainValidatorProvided == true) {
-                require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not yet mining */, chain.validators.list.length) == true, "chain creator not allowed by external chainvalidator SC (vesting)");
-            }
-            
-            // Transfers vesting tokens
-            token.transferFrom(msg.sender, address(this), vesting);
-        }
-        
         
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
@@ -435,17 +405,11 @@ contract LitionRegistry {
         chain.involvedVestingNotaryCond = involvedVestingNotaryCond;
         chain.participationNotaryCond   = participationNotaryCond;
         
+        if (chainValidator != ChainValidator(0)) {
+            chain.chainValidator = chainValidator;
+        }
+        
         emit NewChain(chainId, description, initEndpoint);
-        
-        emit VestInChain(chainId, msg.sender, vesting, 0 /* zero block */, true);
-        if (vesting != 0) {
-            validatorCreate(chainId, msg.sender, vesting);
-        }
-        
-        emit DepositInChain(chainId, msg.sender, deposit, 0 /* zero block */, true);
-        if (deposit != 0) {
-            transactorCreate(chainId, msg.sender, deposit);
-        }
         
         nextId++;
     }
