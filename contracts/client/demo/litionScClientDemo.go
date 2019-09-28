@@ -12,21 +12,17 @@ import (
 	litionScClient "gitlab.com/lition/lition_contracts/contracts/client"
 )
 
-func processStartMining(event *litionScClient.LitionScClientStartMining) {
-	log.Info("processStartMining. Acc: ", event.Account.String())
+func processAccMining(event *litionScClient.LitionScClientAccountMining) {
+	log.Info("processAccMining. Acc: ", event.Account.String(), " miningFlag: ", event.Mining)
 }
 
-func processStopMining(event *litionScClient.LitionScClientStopMining) {
-	log.Info("processStopMining. Acc: ", event.Account.String())
-}
-
-func processWhitelistAcc(event *litionScClient.LitionScClientWhitelistAccount) {
-	log.Info("processWhitelistAcc. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelist)
+func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelist) {
+	log.Info("processAccWhitelist. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelist)
 }
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0xFdF20223c0b10f7281Fc00ef6Afc29aE2a9c043d"
+	contractAddress := "0x25A74c7692cE2F3CA5a7847FE5E4F2C698f3b0a0"
 	privateKeyStr := ""
 	chainID := 0
 
@@ -45,32 +41,27 @@ func main() {
 		log.Fatal("Unable to init Lition smart contract client")
 	}
 
-	lastNotary, err := litionScClient.GetLastNotary()
+	chainDynamicDetails, err := litionScClient.GetChainDynamicDetails()
 	if err != nil {
 		log.Error("err: ", err)
 	}
 
-	log.Info("lastNotaryBlock: ", lastNotary.NotaryBlock)
-	log.Info("lastNotaryTime: ", lastNotary.NotaryTimestamp)
+	log.Info("lastNotaryBlock: ", chainDynamicDetails.LastNotaryBlock)
+	log.Info("lastNotaryTime: ", chainDynamicDetails.LastNotaryTimestamp)
 
 	// Init Lition Smartcontract event listeners
-	err = litionScClient.InitStartMiningEventListener()
+	err = litionScClient.InitAccMiningEventListener()
 	if err != nil {
-		log.Fatal("Unable to init 'StartMining' event listeners")
+		log.Fatal("Unable to init 'AccountMining' event listeners")
 	}
-	err = litionScClient.InitStoptMiningEventListener()
+	err = litionScClient.InitAccWhitelistEventListener()
 	if err != nil {
-		log.Fatal("Unable to init 'StopMining' event listeners")
-	}
-	err = litionScClient.InitWhitelistAccEventListener()
-	if err != nil {
-		log.Fatal("Unable to init 'Deposit' event listeners")
+		log.Fatal("Unable to init 'AccountWHitelist' event listeners")
 	}
 
 	// Start standalone event listeners
-	go litionScClient.Start_StartMiningEventListener(processStartMining)
-	go litionScClient.Start_StopMiningEventListener(processStopMining)
-	go litionScClient.Start_WhitelistAccEventListener(processWhitelistAcc)
+	go litionScClient.Start_accMiningEventListener(processAccMining)
+	go litionScClient.Start_accWhitelistEventListener(processAccWhitelist)
 
 	if privateKeyStr != "" {
 		err = litionScClient.StartMining(auth)
@@ -79,13 +70,13 @@ func main() {
 		}
 	}
 
-	accountWhitelist, err := litionScClient.GetAllowedToTransact()
+	transactors, err := litionScClient.GetTransactors()
 	if err != nil {
-		log.Fatal("Unable to GetAllowedToTransact")
+		log.Fatal("Unable to GetTransactors")
 	}
 
-	log.Info("GetAllowedToTransact: ")
-	for _, acc := range accountWhitelist {
+	log.Info("GetTransactors: ")
+	for _, acc := range transactors {
 		log.Info(acc.String())
 	}
 

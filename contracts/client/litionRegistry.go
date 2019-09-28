@@ -28,7 +28,7 @@ var (
 )
 
 // LitionScClientABI is the input ABI used to generate the binding from.
-const LitionScClientABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getLastNotary\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"notaryBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryTimestamp\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getAllowedToValidate\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"stopMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"cancelVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"startMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getAllowedToTransact\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nextId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryStartBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryEndBlock\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"miners\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocksMined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"userGas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largestTx\",\"type\":\"uint32\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"getUserRequests\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"vestingReqExists\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqNotary\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqValue\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqState\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqControlState\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"depositReqExists\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"depositReqTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"depositReqNotary\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"depositReqValue\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"depositReqState\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainDetails\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"registered\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"totalVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryTimestamp\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getActiveValidators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmDepositWithdrawalFromChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryBlockNo\",\"type\":\"uint256\"}],\"name\":\"testNotary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"hasDeposited\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"requestDepositInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"cancelDepositInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"getUserDetails\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"exists\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"whitelisted\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"validator\",\"type\":\"address\"},{\"internalType\":\"uint96\",\"name\":\"vesting\",\"type\":\"uint96\"},{\"internalType\":\"uint96\",\"name\":\"deposit\",\"type\":\"uint96\"},{\"internalType\":\"string\",\"name\":\"initEndpoint\",\"type\":\"string\"}],\"name\":\"registerChain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"hasVested\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"requestVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"RequestDepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"ConfirmDepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"CancelDepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"ForceWithdrawDeposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"RequestVestInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"ConfirmVestInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"CancelVestInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reqTimestamp\",\"type\":\"uint256\"}],\"name\":\"AcceptedVestInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"ForceWithdrawVesting\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"WhitelistAccount\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"StartMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"StopMining\",\"type\":\"event\"}]"
+const LitionScClientABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmVestIncreaseInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getTransactors\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"transactors\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"isAllowedToTransact\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"stopMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"startMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nextId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryStartBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryEndBlock\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocksMined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"userGas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largestTx\",\"type\":\"uint32\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"initEndpoint\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"chainValidator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"name\":\"registerChain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmDepositWithdrawalFromChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainStaticDetails\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"registered\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"requestDepositInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"isAllowedToValidate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getValidators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"validators\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainDynamicDetails\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"totalVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastValidatorVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryTimestamp\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"getUserDetails\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"whitelisted\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"prevNotaryMined\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"secondPrevNotaryMined\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"vestingIncreaceReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqNotary\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqValue\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"depositFullWithdrawalReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"depositReqNotary\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryStartBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryEndBlock\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocksMined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"userGas\",\"type\":\"uint32[]\"},{\"internalType\":\"uint32\",\"name\":\"largestTx\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"signaturesCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"signaturesVesting\",\"type\":\"uint256\"}],\"name\":\"advancedTestNotary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"requestVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"DepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"VestInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"AccountWhitelist\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"}],\"name\":\"AccountMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"notaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"Notary\",\"type\":\"event\"}]"
 
 // LitionScClient is an auto generated Go binding around an Ethereum contract.
 type LitionScClient struct {
@@ -172,206 +172,186 @@ func (_LitionScClient *LitionScClientTransactorRaw) Transact(opts *bind.Transact
 	return _LitionScClient.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetActiveValidators is a free data retrieval call binding the contract method 0x7e233e26.
+// GetChainDynamicDetails is a free data retrieval call binding the contract method 0xc660c93e.
 //
-// Solidity: function getActiveValidators(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCaller) GetActiveValidators(opts *bind.CallOpts, chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	var (
-		ret0 = new([100]common.Address)
-		ret1 = new(*big.Int)
-		ret2 = new(bool)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
-		ret2,
-	}
-	err := _LitionScClient.contract.Call(opts, out, "getActiveValidators", chainId, batch)
-	return *ret0, *ret1, *ret2, err
-}
-
-// GetActiveValidators is a free data retrieval call binding the contract method 0x7e233e26.
-//
-// Solidity: function getActiveValidators(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientSession) GetActiveValidators(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetActiveValidators(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetActiveValidators is a free data retrieval call binding the contract method 0x7e233e26.
-//
-// Solidity: function getActiveValidators(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCallerSession) GetActiveValidators(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetActiveValidators(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetAllowedToTransact is a free data retrieval call binding the contract method 0x529f31bf.
-//
-// Solidity: function getAllowedToTransact(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCaller) GetAllowedToTransact(opts *bind.CallOpts, chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	var (
-		ret0 = new([100]common.Address)
-		ret1 = new(*big.Int)
-		ret2 = new(bool)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
-		ret2,
-	}
-	err := _LitionScClient.contract.Call(opts, out, "getAllowedToTransact", chainId, batch)
-	return *ret0, *ret1, *ret2, err
-}
-
-// GetAllowedToTransact is a free data retrieval call binding the contract method 0x529f31bf.
-//
-// Solidity: function getAllowedToTransact(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientSession) GetAllowedToTransact(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetAllowedToTransact(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetAllowedToTransact is a free data retrieval call binding the contract method 0x529f31bf.
-//
-// Solidity: function getAllowedToTransact(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCallerSession) GetAllowedToTransact(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetAllowedToTransact(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetAllowedToValidate is a free data retrieval call binding the contract method 0x148dbe94.
-//
-// Solidity: function getAllowedToValidate(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCaller) GetAllowedToValidate(opts *bind.CallOpts, chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	var (
-		ret0 = new([100]common.Address)
-		ret1 = new(*big.Int)
-		ret2 = new(bool)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
-		ret2,
-	}
-	err := _LitionScClient.contract.Call(opts, out, "getAllowedToValidate", chainId, batch)
-	return *ret0, *ret1, *ret2, err
-}
-
-// GetAllowedToValidate is a free data retrieval call binding the contract method 0x148dbe94.
-//
-// Solidity: function getAllowedToValidate(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientSession) GetAllowedToValidate(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetAllowedToValidate(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetAllowedToValidate is a free data retrieval call binding the contract method 0x148dbe94.
-//
-// Solidity: function getAllowedToValidate(uint256 chainId, uint256 batch) constant returns(address[100], uint256, bool)
-func (_LitionScClient *LitionScClientCallerSession) GetAllowedToValidate(chainId *big.Int, batch *big.Int) ([100]common.Address, *big.Int, bool, error) {
-	return _LitionScClient.Contract.GetAllowedToValidate(&_LitionScClient.CallOpts, chainId, batch)
-}
-
-// GetChainDetails is a free data retrieval call binding the contract method 0x79c767d6.
-//
-// Solidity: function getChainDetails(uint256 chainId) constant returns(bool registered, bool active, string endpoint, uint256 totalVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
-func (_LitionScClient *LitionScClientCaller) GetChainDetails(opts *bind.CallOpts, chainId *big.Int) (struct {
-	Registered          bool
-	Active              bool
-	Endpoint            string
-	TotalVesting        *big.Int
-	LastNotaryBlock     *big.Int
-	LastNotaryTimestamp *big.Int
+// Solidity: function getChainDynamicDetails(uint256 chainId) constant returns(bool active, uint256 totalVesting, uint256 validatorsCount, uint256 transactorsCount, uint256 lastValidatorVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
+func (_LitionScClient *LitionScClientCaller) GetChainDynamicDetails(opts *bind.CallOpts, chainId *big.Int) (struct {
+	Active               bool
+	TotalVesting         *big.Int
+	ValidatorsCount      *big.Int
+	TransactorsCount     *big.Int
+	LastValidatorVesting *big.Int
+	LastNotaryBlock      *big.Int
+	LastNotaryTimestamp  *big.Int
 }, error) {
 	ret := new(struct {
-		Registered          bool
-		Active              bool
-		Endpoint            string
-		TotalVesting        *big.Int
-		LastNotaryBlock     *big.Int
-		LastNotaryTimestamp *big.Int
+		Active               bool
+		TotalVesting         *big.Int
+		ValidatorsCount      *big.Int
+		TransactorsCount     *big.Int
+		LastValidatorVesting *big.Int
+		LastNotaryBlock      *big.Int
+		LastNotaryTimestamp  *big.Int
 	})
 	out := ret
-	err := _LitionScClient.contract.Call(opts, out, "getChainDetails", chainId)
+	err := _LitionScClient.contract.Call(opts, out, "getChainDynamicDetails", chainId)
 	return *ret, err
 }
 
-// GetChainDetails is a free data retrieval call binding the contract method 0x79c767d6.
+// GetChainDynamicDetails is a free data retrieval call binding the contract method 0xc660c93e.
 //
-// Solidity: function getChainDetails(uint256 chainId) constant returns(bool registered, bool active, string endpoint, uint256 totalVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
-func (_LitionScClient *LitionScClientSession) GetChainDetails(chainId *big.Int) (struct {
-	Registered          bool
-	Active              bool
-	Endpoint            string
-	TotalVesting        *big.Int
-	LastNotaryBlock     *big.Int
-	LastNotaryTimestamp *big.Int
+// Solidity: function getChainDynamicDetails(uint256 chainId) constant returns(bool active, uint256 totalVesting, uint256 validatorsCount, uint256 transactorsCount, uint256 lastValidatorVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
+func (_LitionScClient *LitionScClientSession) GetChainDynamicDetails(chainId *big.Int) (struct {
+	Active               bool
+	TotalVesting         *big.Int
+	ValidatorsCount      *big.Int
+	TransactorsCount     *big.Int
+	LastValidatorVesting *big.Int
+	LastNotaryBlock      *big.Int
+	LastNotaryTimestamp  *big.Int
 }, error) {
-	return _LitionScClient.Contract.GetChainDetails(&_LitionScClient.CallOpts, chainId)
+	return _LitionScClient.Contract.GetChainDynamicDetails(&_LitionScClient.CallOpts, chainId)
 }
 
-// GetChainDetails is a free data retrieval call binding the contract method 0x79c767d6.
+// GetChainDynamicDetails is a free data retrieval call binding the contract method 0xc660c93e.
 //
-// Solidity: function getChainDetails(uint256 chainId) constant returns(bool registered, bool active, string endpoint, uint256 totalVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
-func (_LitionScClient *LitionScClientCallerSession) GetChainDetails(chainId *big.Int) (struct {
-	Registered          bool
-	Active              bool
-	Endpoint            string
-	TotalVesting        *big.Int
-	LastNotaryBlock     *big.Int
-	LastNotaryTimestamp *big.Int
+// Solidity: function getChainDynamicDetails(uint256 chainId) constant returns(bool active, uint256 totalVesting, uint256 validatorsCount, uint256 transactorsCount, uint256 lastValidatorVesting, uint256 lastNotaryBlock, uint256 lastNotaryTimestamp)
+func (_LitionScClient *LitionScClientCallerSession) GetChainDynamicDetails(chainId *big.Int) (struct {
+	Active               bool
+	TotalVesting         *big.Int
+	ValidatorsCount      *big.Int
+	TransactorsCount     *big.Int
+	LastValidatorVesting *big.Int
+	LastNotaryBlock      *big.Int
+	LastNotaryTimestamp  *big.Int
 }, error) {
-	return _LitionScClient.Contract.GetChainDetails(&_LitionScClient.CallOpts, chainId)
+	return _LitionScClient.Contract.GetChainDynamicDetails(&_LitionScClient.CallOpts, chainId)
 }
 
-// GetLastNotary is a free data retrieval call binding the contract method 0x0ebd0ff7.
+// GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getLastNotary(uint256 chainId) constant returns(uint256 notaryBlock, uint256 notaryTimestamp)
-func (_LitionScClient *LitionScClientCaller) GetLastNotary(opts *bind.CallOpts, chainId *big.Int) (struct {
-	NotaryBlock     *big.Int
-	NotaryTimestamp *big.Int
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+func (_LitionScClient *LitionScClientCaller) GetChainStaticDetails(opts *bind.CallOpts, chainId *big.Int) (struct {
+	Description               string
+	Endpoint                  string
+	Registered                bool
+	MaxNumOfValidators        *big.Int
+	MaxNumOfTransactors       *big.Int
+	InvolvedVestingNotaryCond bool
+	ParticipationNotaryCond   bool
 }, error) {
 	ret := new(struct {
-		NotaryBlock     *big.Int
-		NotaryTimestamp *big.Int
+		Description               string
+		Endpoint                  string
+		Registered                bool
+		MaxNumOfValidators        *big.Int
+		MaxNumOfTransactors       *big.Int
+		InvolvedVestingNotaryCond bool
+		ParticipationNotaryCond   bool
 	})
 	out := ret
-	err := _LitionScClient.contract.Call(opts, out, "getLastNotary", chainId)
+	err := _LitionScClient.contract.Call(opts, out, "getChainStaticDetails", chainId)
 	return *ret, err
 }
 
-// GetLastNotary is a free data retrieval call binding the contract method 0x0ebd0ff7.
+// GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getLastNotary(uint256 chainId) constant returns(uint256 notaryBlock, uint256 notaryTimestamp)
-func (_LitionScClient *LitionScClientSession) GetLastNotary(chainId *big.Int) (struct {
-	NotaryBlock     *big.Int
-	NotaryTimestamp *big.Int
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+func (_LitionScClient *LitionScClientSession) GetChainStaticDetails(chainId *big.Int) (struct {
+	Description               string
+	Endpoint                  string
+	Registered                bool
+	MaxNumOfValidators        *big.Int
+	MaxNumOfTransactors       *big.Int
+	InvolvedVestingNotaryCond bool
+	ParticipationNotaryCond   bool
 }, error) {
-	return _LitionScClient.Contract.GetLastNotary(&_LitionScClient.CallOpts, chainId)
+	return _LitionScClient.Contract.GetChainStaticDetails(&_LitionScClient.CallOpts, chainId)
 }
 
-// GetLastNotary is a free data retrieval call binding the contract method 0x0ebd0ff7.
+// GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getLastNotary(uint256 chainId) constant returns(uint256 notaryBlock, uint256 notaryTimestamp)
-func (_LitionScClient *LitionScClientCallerSession) GetLastNotary(chainId *big.Int) (struct {
-	NotaryBlock     *big.Int
-	NotaryTimestamp *big.Int
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+func (_LitionScClient *LitionScClientCallerSession) GetChainStaticDetails(chainId *big.Int) (struct {
+	Description               string
+	Endpoint                  string
+	Registered                bool
+	MaxNumOfValidators        *big.Int
+	MaxNumOfTransactors       *big.Int
+	InvolvedVestingNotaryCond bool
+	ParticipationNotaryCond   bool
 }, error) {
-	return _LitionScClient.Contract.GetLastNotary(&_LitionScClient.CallOpts, chainId)
+	return _LitionScClient.Contract.GetChainStaticDetails(&_LitionScClient.CallOpts, chainId)
+}
+
+// GetTransactors is a free data retrieval call binding the contract method 0x2d94c932.
+//
+// Solidity: function getTransactors(uint256 chainId, uint256 batch) constant returns(address[100] transactors, uint256 count, bool end)
+func (_LitionScClient *LitionScClientCaller) GetTransactors(opts *bind.CallOpts, chainId *big.Int, batch *big.Int) (struct {
+	Transactors [100]common.Address
+	Count       *big.Int
+	End         bool
+}, error) {
+	ret := new(struct {
+		Transactors [100]common.Address
+		Count       *big.Int
+		End         bool
+	})
+	out := ret
+	err := _LitionScClient.contract.Call(opts, out, "getTransactors", chainId, batch)
+	return *ret, err
+}
+
+// GetTransactors is a free data retrieval call binding the contract method 0x2d94c932.
+//
+// Solidity: function getTransactors(uint256 chainId, uint256 batch) constant returns(address[100] transactors, uint256 count, bool end)
+func (_LitionScClient *LitionScClientSession) GetTransactors(chainId *big.Int, batch *big.Int) (struct {
+	Transactors [100]common.Address
+	Count       *big.Int
+	End         bool
+}, error) {
+	return _LitionScClient.Contract.GetTransactors(&_LitionScClient.CallOpts, chainId, batch)
+}
+
+// GetTransactors is a free data retrieval call binding the contract method 0x2d94c932.
+//
+// Solidity: function getTransactors(uint256 chainId, uint256 batch) constant returns(address[100] transactors, uint256 count, bool end)
+func (_LitionScClient *LitionScClientCallerSession) GetTransactors(chainId *big.Int, batch *big.Int) (struct {
+	Transactors [100]common.Address
+	Count       *big.Int
+	End         bool
+}, error) {
+	return _LitionScClient.Contract.GetTransactors(&_LitionScClient.CallOpts, chainId, batch)
 }
 
 // GetUserDetails is a free data retrieval call binding the contract method 0xc90902cb.
 //
-// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(bool exists, uint256 deposit, bool whitelisted, uint256 vesting, bool mining)
+// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(uint256 deposit, bool whitelisted, uint256 vesting, bool mining, bool prevNotaryMined, bool secondPrevNotaryMined, bool vestingIncreaceReqExist, uint256 vestingReqNotary, uint256 vestingReqValue, bool depositFullWithdrawalReqExist, uint256 depositReqNotary)
 func (_LitionScClient *LitionScClientCaller) GetUserDetails(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (struct {
-	Exists      bool
-	Deposit     *big.Int
-	Whitelisted bool
-	Vesting     *big.Int
-	Mining      bool
+	Deposit                       *big.Int
+	Whitelisted                   bool
+	Vesting                       *big.Int
+	Mining                        bool
+	PrevNotaryMined               bool
+	SecondPrevNotaryMined         bool
+	VestingIncreaceReqExist       bool
+	VestingReqNotary              *big.Int
+	VestingReqValue               *big.Int
+	DepositFullWithdrawalReqExist bool
+	DepositReqNotary              *big.Int
 }, error) {
 	ret := new(struct {
-		Exists      bool
-		Deposit     *big.Int
-		Whitelisted bool
-		Vesting     *big.Int
-		Mining      bool
+		Deposit                       *big.Int
+		Whitelisted                   bool
+		Vesting                       *big.Int
+		Mining                        bool
+		PrevNotaryMined               bool
+		SecondPrevNotaryMined         bool
+		VestingIncreaceReqExist       bool
+		VestingReqNotary              *big.Int
+		VestingReqValue               *big.Int
+		DepositFullWithdrawalReqExist bool
+		DepositReqNotary              *big.Int
 	})
 	out := ret
 	err := _LitionScClient.contract.Call(opts, out, "getUserDetails", chainId, acc)
@@ -380,152 +360,132 @@ func (_LitionScClient *LitionScClientCaller) GetUserDetails(opts *bind.CallOpts,
 
 // GetUserDetails is a free data retrieval call binding the contract method 0xc90902cb.
 //
-// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(bool exists, uint256 deposit, bool whitelisted, uint256 vesting, bool mining)
+// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(uint256 deposit, bool whitelisted, uint256 vesting, bool mining, bool prevNotaryMined, bool secondPrevNotaryMined, bool vestingIncreaceReqExist, uint256 vestingReqNotary, uint256 vestingReqValue, bool depositFullWithdrawalReqExist, uint256 depositReqNotary)
 func (_LitionScClient *LitionScClientSession) GetUserDetails(chainId *big.Int, acc common.Address) (struct {
-	Exists      bool
-	Deposit     *big.Int
-	Whitelisted bool
-	Vesting     *big.Int
-	Mining      bool
+	Deposit                       *big.Int
+	Whitelisted                   bool
+	Vesting                       *big.Int
+	Mining                        bool
+	PrevNotaryMined               bool
+	SecondPrevNotaryMined         bool
+	VestingIncreaceReqExist       bool
+	VestingReqNotary              *big.Int
+	VestingReqValue               *big.Int
+	DepositFullWithdrawalReqExist bool
+	DepositReqNotary              *big.Int
 }, error) {
 	return _LitionScClient.Contract.GetUserDetails(&_LitionScClient.CallOpts, chainId, acc)
 }
 
 // GetUserDetails is a free data retrieval call binding the contract method 0xc90902cb.
 //
-// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(bool exists, uint256 deposit, bool whitelisted, uint256 vesting, bool mining)
+// Solidity: function getUserDetails(uint256 chainId, address acc) constant returns(uint256 deposit, bool whitelisted, uint256 vesting, bool mining, bool prevNotaryMined, bool secondPrevNotaryMined, bool vestingIncreaceReqExist, uint256 vestingReqNotary, uint256 vestingReqValue, bool depositFullWithdrawalReqExist, uint256 depositReqNotary)
 func (_LitionScClient *LitionScClientCallerSession) GetUserDetails(chainId *big.Int, acc common.Address) (struct {
-	Exists      bool
-	Deposit     *big.Int
-	Whitelisted bool
-	Vesting     *big.Int
-	Mining      bool
+	Deposit                       *big.Int
+	Whitelisted                   bool
+	Vesting                       *big.Int
+	Mining                        bool
+	PrevNotaryMined               bool
+	SecondPrevNotaryMined         bool
+	VestingIncreaceReqExist       bool
+	VestingReqNotary              *big.Int
+	VestingReqValue               *big.Int
+	DepositFullWithdrawalReqExist bool
+	DepositReqNotary              *big.Int
 }, error) {
 	return _LitionScClient.Contract.GetUserDetails(&_LitionScClient.CallOpts, chainId, acc)
 }
 
-// GetUserRequests is a free data retrieval call binding the contract method 0x75195b67.
+// GetValidators is a free data retrieval call binding the contract method 0xbff02e20.
 //
-// Solidity: function getUserRequests(uint256 chainId, address acc) constant returns(bool vestingReqExists, uint256 vestingReqTime, uint256 vestingReqNotary, uint256 vestingReqValue, uint256 vestingReqState, uint256 vestingReqControlState, bool depositReqExists, uint256 depositReqTime, uint256 depositReqNotary, uint256 depositReqValue, uint256 depositReqState)
-func (_LitionScClient *LitionScClientCaller) GetUserRequests(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (struct {
-	VestingReqExists       bool
-	VestingReqTime         *big.Int
-	VestingReqNotary       *big.Int
-	VestingReqValue        *big.Int
-	VestingReqState        *big.Int
-	VestingReqControlState *big.Int
-	DepositReqExists       bool
-	DepositReqTime         *big.Int
-	DepositReqNotary       *big.Int
-	DepositReqValue        *big.Int
-	DepositReqState        *big.Int
+// Solidity: function getValidators(uint256 chainId, uint256 batch) constant returns(address[100] validators, uint256 count, bool end)
+func (_LitionScClient *LitionScClientCaller) GetValidators(opts *bind.CallOpts, chainId *big.Int, batch *big.Int) (struct {
+	Validators [100]common.Address
+	Count      *big.Int
+	End        bool
 }, error) {
 	ret := new(struct {
-		VestingReqExists       bool
-		VestingReqTime         *big.Int
-		VestingReqNotary       *big.Int
-		VestingReqValue        *big.Int
-		VestingReqState        *big.Int
-		VestingReqControlState *big.Int
-		DepositReqExists       bool
-		DepositReqTime         *big.Int
-		DepositReqNotary       *big.Int
-		DepositReqValue        *big.Int
-		DepositReqState        *big.Int
+		Validators [100]common.Address
+		Count      *big.Int
+		End        bool
 	})
 	out := ret
-	err := _LitionScClient.contract.Call(opts, out, "getUserRequests", chainId, acc)
+	err := _LitionScClient.contract.Call(opts, out, "getValidators", chainId, batch)
 	return *ret, err
 }
 
-// GetUserRequests is a free data retrieval call binding the contract method 0x75195b67.
+// GetValidators is a free data retrieval call binding the contract method 0xbff02e20.
 //
-// Solidity: function getUserRequests(uint256 chainId, address acc) constant returns(bool vestingReqExists, uint256 vestingReqTime, uint256 vestingReqNotary, uint256 vestingReqValue, uint256 vestingReqState, uint256 vestingReqControlState, bool depositReqExists, uint256 depositReqTime, uint256 depositReqNotary, uint256 depositReqValue, uint256 depositReqState)
-func (_LitionScClient *LitionScClientSession) GetUserRequests(chainId *big.Int, acc common.Address) (struct {
-	VestingReqExists       bool
-	VestingReqTime         *big.Int
-	VestingReqNotary       *big.Int
-	VestingReqValue        *big.Int
-	VestingReqState        *big.Int
-	VestingReqControlState *big.Int
-	DepositReqExists       bool
-	DepositReqTime         *big.Int
-	DepositReqNotary       *big.Int
-	DepositReqValue        *big.Int
-	DepositReqState        *big.Int
+// Solidity: function getValidators(uint256 chainId, uint256 batch) constant returns(address[100] validators, uint256 count, bool end)
+func (_LitionScClient *LitionScClientSession) GetValidators(chainId *big.Int, batch *big.Int) (struct {
+	Validators [100]common.Address
+	Count      *big.Int
+	End        bool
 }, error) {
-	return _LitionScClient.Contract.GetUserRequests(&_LitionScClient.CallOpts, chainId, acc)
+	return _LitionScClient.Contract.GetValidators(&_LitionScClient.CallOpts, chainId, batch)
 }
 
-// GetUserRequests is a free data retrieval call binding the contract method 0x75195b67.
+// GetValidators is a free data retrieval call binding the contract method 0xbff02e20.
 //
-// Solidity: function getUserRequests(uint256 chainId, address acc) constant returns(bool vestingReqExists, uint256 vestingReqTime, uint256 vestingReqNotary, uint256 vestingReqValue, uint256 vestingReqState, uint256 vestingReqControlState, bool depositReqExists, uint256 depositReqTime, uint256 depositReqNotary, uint256 depositReqValue, uint256 depositReqState)
-func (_LitionScClient *LitionScClientCallerSession) GetUserRequests(chainId *big.Int, acc common.Address) (struct {
-	VestingReqExists       bool
-	VestingReqTime         *big.Int
-	VestingReqNotary       *big.Int
-	VestingReqValue        *big.Int
-	VestingReqState        *big.Int
-	VestingReqControlState *big.Int
-	DepositReqExists       bool
-	DepositReqTime         *big.Int
-	DepositReqNotary       *big.Int
-	DepositReqValue        *big.Int
-	DepositReqState        *big.Int
+// Solidity: function getValidators(uint256 chainId, uint256 batch) constant returns(address[100] validators, uint256 count, bool end)
+func (_LitionScClient *LitionScClientCallerSession) GetValidators(chainId *big.Int, batch *big.Int) (struct {
+	Validators [100]common.Address
+	Count      *big.Int
+	End        bool
 }, error) {
-	return _LitionScClient.Contract.GetUserRequests(&_LitionScClient.CallOpts, chainId, acc)
+	return _LitionScClient.Contract.GetValidators(&_LitionScClient.CallOpts, chainId, batch)
 }
 
-// HasDeposited is a free data retrieval call binding the contract method 0x99b1eb2e.
+// IsAllowedToTransact is a free data retrieval call binding the contract method 0x36f3eecb.
 //
-// Solidity: function hasDeposited(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientCaller) HasDeposited(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (bool, error) {
+// Solidity: function isAllowedToTransact(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientCaller) IsAllowedToTransact(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
 	)
 	out := ret0
-	err := _LitionScClient.contract.Call(opts, out, "hasDeposited", chainId, acc)
+	err := _LitionScClient.contract.Call(opts, out, "isAllowedToTransact", chainId, acc)
 	return *ret0, err
 }
 
-// HasDeposited is a free data retrieval call binding the contract method 0x99b1eb2e.
+// IsAllowedToTransact is a free data retrieval call binding the contract method 0x36f3eecb.
 //
-// Solidity: function hasDeposited(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientSession) HasDeposited(chainId *big.Int, acc common.Address) (bool, error) {
-	return _LitionScClient.Contract.HasDeposited(&_LitionScClient.CallOpts, chainId, acc)
+// Solidity: function isAllowedToTransact(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientSession) IsAllowedToTransact(chainId *big.Int, acc common.Address) (bool, error) {
+	return _LitionScClient.Contract.IsAllowedToTransact(&_LitionScClient.CallOpts, chainId, acc)
 }
 
-// HasDeposited is a free data retrieval call binding the contract method 0x99b1eb2e.
+// IsAllowedToTransact is a free data retrieval call binding the contract method 0x36f3eecb.
 //
-// Solidity: function hasDeposited(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientCallerSession) HasDeposited(chainId *big.Int, acc common.Address) (bool, error) {
-	return _LitionScClient.Contract.HasDeposited(&_LitionScClient.CallOpts, chainId, acc)
+// Solidity: function isAllowedToTransact(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientCallerSession) IsAllowedToTransact(chainId *big.Int, acc common.Address) (bool, error) {
+	return _LitionScClient.Contract.IsAllowedToTransact(&_LitionScClient.CallOpts, chainId, acc)
 }
 
-// HasVested is a free data retrieval call binding the contract method 0xda40da76.
+// IsAllowedToValidate is a free data retrieval call binding the contract method 0xb5fc7ef7.
 //
-// Solidity: function hasVested(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientCaller) HasVested(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (bool, error) {
+// Solidity: function isAllowedToValidate(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientCaller) IsAllowedToValidate(opts *bind.CallOpts, chainId *big.Int, acc common.Address) (bool, error) {
 	var (
 		ret0 = new(bool)
 	)
 	out := ret0
-	err := _LitionScClient.contract.Call(opts, out, "hasVested", chainId, acc)
+	err := _LitionScClient.contract.Call(opts, out, "isAllowedToValidate", chainId, acc)
 	return *ret0, err
 }
 
-// HasVested is a free data retrieval call binding the contract method 0xda40da76.
+// IsAllowedToValidate is a free data retrieval call binding the contract method 0xb5fc7ef7.
 //
-// Solidity: function hasVested(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientSession) HasVested(chainId *big.Int, acc common.Address) (bool, error) {
-	return _LitionScClient.Contract.HasVested(&_LitionScClient.CallOpts, chainId, acc)
+// Solidity: function isAllowedToValidate(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientSession) IsAllowedToValidate(chainId *big.Int, acc common.Address) (bool, error) {
+	return _LitionScClient.Contract.IsAllowedToValidate(&_LitionScClient.CallOpts, chainId, acc)
 }
 
-// HasVested is a free data retrieval call binding the contract method 0xda40da76.
+// IsAllowedToValidate is a free data retrieval call binding the contract method 0xb5fc7ef7.
 //
-// Solidity: function hasVested(uint256 chainId, address acc) constant returns(bool)
-func (_LitionScClient *LitionScClientCallerSession) HasVested(chainId *big.Int, acc common.Address) (bool, error) {
-	return _LitionScClient.Contract.HasVested(&_LitionScClient.CallOpts, chainId, acc)
+// Solidity: function isAllowedToValidate(uint256 chainId, address acc) constant returns(bool)
+func (_LitionScClient *LitionScClientCallerSession) IsAllowedToValidate(chainId *big.Int, acc common.Address) (bool, error) {
+	return _LitionScClient.Contract.IsAllowedToValidate(&_LitionScClient.CallOpts, chainId, acc)
 }
 
 // NextId is a free data retrieval call binding the contract method 0x61b8ce8c.
@@ -554,46 +514,25 @@ func (_LitionScClient *LitionScClientCallerSession) NextId() (*big.Int, error) {
 	return _LitionScClient.Contract.NextId(&_LitionScClient.CallOpts)
 }
 
-// CancelDepositInChain is a paid mutator transaction binding the contract method 0xa1a906e0.
+// AdvancedTestNotary is a paid mutator transaction binding the contract method 0xf1e0d9cf.
 //
-// Solidity: function cancelDepositInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactor) CancelDepositInChain(opts *bind.TransactOpts, chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "cancelDepositInChain", chainId)
+// Solidity: function advancedTestNotary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint256 signaturesCount, uint256 signaturesVesting) returns()
+func (_LitionScClient *LitionScClientTransactor) AdvancedTestNotary(opts *bind.TransactOpts, chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, signaturesCount *big.Int, signaturesVesting *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.contract.Transact(opts, "advancedTestNotary", chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, signaturesCount, signaturesVesting)
 }
 
-// CancelDepositInChain is a paid mutator transaction binding the contract method 0xa1a906e0.
+// AdvancedTestNotary is a paid mutator transaction binding the contract method 0xf1e0d9cf.
 //
-// Solidity: function cancelDepositInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientSession) CancelDepositInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.CancelDepositInChain(&_LitionScClient.TransactOpts, chainId)
+// Solidity: function advancedTestNotary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint256 signaturesCount, uint256 signaturesVesting) returns()
+func (_LitionScClient *LitionScClientSession) AdvancedTestNotary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, signaturesCount *big.Int, signaturesVesting *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.Contract.AdvancedTestNotary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, signaturesCount, signaturesVesting)
 }
 
-// CancelDepositInChain is a paid mutator transaction binding the contract method 0xa1a906e0.
+// AdvancedTestNotary is a paid mutator transaction binding the contract method 0xf1e0d9cf.
 //
-// Solidity: function cancelDepositInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactorSession) CancelDepositInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.CancelDepositInChain(&_LitionScClient.TransactOpts, chainId)
-}
-
-// CancelVestInChain is a paid mutator transaction binding the contract method 0x449c067f.
-//
-// Solidity: function cancelVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactor) CancelVestInChain(opts *bind.TransactOpts, chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "cancelVestInChain", chainId)
-}
-
-// CancelVestInChain is a paid mutator transaction binding the contract method 0x449c067f.
-//
-// Solidity: function cancelVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientSession) CancelVestInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.CancelVestInChain(&_LitionScClient.TransactOpts, chainId)
-}
-
-// CancelVestInChain is a paid mutator transaction binding the contract method 0x449c067f.
-//
-// Solidity: function cancelVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactorSession) CancelVestInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.CancelVestInChain(&_LitionScClient.TransactOpts, chainId)
+// Solidity: function advancedTestNotary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint256 signaturesCount, uint256 signaturesVesting) returns()
+func (_LitionScClient *LitionScClientTransactorSession) AdvancedTestNotary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, signaturesCount *big.Int, signaturesVesting *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.Contract.AdvancedTestNotary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, signaturesCount, signaturesVesting)
 }
 
 // ConfirmDepositWithdrawalFromChain is a paid mutator transaction binding the contract method 0x81577959.
@@ -617,67 +556,67 @@ func (_LitionScClient *LitionScClientTransactorSession) ConfirmDepositWithdrawal
 	return _LitionScClient.Contract.ConfirmDepositWithdrawalFromChain(&_LitionScClient.TransactOpts, chainId)
 }
 
-// ConfirmVestInChain is a paid mutator transaction binding the contract method 0x13456851.
+// ConfirmVestIncreaseInChain is a paid mutator transaction binding the contract method 0x14356baf.
 //
-// Solidity: function confirmVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactor) ConfirmVestInChain(opts *bind.TransactOpts, chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "confirmVestInChain", chainId)
+// Solidity: function confirmVestIncreaseInChain(uint256 chainId) returns()
+func (_LitionScClient *LitionScClientTransactor) ConfirmVestIncreaseInChain(opts *bind.TransactOpts, chainId *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.contract.Transact(opts, "confirmVestIncreaseInChain", chainId)
 }
 
-// ConfirmVestInChain is a paid mutator transaction binding the contract method 0x13456851.
+// ConfirmVestIncreaseInChain is a paid mutator transaction binding the contract method 0x14356baf.
 //
-// Solidity: function confirmVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientSession) ConfirmVestInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.ConfirmVestInChain(&_LitionScClient.TransactOpts, chainId)
+// Solidity: function confirmVestIncreaseInChain(uint256 chainId) returns()
+func (_LitionScClient *LitionScClientSession) ConfirmVestIncreaseInChain(chainId *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.Contract.ConfirmVestIncreaseInChain(&_LitionScClient.TransactOpts, chainId)
 }
 
-// ConfirmVestInChain is a paid mutator transaction binding the contract method 0x13456851.
+// ConfirmVestIncreaseInChain is a paid mutator transaction binding the contract method 0x14356baf.
 //
-// Solidity: function confirmVestInChain(uint256 chainId) returns()
-func (_LitionScClient *LitionScClientTransactorSession) ConfirmVestInChain(chainId *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.ConfirmVestInChain(&_LitionScClient.TransactOpts, chainId)
-}
-
-// Notary is a paid mutator transaction binding the contract method 0x6cd22ed8.
-//
-// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] miners, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
-func (_LitionScClient *LitionScClientTransactor) Notary(opts *bind.TransactOpts, chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, miners []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "notary", chainId, notaryStartBlock, notaryEndBlock, miners, blocksMined, users, userGas, largestTx, v, r, s)
+// Solidity: function confirmVestIncreaseInChain(uint256 chainId) returns()
+func (_LitionScClient *LitionScClientTransactorSession) ConfirmVestIncreaseInChain(chainId *big.Int) (*types.Transaction, error) {
+	return _LitionScClient.Contract.ConfirmVestIncreaseInChain(&_LitionScClient.TransactOpts, chainId)
 }
 
 // Notary is a paid mutator transaction binding the contract method 0x6cd22ed8.
 //
-// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] miners, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
-func (_LitionScClient *LitionScClientSession) Notary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, miners []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
-	return _LitionScClient.Contract.Notary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, miners, blocksMined, users, userGas, largestTx, v, r, s)
+// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
+func (_LitionScClient *LitionScClientTransactor) Notary(opts *bind.TransactOpts, chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
+	return _LitionScClient.contract.Transact(opts, "notary", chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, v, r, s)
 }
 
 // Notary is a paid mutator transaction binding the contract method 0x6cd22ed8.
 //
-// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] miners, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
-func (_LitionScClient *LitionScClientTransactorSession) Notary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, miners []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
-	return _LitionScClient.Contract.Notary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, miners, blocksMined, users, userGas, largestTx, v, r, s)
+// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
+func (_LitionScClient *LitionScClientSession) Notary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
+	return _LitionScClient.Contract.Notary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, v, r, s)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0xcf883380.
+// Notary is a paid mutator transaction binding the contract method 0x6cd22ed8.
 //
-// Solidity: function registerChain(string description, address validator, uint96 vesting, uint96 deposit, string initEndpoint) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientTransactor) RegisterChain(opts *bind.TransactOpts, description string, validator common.Address, vesting *big.Int, deposit *big.Int, initEndpoint string) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "registerChain", description, validator, vesting, deposit, initEndpoint)
+// Solidity: function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] validators, uint32[] blocksMined, address[] users, uint32[] userGas, uint32 largestTx, uint8[] v, bytes32[] r, bytes32[] s) returns()
+func (_LitionScClient *LitionScClientTransactorSession) Notary(chainId *big.Int, notaryStartBlock *big.Int, notaryEndBlock *big.Int, validators []common.Address, blocksMined []uint32, users []common.Address, userGas []uint32, largestTx uint32, v []uint8, r [][32]byte, s [][32]byte) (*types.Transaction, error) {
+	return _LitionScClient.Contract.Notary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, v, r, s)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0xcf883380.
+// RegisterChain is a paid mutator transaction binding the contract method 0x70ea97ea.
 //
-// Solidity: function registerChain(string description, address validator, uint96 vesting, uint96 deposit, string initEndpoint) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientSession) RegisterChain(description string, validator common.Address, vesting *big.Int, deposit *big.Int, initEndpoint string) (*types.Transaction, error) {
-	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, validator, vesting, deposit, initEndpoint)
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 vesting, uint256 deposit, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientTransactor) RegisterChain(opts *bind.TransactOpts, description string, initEndpoint string, chainValidator common.Address, vesting *big.Int, deposit *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.contract.Transact(opts, "registerChain", description, initEndpoint, chainValidator, vesting, deposit, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0xcf883380.
+// RegisterChain is a paid mutator transaction binding the contract method 0x70ea97ea.
 //
-// Solidity: function registerChain(string description, address validator, uint96 vesting, uint96 deposit, string initEndpoint) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientTransactorSession) RegisterChain(description string, validator common.Address, vesting *big.Int, deposit *big.Int, initEndpoint string) (*types.Transaction, error) {
-	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, validator, vesting, deposit, initEndpoint)
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 vesting, uint256 deposit, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, vesting *big.Int, deposit *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, vesting, deposit, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
+}
+
+// RegisterChain is a paid mutator transaction binding the contract method 0x70ea97ea.
+//
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 vesting, uint256 deposit, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientTransactorSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, vesting *big.Int, deposit *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, vesting, deposit, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
 }
 
 // RequestDepositInChain is a paid mutator transaction binding the contract method 0x9e9a4db9.
@@ -764,30 +703,9 @@ func (_LitionScClient *LitionScClientTransactorSession) StopMining(chainId *big.
 	return _LitionScClient.Contract.StopMining(&_LitionScClient.TransactOpts, chainId)
 }
 
-// TestNotary is a paid mutator transaction binding the contract method 0x83f2d9d2.
-//
-// Solidity: function testNotary(uint256 chainId, uint256 notaryBlockNo) returns()
-func (_LitionScClient *LitionScClientTransactor) TestNotary(opts *bind.TransactOpts, chainId *big.Int, notaryBlockNo *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "testNotary", chainId, notaryBlockNo)
-}
-
-// TestNotary is a paid mutator transaction binding the contract method 0x83f2d9d2.
-//
-// Solidity: function testNotary(uint256 chainId, uint256 notaryBlockNo) returns()
-func (_LitionScClient *LitionScClientSession) TestNotary(chainId *big.Int, notaryBlockNo *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.TestNotary(&_LitionScClient.TransactOpts, chainId, notaryBlockNo)
-}
-
-// TestNotary is a paid mutator transaction binding the contract method 0x83f2d9d2.
-//
-// Solidity: function testNotary(uint256 chainId, uint256 notaryBlockNo) returns()
-func (_LitionScClient *LitionScClientTransactorSession) TestNotary(chainId *big.Int, notaryBlockNo *big.Int) (*types.Transaction, error) {
-	return _LitionScClient.Contract.TestNotary(&_LitionScClient.TransactOpts, chainId, notaryBlockNo)
-}
-
-// LitionScClientAcceptedVestInChainIterator is returned from FilterAcceptedVestInChain and is used to iterate over the raw logs and unpacked data for AcceptedVestInChain events raised by the LitionScClient contract.
-type LitionScClientAcceptedVestInChainIterator struct {
-	Event *LitionScClientAcceptedVestInChain // Event containing the contract specifics and raw log
+// LitionScClientAccountMiningIterator is returned from FilterAccountMining and is used to iterate over the raw logs and unpacked data for AccountMining events raised by the LitionScClient contract.
+type LitionScClientAccountMiningIterator struct {
+	Event *LitionScClientAccountMining // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -801,7 +719,7 @@ type LitionScClientAcceptedVestInChainIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientAcceptedVestInChainIterator) Next() bool {
+func (it *LitionScClientAccountMiningIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -810,7 +728,7 @@ func (it *LitionScClientAcceptedVestInChainIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientAcceptedVestInChain)
+			it.Event = new(LitionScClientAccountMining)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -825,7 +743,7 @@ func (it *LitionScClientAcceptedVestInChainIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientAcceptedVestInChain)
+		it.Event = new(LitionScClientAccountMining)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -841,30 +759,29 @@ func (it *LitionScClientAcceptedVestInChainIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientAcceptedVestInChainIterator) Error() error {
+func (it *LitionScClientAccountMiningIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientAcceptedVestInChainIterator) Close() error {
+func (it *LitionScClientAccountMiningIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientAcceptedVestInChain represents a AcceptedVestInChain event raised by the LitionScClient contract.
-type LitionScClientAcceptedVestInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Vesting      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
+// LitionScClientAccountMining represents a AccountMining event raised by the LitionScClient contract.
+type LitionScClientAccountMining struct {
+	ChainId *big.Int
+	Account common.Address
+	Mining  bool
+	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterAcceptedVestInChain is a free log retrieval operation binding the contract event 0x00547b633d4da14c6f2e748a506f553393a70da4e5cdd6cb304865b140f92f6c.
+// FilterAccountMining is a free log retrieval operation binding the contract event 0xbdcecfacc87dc76e8dd0ce9ec36aafac83c67468e83445dac5e316e8a60824cb.
 //
-// Solidity: event AcceptedVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterAcceptedVestInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientAcceptedVestInChainIterator, error) {
+// Solidity: event AccountMining(uint256 indexed chainId, address indexed account, bool mining)
+func (_LitionScClient *LitionScClientFilterer) FilterAccountMining(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientAccountMiningIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -875,17 +792,17 @@ func (_LitionScClient *LitionScClientFilterer) FilterAcceptedVestInChain(opts *b
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "AcceptedVestInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "AccountMining", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientAcceptedVestInChainIterator{contract: _LitionScClient.contract, event: "AcceptedVestInChain", logs: logs, sub: sub}, nil
+	return &LitionScClientAccountMiningIterator{contract: _LitionScClient.contract, event: "AccountMining", logs: logs, sub: sub}, nil
 }
 
-// WatchAcceptedVestInChain is a free log subscription operation binding the contract event 0x00547b633d4da14c6f2e748a506f553393a70da4e5cdd6cb304865b140f92f6c.
+// WatchAccountMining is a free log subscription operation binding the contract event 0xbdcecfacc87dc76e8dd0ce9ec36aafac83c67468e83445dac5e316e8a60824cb.
 //
-// Solidity: event AcceptedVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchAcceptedVestInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientAcceptedVestInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event AccountMining(uint256 indexed chainId, address indexed account, bool mining)
+func (_LitionScClient *LitionScClientFilterer) WatchAccountMining(opts *bind.WatchOpts, sink chan<- *LitionScClientAccountMining, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -896,7 +813,7 @@ func (_LitionScClient *LitionScClientFilterer) WatchAcceptedVestInChain(opts *bi
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "AcceptedVestInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "AccountMining", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
@@ -906,8 +823,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchAcceptedVestInChain(opts *bi
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientAcceptedVestInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "AcceptedVestInChain", log); err != nil {
+				event := new(LitionScClientAccountMining)
+				if err := _LitionScClient.contract.UnpackLog(event, "AccountMining", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -928,20 +845,20 @@ func (_LitionScClient *LitionScClientFilterer) WatchAcceptedVestInChain(opts *bi
 	}), nil
 }
 
-// ParseAcceptedVestInChain is a log parse operation binding the contract event 0x00547b633d4da14c6f2e748a506f553393a70da4e5cdd6cb304865b140f92f6c.
+// ParseAccountMining is a log parse operation binding the contract event 0xbdcecfacc87dc76e8dd0ce9ec36aafac83c67468e83445dac5e316e8a60824cb.
 //
-// Solidity: event AcceptedVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseAcceptedVestInChain(log types.Log) (*LitionScClientAcceptedVestInChain, error) {
-	event := new(LitionScClientAcceptedVestInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "AcceptedVestInChain", log); err != nil {
+// Solidity: event AccountMining(uint256 indexed chainId, address indexed account, bool mining)
+func (_LitionScClient *LitionScClientFilterer) ParseAccountMining(log types.Log) (*LitionScClientAccountMining, error) {
+	event := new(LitionScClientAccountMining)
+	if err := _LitionScClient.contract.UnpackLog(event, "AccountMining", log); err != nil {
 		return nil, err
 	}
 	return event, nil
 }
 
-// LitionScClientCancelDepositInChainIterator is returned from FilterCancelDepositInChain and is used to iterate over the raw logs and unpacked data for CancelDepositInChain events raised by the LitionScClient contract.
-type LitionScClientCancelDepositInChainIterator struct {
-	Event *LitionScClientCancelDepositInChain // Event containing the contract specifics and raw log
+// LitionScClientAccountWhitelistIterator is returned from FilterAccountWhitelist and is used to iterate over the raw logs and unpacked data for AccountWhitelist events raised by the LitionScClient contract.
+type LitionScClientAccountWhitelistIterator struct {
+	Event *LitionScClientAccountWhitelist // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -955,7 +872,7 @@ type LitionScClientCancelDepositInChainIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientCancelDepositInChainIterator) Next() bool {
+func (it *LitionScClientAccountWhitelistIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -964,7 +881,7 @@ func (it *LitionScClientCancelDepositInChainIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientCancelDepositInChain)
+			it.Event = new(LitionScClientAccountWhitelist)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -979,7 +896,7 @@ func (it *LitionScClientCancelDepositInChainIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientCancelDepositInChain)
+		it.Event = new(LitionScClientAccountWhitelist)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -995,645 +912,29 @@ func (it *LitionScClientCancelDepositInChainIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientCancelDepositInChainIterator) Error() error {
+func (it *LitionScClientAccountWhitelistIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientCancelDepositInChainIterator) Close() error {
+func (it *LitionScClientAccountWhitelistIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientCancelDepositInChain represents a CancelDepositInChain event raised by the LitionScClient contract.
-type LitionScClientCancelDepositInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Deposit      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
-}
-
-// FilterCancelDepositInChain is a free log retrieval operation binding the contract event 0x9e6b1e30d746be09c6f5cf9e8ec4c7bf584bfe1308d70b39a097363e118814e5.
-//
-// Solidity: event CancelDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterCancelDepositInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientCancelDepositInChainIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "CancelDepositInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientCancelDepositInChainIterator{contract: _LitionScClient.contract, event: "CancelDepositInChain", logs: logs, sub: sub}, nil
-}
-
-// WatchCancelDepositInChain is a free log subscription operation binding the contract event 0x9e6b1e30d746be09c6f5cf9e8ec4c7bf584bfe1308d70b39a097363e118814e5.
-//
-// Solidity: event CancelDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchCancelDepositInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientCancelDepositInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "CancelDepositInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientCancelDepositInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "CancelDepositInChain", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseCancelDepositInChain is a log parse operation binding the contract event 0x9e6b1e30d746be09c6f5cf9e8ec4c7bf584bfe1308d70b39a097363e118814e5.
-//
-// Solidity: event CancelDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseCancelDepositInChain(log types.Log) (*LitionScClientCancelDepositInChain, error) {
-	event := new(LitionScClientCancelDepositInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "CancelDepositInChain", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientCancelVestInChainIterator is returned from FilterCancelVestInChain and is used to iterate over the raw logs and unpacked data for CancelVestInChain events raised by the LitionScClient contract.
-type LitionScClientCancelVestInChainIterator struct {
-	Event *LitionScClientCancelVestInChain // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientCancelVestInChainIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientCancelVestInChain)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientCancelVestInChain)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientCancelVestInChainIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientCancelVestInChainIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientCancelVestInChain represents a CancelVestInChain event raised by the LitionScClient contract.
-type LitionScClientCancelVestInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Vesting      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
-}
-
-// FilterCancelVestInChain is a free log retrieval operation binding the contract event 0x698f91699fc921ec104a854863c577f1d32e8d48e41eac966924cbbdae212fea.
-//
-// Solidity: event CancelVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterCancelVestInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientCancelVestInChainIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "CancelVestInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientCancelVestInChainIterator{contract: _LitionScClient.contract, event: "CancelVestInChain", logs: logs, sub: sub}, nil
-}
-
-// WatchCancelVestInChain is a free log subscription operation binding the contract event 0x698f91699fc921ec104a854863c577f1d32e8d48e41eac966924cbbdae212fea.
-//
-// Solidity: event CancelVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchCancelVestInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientCancelVestInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "CancelVestInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientCancelVestInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "CancelVestInChain", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseCancelVestInChain is a log parse operation binding the contract event 0x698f91699fc921ec104a854863c577f1d32e8d48e41eac966924cbbdae212fea.
-//
-// Solidity: event CancelVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseCancelVestInChain(log types.Log) (*LitionScClientCancelVestInChain, error) {
-	event := new(LitionScClientCancelVestInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "CancelVestInChain", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientConfirmDepositInChainIterator is returned from FilterConfirmDepositInChain and is used to iterate over the raw logs and unpacked data for ConfirmDepositInChain events raised by the LitionScClient contract.
-type LitionScClientConfirmDepositInChainIterator struct {
-	Event *LitionScClientConfirmDepositInChain // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientConfirmDepositInChainIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientConfirmDepositInChain)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientConfirmDepositInChain)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientConfirmDepositInChainIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientConfirmDepositInChainIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientConfirmDepositInChain represents a ConfirmDepositInChain event raised by the LitionScClient contract.
-type LitionScClientConfirmDepositInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Deposit      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
-}
-
-// FilterConfirmDepositInChain is a free log retrieval operation binding the contract event 0x339a7256b6e5032769b6cee82c769df79aefc6215244052d987decc224251499.
-//
-// Solidity: event ConfirmDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterConfirmDepositInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientConfirmDepositInChainIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "ConfirmDepositInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientConfirmDepositInChainIterator{contract: _LitionScClient.contract, event: "ConfirmDepositInChain", logs: logs, sub: sub}, nil
-}
-
-// WatchConfirmDepositInChain is a free log subscription operation binding the contract event 0x339a7256b6e5032769b6cee82c769df79aefc6215244052d987decc224251499.
-//
-// Solidity: event ConfirmDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchConfirmDepositInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientConfirmDepositInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "ConfirmDepositInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientConfirmDepositInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "ConfirmDepositInChain", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseConfirmDepositInChain is a log parse operation binding the contract event 0x339a7256b6e5032769b6cee82c769df79aefc6215244052d987decc224251499.
-//
-// Solidity: event ConfirmDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseConfirmDepositInChain(log types.Log) (*LitionScClientConfirmDepositInChain, error) {
-	event := new(LitionScClientConfirmDepositInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "ConfirmDepositInChain", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientConfirmVestInChainIterator is returned from FilterConfirmVestInChain and is used to iterate over the raw logs and unpacked data for ConfirmVestInChain events raised by the LitionScClient contract.
-type LitionScClientConfirmVestInChainIterator struct {
-	Event *LitionScClientConfirmVestInChain // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientConfirmVestInChainIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientConfirmVestInChain)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientConfirmVestInChain)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientConfirmVestInChainIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientConfirmVestInChainIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientConfirmVestInChain represents a ConfirmVestInChain event raised by the LitionScClient contract.
-type LitionScClientConfirmVestInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Vesting      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
-}
-
-// FilterConfirmVestInChain is a free log retrieval operation binding the contract event 0xb5aaacabfddd3428a7e8b351250df8f590b10b3eb0709a08223d2730aa110732.
-//
-// Solidity: event ConfirmVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterConfirmVestInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientConfirmVestInChainIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "ConfirmVestInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientConfirmVestInChainIterator{contract: _LitionScClient.contract, event: "ConfirmVestInChain", logs: logs, sub: sub}, nil
-}
-
-// WatchConfirmVestInChain is a free log subscription operation binding the contract event 0xb5aaacabfddd3428a7e8b351250df8f590b10b3eb0709a08223d2730aa110732.
-//
-// Solidity: event ConfirmVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchConfirmVestInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientConfirmVestInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "ConfirmVestInChain", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientConfirmVestInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "ConfirmVestInChain", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseConfirmVestInChain is a log parse operation binding the contract event 0xb5aaacabfddd3428a7e8b351250df8f590b10b3eb0709a08223d2730aa110732.
-//
-// Solidity: event ConfirmVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseConfirmVestInChain(log types.Log) (*LitionScClientConfirmVestInChain, error) {
-	event := new(LitionScClientConfirmVestInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "ConfirmVestInChain", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientForceWithdrawDepositIterator is returned from FilterForceWithdrawDeposit and is used to iterate over the raw logs and unpacked data for ForceWithdrawDeposit events raised by the LitionScClient contract.
-type LitionScClientForceWithdrawDepositIterator struct {
-	Event *LitionScClientForceWithdrawDeposit // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientForceWithdrawDepositIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientForceWithdrawDeposit)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientForceWithdrawDeposit)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientForceWithdrawDepositIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientForceWithdrawDepositIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientForceWithdrawDeposit represents a ForceWithdrawDeposit event raised by the LitionScClient contract.
-type LitionScClientForceWithdrawDeposit struct {
+// LitionScClientAccountWhitelist represents a AccountWhitelist event raised by the LitionScClient contract.
+type LitionScClientAccountWhitelist struct {
 	ChainId   *big.Int
 	Account   common.Address
-	Timestamp *big.Int
+	Whitelist bool
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterForceWithdrawDeposit is a free log retrieval operation binding the contract event 0x09ddb46db0b11a56fa7611442b214b389d5479513714d4f5c596cdd62b39a59c.
+// FilterAccountWhitelist is a free log retrieval operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
 //
-// Solidity: event ForceWithdrawDeposit(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterForceWithdrawDeposit(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientForceWithdrawDepositIterator, error) {
+// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) FilterAccountWhitelist(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientAccountWhitelistIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -1644,17 +945,17 @@ func (_LitionScClient *LitionScClientFilterer) FilterForceWithdrawDeposit(opts *
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "ForceWithdrawDeposit", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "AccountWhitelist", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientForceWithdrawDepositIterator{contract: _LitionScClient.contract, event: "ForceWithdrawDeposit", logs: logs, sub: sub}, nil
+	return &LitionScClientAccountWhitelistIterator{contract: _LitionScClient.contract, event: "AccountWhitelist", logs: logs, sub: sub}, nil
 }
 
-// WatchForceWithdrawDeposit is a free log subscription operation binding the contract event 0x09ddb46db0b11a56fa7611442b214b389d5479513714d4f5c596cdd62b39a59c.
+// WatchAccountWhitelist is a free log subscription operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
 //
-// Solidity: event ForceWithdrawDeposit(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawDeposit(opts *bind.WatchOpts, sink chan<- *LitionScClientForceWithdrawDeposit, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelist(opts *bind.WatchOpts, sink chan<- *LitionScClientAccountWhitelist, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -1665,7 +966,7 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawDeposit(opts *b
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "ForceWithdrawDeposit", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "AccountWhitelist", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1675,8 +976,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawDeposit(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientForceWithdrawDeposit)
-				if err := _LitionScClient.contract.UnpackLog(event, "ForceWithdrawDeposit", log); err != nil {
+				event := new(LitionScClientAccountWhitelist)
+				if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelist", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1697,20 +998,20 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawDeposit(opts *b
 	}), nil
 }
 
-// ParseForceWithdrawDeposit is a log parse operation binding the contract event 0x09ddb46db0b11a56fa7611442b214b389d5479513714d4f5c596cdd62b39a59c.
+// ParseAccountWhitelist is a log parse operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
 //
-// Solidity: event ForceWithdrawDeposit(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseForceWithdrawDeposit(log types.Log) (*LitionScClientForceWithdrawDeposit, error) {
-	event := new(LitionScClientForceWithdrawDeposit)
-	if err := _LitionScClient.contract.UnpackLog(event, "ForceWithdrawDeposit", log); err != nil {
+// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) ParseAccountWhitelist(log types.Log) (*LitionScClientAccountWhitelist, error) {
+	event := new(LitionScClientAccountWhitelist)
+	if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelist", log); err != nil {
 		return nil, err
 	}
 	return event, nil
 }
 
-// LitionScClientForceWithdrawVestingIterator is returned from FilterForceWithdrawVesting and is used to iterate over the raw logs and unpacked data for ForceWithdrawVesting events raised by the LitionScClient contract.
-type LitionScClientForceWithdrawVestingIterator struct {
-	Event *LitionScClientForceWithdrawVesting // Event containing the contract specifics and raw log
+// LitionScClientDepositInChainIterator is returned from FilterDepositInChain and is used to iterate over the raw logs and unpacked data for DepositInChain events raised by the LitionScClient contract.
+type LitionScClientDepositInChainIterator struct {
+	Event *LitionScClientDepositInChain // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1724,7 +1025,7 @@ type LitionScClientForceWithdrawVestingIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientForceWithdrawVestingIterator) Next() bool {
+func (it *LitionScClientDepositInChainIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1733,7 +1034,7 @@ func (it *LitionScClientForceWithdrawVestingIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientForceWithdrawVesting)
+			it.Event = new(LitionScClientDepositInChain)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1748,7 +1049,7 @@ func (it *LitionScClientForceWithdrawVestingIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientForceWithdrawVesting)
+		it.Event = new(LitionScClientDepositInChain)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1764,29 +1065,31 @@ func (it *LitionScClientForceWithdrawVestingIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientForceWithdrawVestingIterator) Error() error {
+func (it *LitionScClientDepositInChainIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientForceWithdrawVestingIterator) Close() error {
+func (it *LitionScClientDepositInChainIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientForceWithdrawVesting represents a ForceWithdrawVesting event raised by the LitionScClient contract.
-type LitionScClientForceWithdrawVesting struct {
-	ChainId   *big.Int
-	Account   common.Address
-	Timestamp *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+// LitionScClientDepositInChain represents a DepositInChain event raised by the LitionScClient contract.
+type LitionScClientDepositInChain struct {
+	ChainId         *big.Int
+	Account         common.Address
+	Deposit         *big.Int
+	LastNotaryBlock *big.Int
+	Confirmed       bool
+	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterForceWithdrawVesting is a free log retrieval operation binding the contract event 0xa3384ea61d5ab8755c01442bce838b3b1235b6f18e294620c2bc49de0073854f.
+// FilterDepositInChain is a free log retrieval operation binding the contract event 0xe56ded5a257157adb0d590ebbb8ca76f1e27d8df7dc2d7c42ea40e2269b634b4.
 //
-// Solidity: event ForceWithdrawVesting(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterForceWithdrawVesting(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientForceWithdrawVestingIterator, error) {
+// Solidity: event DepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) FilterDepositInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientDepositInChainIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -1797,17 +1100,17 @@ func (_LitionScClient *LitionScClientFilterer) FilterForceWithdrawVesting(opts *
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "ForceWithdrawVesting", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "DepositInChain", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientForceWithdrawVestingIterator{contract: _LitionScClient.contract, event: "ForceWithdrawVesting", logs: logs, sub: sub}, nil
+	return &LitionScClientDepositInChainIterator{contract: _LitionScClient.contract, event: "DepositInChain", logs: logs, sub: sub}, nil
 }
 
-// WatchForceWithdrawVesting is a free log subscription operation binding the contract event 0xa3384ea61d5ab8755c01442bce838b3b1235b6f18e294620c2bc49de0073854f.
+// WatchDepositInChain is a free log subscription operation binding the contract event 0xe56ded5a257157adb0d590ebbb8ca76f1e27d8df7dc2d7c42ea40e2269b634b4.
 //
-// Solidity: event ForceWithdrawVesting(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawVesting(opts *bind.WatchOpts, sink chan<- *LitionScClientForceWithdrawVesting, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event DepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) WatchDepositInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientDepositInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -1818,7 +1121,7 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawVesting(opts *b
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "ForceWithdrawVesting", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "DepositInChain", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1828,8 +1131,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawVesting(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientForceWithdrawVesting)
-				if err := _LitionScClient.contract.UnpackLog(event, "ForceWithdrawVesting", log); err != nil {
+				event := new(LitionScClientDepositInChain)
+				if err := _LitionScClient.contract.UnpackLog(event, "DepositInChain", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1850,12 +1153,12 @@ func (_LitionScClient *LitionScClientFilterer) WatchForceWithdrawVesting(opts *b
 	}), nil
 }
 
-// ParseForceWithdrawVesting is a log parse operation binding the contract event 0xa3384ea61d5ab8755c01442bce838b3b1235b6f18e294620c2bc49de0073854f.
+// ParseDepositInChain is a log parse operation binding the contract event 0xe56ded5a257157adb0d590ebbb8ca76f1e27d8df7dc2d7c42ea40e2269b634b4.
 //
-// Solidity: event ForceWithdrawVesting(uint256 indexed chainId, address indexed account, uint256 timestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseForceWithdrawVesting(log types.Log) (*LitionScClientForceWithdrawVesting, error) {
-	event := new(LitionScClientForceWithdrawVesting)
-	if err := _LitionScClient.contract.UnpackLog(event, "ForceWithdrawVesting", log); err != nil {
+// Solidity: event DepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) ParseDepositInChain(log types.Log) (*LitionScClientDepositInChain, error) {
+	event := new(LitionScClientDepositInChain)
+	if err := _LitionScClient.contract.UnpackLog(event, "DepositInChain", log); err != nil {
 		return nil, err
 	}
 	return event, nil
@@ -1996,9 +1299,9 @@ func (_LitionScClient *LitionScClientFilterer) ParseNewChain(log types.Log) (*Li
 	return event, nil
 }
 
-// LitionScClientRequestDepositInChainIterator is returned from FilterRequestDepositInChain and is used to iterate over the raw logs and unpacked data for RequestDepositInChain events raised by the LitionScClient contract.
-type LitionScClientRequestDepositInChainIterator struct {
-	Event *LitionScClientRequestDepositInChain // Event containing the contract specifics and raw log
+// LitionScClientNotaryIterator is returned from FilterNotary and is used to iterate over the raw logs and unpacked data for Notary events raised by the LitionScClient contract.
+type LitionScClientNotaryIterator struct {
+	Event *LitionScClientNotary // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2012,7 +1315,7 @@ type LitionScClientRequestDepositInChainIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientRequestDepositInChainIterator) Next() bool {
+func (it *LitionScClientNotaryIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -2021,7 +1324,7 @@ func (it *LitionScClientRequestDepositInChainIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientRequestDepositInChain)
+			it.Event = new(LitionScClientNotary)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2036,7 +1339,7 @@ func (it *LitionScClientRequestDepositInChainIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientRequestDepositInChain)
+		it.Event = new(LitionScClientNotary)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2052,62 +1355,53 @@ func (it *LitionScClientRequestDepositInChainIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientRequestDepositInChainIterator) Error() error {
+func (it *LitionScClientNotaryIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientRequestDepositInChainIterator) Close() error {
+func (it *LitionScClientNotaryIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientRequestDepositInChain represents a RequestDepositInChain event raised by the LitionScClient contract.
-type LitionScClientRequestDepositInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Deposit      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
+// LitionScClientNotary represents a Notary event raised by the LitionScClient contract.
+type LitionScClientNotary struct {
+	ChainId     *big.Int
+	NotaryBlock *big.Int
+	Confirmed   bool
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
-// FilterRequestDepositInChain is a free log retrieval operation binding the contract event 0x11b73dd0023b91d2be09f591166aeda0a3794d5c5d63607603e5d31c053c4804.
+// FilterNotary is a free log retrieval operation binding the contract event 0x2bf6913b394ab8c4cb188e7c518c7f79fa5ca7a96701d295071195c41bcd6457.
 //
-// Solidity: event RequestDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterRequestDepositInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientRequestDepositInChainIterator, error) {
+// Solidity: event Notary(uint256 indexed chainId, uint256 notaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) FilterNotary(opts *bind.FilterOpts, chainId []*big.Int) (*LitionScClientNotaryIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
 		chainIdRule = append(chainIdRule, chainIdItem)
 	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "RequestDepositInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "Notary", chainIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientRequestDepositInChainIterator{contract: _LitionScClient.contract, event: "RequestDepositInChain", logs: logs, sub: sub}, nil
+	return &LitionScClientNotaryIterator{contract: _LitionScClient.contract, event: "Notary", logs: logs, sub: sub}, nil
 }
 
-// WatchRequestDepositInChain is a free log subscription operation binding the contract event 0x11b73dd0023b91d2be09f591166aeda0a3794d5c5d63607603e5d31c053c4804.
+// WatchNotary is a free log subscription operation binding the contract event 0x2bf6913b394ab8c4cb188e7c518c7f79fa5ca7a96701d295071195c41bcd6457.
 //
-// Solidity: event RequestDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchRequestDepositInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientRequestDepositInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event Notary(uint256 indexed chainId, uint256 notaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) WatchNotary(opts *bind.WatchOpts, sink chan<- *LitionScClientNotary, chainId []*big.Int) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
 		chainIdRule = append(chainIdRule, chainIdItem)
 	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "RequestDepositInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "Notary", chainIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2117,8 +1411,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchRequestDepositInChain(opts *
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientRequestDepositInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "RequestDepositInChain", log); err != nil {
+				event := new(LitionScClientNotary)
+				if err := _LitionScClient.contract.UnpackLog(event, "Notary", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -2139,20 +1433,20 @@ func (_LitionScClient *LitionScClientFilterer) WatchRequestDepositInChain(opts *
 	}), nil
 }
 
-// ParseRequestDepositInChain is a log parse operation binding the contract event 0x11b73dd0023b91d2be09f591166aeda0a3794d5c5d63607603e5d31c053c4804.
+// ParseNotary is a log parse operation binding the contract event 0x2bf6913b394ab8c4cb188e7c518c7f79fa5ca7a96701d295071195c41bcd6457.
 //
-// Solidity: event RequestDepositInChain(uint256 indexed chainId, address indexed account, uint256 deposit, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseRequestDepositInChain(log types.Log) (*LitionScClientRequestDepositInChain, error) {
-	event := new(LitionScClientRequestDepositInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "RequestDepositInChain", log); err != nil {
+// Solidity: event Notary(uint256 indexed chainId, uint256 notaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) ParseNotary(log types.Log) (*LitionScClientNotary, error) {
+	event := new(LitionScClientNotary)
+	if err := _LitionScClient.contract.UnpackLog(event, "Notary", log); err != nil {
 		return nil, err
 	}
 	return event, nil
 }
 
-// LitionScClientRequestVestInChainIterator is returned from FilterRequestVestInChain and is used to iterate over the raw logs and unpacked data for RequestVestInChain events raised by the LitionScClient contract.
-type LitionScClientRequestVestInChainIterator struct {
-	Event *LitionScClientRequestVestInChain // Event containing the contract specifics and raw log
+// LitionScClientVestInChainIterator is returned from FilterVestInChain and is used to iterate over the raw logs and unpacked data for VestInChain events raised by the LitionScClient contract.
+type LitionScClientVestInChainIterator struct {
+	Event *LitionScClientVestInChain // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2166,7 +1460,7 @@ type LitionScClientRequestVestInChainIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientRequestVestInChainIterator) Next() bool {
+func (it *LitionScClientVestInChainIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -2175,7 +1469,7 @@ func (it *LitionScClientRequestVestInChainIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientRequestVestInChain)
+			it.Event = new(LitionScClientVestInChain)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2190,7 +1484,7 @@ func (it *LitionScClientRequestVestInChainIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientRequestVestInChain)
+		it.Event = new(LitionScClientVestInChain)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2206,30 +1500,31 @@ func (it *LitionScClientRequestVestInChainIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientRequestVestInChainIterator) Error() error {
+func (it *LitionScClientVestInChainIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientRequestVestInChainIterator) Close() error {
+func (it *LitionScClientVestInChainIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientRequestVestInChain represents a RequestVestInChain event raised by the LitionScClient contract.
-type LitionScClientRequestVestInChain struct {
-	ChainId      *big.Int
-	Account      common.Address
-	Vesting      *big.Int
-	ReqTimestamp *big.Int
-	Raw          types.Log // Blockchain specific contextual infos
+// LitionScClientVestInChain represents a VestInChain event raised by the LitionScClient contract.
+type LitionScClientVestInChain struct {
+	ChainId         *big.Int
+	Account         common.Address
+	Vesting         *big.Int
+	LastNotaryBlock *big.Int
+	Confirmed       bool
+	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterRequestVestInChain is a free log retrieval operation binding the contract event 0x5be03bab1e7e8d384248dfcee1d12d03a399213ac09c422aac74b6e766de144d.
+// FilterVestInChain is a free log retrieval operation binding the contract event 0xcdf71206e0f94bf5111dc95b5392b83fd7f390a69ec0afe1181cc0edfaee834c.
 //
-// Solidity: event RequestVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) FilterRequestVestInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientRequestVestInChainIterator, error) {
+// Solidity: event VestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) FilterVestInChain(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientVestInChainIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -2240,17 +1535,17 @@ func (_LitionScClient *LitionScClientFilterer) FilterRequestVestInChain(opts *bi
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "RequestVestInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "VestInChain", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientRequestVestInChainIterator{contract: _LitionScClient.contract, event: "RequestVestInChain", logs: logs, sub: sub}, nil
+	return &LitionScClientVestInChainIterator{contract: _LitionScClient.contract, event: "VestInChain", logs: logs, sub: sub}, nil
 }
 
-// WatchRequestVestInChain is a free log subscription operation binding the contract event 0x5be03bab1e7e8d384248dfcee1d12d03a399213ac09c422aac74b6e766de144d.
+// WatchVestInChain is a free log subscription operation binding the contract event 0xcdf71206e0f94bf5111dc95b5392b83fd7f390a69ec0afe1181cc0edfaee834c.
 //
-// Solidity: event RequestVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) WatchRequestVestInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientRequestVestInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event VestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) WatchVestInChain(opts *bind.WatchOpts, sink chan<- *LitionScClientVestInChain, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -2261,7 +1556,7 @@ func (_LitionScClient *LitionScClientFilterer) WatchRequestVestInChain(opts *bin
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "RequestVestInChain", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "VestInChain", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2271,8 +1566,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchRequestVestInChain(opts *bin
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientRequestVestInChain)
-				if err := _LitionScClient.contract.UnpackLog(event, "RequestVestInChain", log); err != nil {
+				event := new(LitionScClientVestInChain)
+				if err := _LitionScClient.contract.UnpackLog(event, "VestInChain", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -2293,469 +1588,12 @@ func (_LitionScClient *LitionScClientFilterer) WatchRequestVestInChain(opts *bin
 	}), nil
 }
 
-// ParseRequestVestInChain is a log parse operation binding the contract event 0x5be03bab1e7e8d384248dfcee1d12d03a399213ac09c422aac74b6e766de144d.
+// ParseVestInChain is a log parse operation binding the contract event 0xcdf71206e0f94bf5111dc95b5392b83fd7f390a69ec0afe1181cc0edfaee834c.
 //
-// Solidity: event RequestVestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 reqTimestamp)
-func (_LitionScClient *LitionScClientFilterer) ParseRequestVestInChain(log types.Log) (*LitionScClientRequestVestInChain, error) {
-	event := new(LitionScClientRequestVestInChain)
-	if err := _LitionScClient.contract.UnpackLog(event, "RequestVestInChain", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientStartMiningIterator is returned from FilterStartMining and is used to iterate over the raw logs and unpacked data for StartMining events raised by the LitionScClient contract.
-type LitionScClientStartMiningIterator struct {
-	Event *LitionScClientStartMining // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientStartMiningIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientStartMining)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientStartMining)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientStartMiningIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientStartMiningIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientStartMining represents a StartMining event raised by the LitionScClient contract.
-type LitionScClientStartMining struct {
-	ChainId *big.Int
-	Account common.Address
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterStartMining is a free log retrieval operation binding the contract event 0x1090e92433a132c15edc16a996682566af9d40d581e34d732ac2b39991847892.
-//
-// Solidity: event StartMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) FilterStartMining(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientStartMiningIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "StartMining", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientStartMiningIterator{contract: _LitionScClient.contract, event: "StartMining", logs: logs, sub: sub}, nil
-}
-
-// WatchStartMining is a free log subscription operation binding the contract event 0x1090e92433a132c15edc16a996682566af9d40d581e34d732ac2b39991847892.
-//
-// Solidity: event StartMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) WatchStartMining(opts *bind.WatchOpts, sink chan<- *LitionScClientStartMining, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "StartMining", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientStartMining)
-				if err := _LitionScClient.contract.UnpackLog(event, "StartMining", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStartMining is a log parse operation binding the contract event 0x1090e92433a132c15edc16a996682566af9d40d581e34d732ac2b39991847892.
-//
-// Solidity: event StartMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) ParseStartMining(log types.Log) (*LitionScClientStartMining, error) {
-	event := new(LitionScClientStartMining)
-	if err := _LitionScClient.contract.UnpackLog(event, "StartMining", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientStopMiningIterator is returned from FilterStopMining and is used to iterate over the raw logs and unpacked data for StopMining events raised by the LitionScClient contract.
-type LitionScClientStopMiningIterator struct {
-	Event *LitionScClientStopMining // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientStopMiningIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientStopMining)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientStopMining)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientStopMiningIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientStopMiningIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientStopMining represents a StopMining event raised by the LitionScClient contract.
-type LitionScClientStopMining struct {
-	ChainId *big.Int
-	Account common.Address
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterStopMining is a free log retrieval operation binding the contract event 0x921c933fe5d237f13ecce36e8ce6e7370d68826ed08698f6d2dd81caf298aaa3.
-//
-// Solidity: event StopMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) FilterStopMining(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientStopMiningIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "StopMining", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientStopMiningIterator{contract: _LitionScClient.contract, event: "StopMining", logs: logs, sub: sub}, nil
-}
-
-// WatchStopMining is a free log subscription operation binding the contract event 0x921c933fe5d237f13ecce36e8ce6e7370d68826ed08698f6d2dd81caf298aaa3.
-//
-// Solidity: event StopMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) WatchStopMining(opts *bind.WatchOpts, sink chan<- *LitionScClientStopMining, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "StopMining", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientStopMining)
-				if err := _LitionScClient.contract.UnpackLog(event, "StopMining", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStopMining is a log parse operation binding the contract event 0x921c933fe5d237f13ecce36e8ce6e7370d68826ed08698f6d2dd81caf298aaa3.
-//
-// Solidity: event StopMining(uint256 indexed chainId, address indexed account)
-func (_LitionScClient *LitionScClientFilterer) ParseStopMining(log types.Log) (*LitionScClientStopMining, error) {
-	event := new(LitionScClientStopMining)
-	if err := _LitionScClient.contract.UnpackLog(event, "StopMining", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// LitionScClientWhitelistAccountIterator is returned from FilterWhitelistAccount and is used to iterate over the raw logs and unpacked data for WhitelistAccount events raised by the LitionScClient contract.
-type LitionScClientWhitelistAccountIterator struct {
-	Event *LitionScClientWhitelistAccount // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LitionScClientWhitelistAccountIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LitionScClientWhitelistAccount)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LitionScClientWhitelistAccount)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientWhitelistAccountIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LitionScClientWhitelistAccountIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LitionScClientWhitelistAccount represents a WhitelistAccount event raised by the LitionScClient contract.
-type LitionScClientWhitelistAccount struct {
-	ChainId   *big.Int
-	Account   common.Address
-	Whitelist bool
-	Raw       types.Log // Blockchain specific contextual infos
-}
-
-// FilterWhitelistAccount is a free log retrieval operation binding the contract event 0x2c8cbcff405aa83b0e160273c7f1159141d2bdc795ecddf1e3413dc2995f0d7f.
-//
-// Solidity: event WhitelistAccount(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) FilterWhitelistAccount(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientWhitelistAccountIterator, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "WhitelistAccount", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LitionScClientWhitelistAccountIterator{contract: _LitionScClient.contract, event: "WhitelistAccount", logs: logs, sub: sub}, nil
-}
-
-// WatchWhitelistAccount is a free log subscription operation binding the contract event 0x2c8cbcff405aa83b0e160273c7f1159141d2bdc795ecddf1e3413dc2995f0d7f.
-//
-// Solidity: event WhitelistAccount(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) WatchWhitelistAccount(opts *bind.WatchOpts, sink chan<- *LitionScClientWhitelistAccount, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
-
-	var chainIdRule []interface{}
-	for _, chainIdItem := range chainId {
-		chainIdRule = append(chainIdRule, chainIdItem)
-	}
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "WhitelistAccount", chainIdRule, accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientWhitelistAccount)
-				if err := _LitionScClient.contract.UnpackLog(event, "WhitelistAccount", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseWhitelistAccount is a log parse operation binding the contract event 0x2c8cbcff405aa83b0e160273c7f1159141d2bdc795ecddf1e3413dc2995f0d7f.
-//
-// Solidity: event WhitelistAccount(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) ParseWhitelistAccount(log types.Log) (*LitionScClientWhitelistAccount, error) {
-	event := new(LitionScClientWhitelistAccount)
-	if err := _LitionScClient.contract.UnpackLog(event, "WhitelistAccount", log); err != nil {
+// Solidity: event VestInChain(uint256 indexed chainId, address indexed account, uint256 vesting, uint256 lastNotaryBlock, bool confirmed)
+func (_LitionScClient *LitionScClientFilterer) ParseVestInChain(log types.Log) (*LitionScClientVestInChain, error) {
+	event := new(LitionScClientVestInChain)
+	if err := _LitionScClient.contract.UnpackLog(event, "VestInChain", log); err != nil {
 		return nil, err
 	}
 	return event, nil

@@ -11,11 +11,11 @@ import (
 	"gitlab.com/lition/lition/event"
 )
 
-type StopMiningEventListener struct {
+type AccMiningEventListener struct {
 	initialized    bool
 	listening      bool
 	scClient       *LitionScClient
-	eventChannel   chan *LitionScClientStopMining
+	eventChannel   chan *LitionScClientAccountMining
 	eventSubs      event.Subscription
 	filterChainId  []*big.Int
 	stopChannel    chan struct{}
@@ -23,8 +23,8 @@ type StopMiningEventListener struct {
 	mutex          sync.Mutex
 }
 
-func NewStopMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*StopMiningEventListener, error) {
-	p := new(StopMiningEventListener)
+func NewAccMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*AccMiningEventListener, error) {
+	p := new(AccMiningEventListener)
 
 	p.initialized = false
 	p.listening = false
@@ -39,7 +39,7 @@ func NewStopMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*St
 	return nil, err
 }
 
-func (listener *StopMiningEventListener) Init() error {
+func (listener *AccMiningEventListener) Init() error {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -48,8 +48,8 @@ func (listener *StopMiningEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionScClientStopMining)
-	listener.eventSubs, err = listener.scClient.WatchStopMining(&bind.WatchOpts{
+	listener.eventChannel = make(chan *LitionScClientAccountMining)
+	listener.eventSubs, err = listener.scClient.WatchAccountMining(&bind.WatchOpts{
 		Context: context.Background(), Start: nil},
 		listener.eventChannel,
 		listener.filterChainId,
@@ -68,7 +68,7 @@ func (listener *StopMiningEventListener) Init() error {
 	return nil
 }
 
-func (listener *StopMiningEventListener) DeInit() {
+func (listener *AccMiningEventListener) DeInit() {
 	listener.Stop()
 
 	listener.mutex.Lock()
@@ -85,23 +85,23 @@ func (listener *StopMiningEventListener) DeInit() {
 	listener.initialized = false
 }
 
-func (listener *StopMiningEventListener) ReInit() error {
+func (listener *AccMiningEventListener) ReInit() error {
 	listener.DeInit()
 	return listener.Init()
 }
 
-func (listener *StopMiningEventListener) Start(f func(*LitionScClientStopMining)) error {
+func (listener *AccMiningEventListener) Start(f func(*LitionScClientAccountMining)) error {
 	if listener.initialized == false {
-		return errors.New("Trying to Start 'StopMiningEventListener' without previous initialization")
+		return errors.New("Trying to Start 'AccMiningEventListener' without previous initialization")
 	}
 	if listener.listening == true {
-		log.Warning("Trying to Start 'StopMiningEventListener', which is already listening.")
+		log.Warning("Trying to Start 'AccMiningEventListener', which is already listening.")
 		return nil
 	}
 
 	listener.stoppedChannel = make(chan struct{})
 	listener.listening = true
-	log.Info("StopMiningEventListener start listening")
+	log.Info("AccMiningEventListener start listening")
 
 	// close the stoppedchan when this func exits
 	defer func() {
@@ -112,18 +112,18 @@ func (listener *StopMiningEventListener) Start(f func(*LitionScClientStopMining)
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'StopMining' event received.")
+			log.Info("New 'StartMining' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
 		case <-listener.stopChannel:
-			log.Info("Signal to stop StopMiningEventListener received.")
+			log.Info("Signal to stop AccMiningEventListener received.")
 			return nil
 		}
 	}
 }
 
-func (listener *StopMiningEventListener) Stop() {
+func (listener *AccMiningEventListener) Stop() {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -135,5 +135,5 @@ func (listener *StopMiningEventListener) Stop() {
 	// wait for it to have stopped
 	<-listener.stoppedChannel
 	listener.stopChannel = make(chan struct{})
-	log.Info("StopMiningEventListener successfully stopped")
+	log.Info("AccMiningEventListener successfully stopped")
 }
