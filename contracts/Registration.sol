@@ -388,14 +388,23 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 maxNumOfValidators,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 maxNumOfValidators, uint256 vesting,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
+        require(vesting <= MAX_VESTING,                                                                 "Vesting is greater than uint96_max_value");
+        require(checkLitionMinVesting(vesting) == true,                                                 "Chain creator does not meet Lition's min.required vesting condition");
     
         chainId                         = nextId;
         ChainInfo storage chain         = chains[chainId];
+        
+        if (chainValidator != ChainValidator(0)) {
+            chain.chainValidator = chainValidator;
+            
+            bool isAllowed = chain.chainValidator.validateNewValidator(vesting, msg.sender, true /* creator is automatically added to the list of active validators */, chain.validators.list.length);
+            require(isAllowed == true, "Chain creator not allowed by external chainvalidator SC (vesting)");
+        }
         
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
@@ -405,9 +414,15 @@ contract LitionRegistry {
         chain.involvedVestingNotaryCond = involvedVestingNotaryCond;
         chain.participationNotaryCond   = participationNotaryCond;
         
-        if (chainValidator != ChainValidator(0)) {
-            chain.chainValidator = chainValidator;
-        }
+        // Transfers vesting tokens
+        token.transferFrom(msg.sender, address(this), vesting);
+        emit VestInChain(chainId, msg.sender, vesting, 0 /* zero block */, true);
+        
+        // Creates validator
+        validatorCreate(chainId, msg.sender, vesting);
+        
+        // Automatically inserts creator into the list of active validators
+        validatorInsert(chainId, msg.sender);
         
         emit NewChain(chainId, description, initEndpoint);
         
