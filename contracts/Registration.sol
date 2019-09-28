@@ -287,7 +287,7 @@ contract LitionRegistry {
         // Full vesting withdrawal
         if (vesting == 0) {
             require(validatorExist(chainId, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
-            require(activeValidatorExist(chainId, msg.sender) == false, "StopMinig must be called first.");  
+            require(activeValidatorExist(chainId, msg.sender) == false,     "StopMinig must be called first.");  
         }
         // Vest in chain or withdraw just part of vesting
         else {
@@ -332,7 +332,6 @@ contract LitionRegistry {
         
         require(chain.registered == true, "Non-registered chain");
         require(depositWithdrawalRequestExist(chainId, msg.sender) == false, "There is already existing withdrawal request being processed for this acc");
-        
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chainId);
         
@@ -356,7 +355,7 @@ contract LitionRegistry {
             
             // Upper limit of transactors reached
             if (chain.maxNumOfTransactors != 0 && isAllowedToTransact(chainId, msg.sender) == false) {
-                require(chain.actNumOfTransactors < chain.maxNumOfTransactors, "Upper limit of transactors reached");
+                require(chain.actNumOfTransactors <= chain.maxNumOfTransactors, "Upper limit of transactors reached");
             }
         }
                 
@@ -391,10 +390,6 @@ contract LitionRegistry {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description cannot be empty");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint cannot be empty");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
-        
-        if (maxNumOfTransactors != 0) {
-            require(maxNumOfValidators != 0 && maxNumOfValidators <= maxNumOfTransactors,               "Max num of validators must be less or equal to max num of transactors");
-        }
         
         chainId                 = nextId;
         ChainInfo storage chain = chains[chainId];
@@ -533,8 +528,8 @@ contract LitionRegistry {
         require(validators.length       > 0,                            "Invalid statistics data: validators.length == 0");
         require(validators.length       == blocksMined.length,          "Invalid statistics data: validators.length != num of block mined");
         if (chain.maxNumOfValidators != 0) {
-            require(validators.length   <= chain.maxNumOfValidators,    "Invalid statistics data: validators.length > maxNumOfValidators*2");
-            require(signaturesCount     <= chain.maxNumOfValidators,    "Invalid statistics data: signatures.length > maxNumOfValidators*2");
+            require(validators.length   <= chain.maxNumOfValidators,    "Invalid statistics data: validators.length > maxNumOfValidators");
+            require(signaturesCount     <= chain.maxNumOfValidators,    "Invalid statistics data: signatures.length > maxNumOfValidators");
         }
         
         if (chain.maxNumOfTransactors != 0) {
@@ -753,9 +748,8 @@ contract LitionRegistry {
         address acc = msg.sender;
         uint256 validatorVesting = chain.users[acc].validator.vesting;
         
-        require(chain.registered == true, "Non-registered chain");
-        require(validatorExist(chainId, acc) == true, "Non-existing validator (0 vesting balance)");
-        require(isAllowedToTransact(chainId, acc) == true, "Cannot start mining without being also whitelisted transactor");
+        require(chain.registered == true,                           "Non-registered chain");
+        require(validatorExist(chainId, acc) == true,               "Non-existing validator (0 vesting balance)");
         require(vestingIncreaseRequestExist(chainId, acc) == false, "Cannot start mining - there is ongoing vesting request");
         
         if (chain.chainValidator != ChainValidator(0)) {
