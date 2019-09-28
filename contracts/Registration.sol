@@ -388,7 +388,7 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 maxNumOfValidators, uint256 vesting,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 vesting, uint256 maxNumOfValidators,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
