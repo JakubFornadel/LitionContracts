@@ -16,21 +16,21 @@ interface ERC20 {
    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-contract LitionChainValidator is ChainValidator {
-   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
-      if(vesting >= 10000*(10**18) && vesting <= 500000*(10**18)) {
-        return true;   
-      }
-      return false;
-   }
+// contract LitionChainValidator is ChainValidator {
+//   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
+//       if(vesting >= 10000*(10**18) && vesting <= 500000*(10**18)) {
+//         return true;   
+//       }
+//       return false;
+//   }
 
-   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool) {
-      if(deposit >= 2000*(10**18)) {
-         return true;
-      }
-      return false;
-   }
-}
+//   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool) {
+//       if(deposit >= 2000*(10**18)) {
+//          return true;
+//       }
+//       return false;
+//   }
+// }
 
 contract LitionRegistry {
     using SafeMath for uint256;
@@ -587,65 +587,65 @@ contract LitionRegistry {
     // Notarization function - calculates user consumption as well as validators rewards
     // First, calculate hash from validators, block_mined, users and userGas
     // then, do ec_recover of the signatures to determine signers
-    // check if there is enough signers (total vesting of signers > 50% of all vestings)
+    // check if there is enough signers (total vesting of signers > 50% of all vestings) or total num of signes >= 2/3+1 out of all validators
     // then, calculate reward
-    // function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] memory validators, uint32[] memory blocksMined,
-    //                 address[] memory users, uint32[] memory userGas, uint32 largestTx,
-    //                 uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
+    function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] memory validators, uint32[] memory blocksMined,
+                    address[] memory users, uint32[] memory userGas, uint32 largestTx,
+                    uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
         
-    //     emit Notary(chainId, notaryEndBlock, false);
+        emit Notary(chainId, notaryEndBlock, false);
                   
-    //     ChainInfo storage chain = chains[chainId];
-    //     require(chain.registered    == true,    "Invalid chain data: Non-registered chain");
-    //     require(chain.totalVesting  > 0,        "Invalid chain data: current chain total_vesting == 0");
+        ChainInfo storage chain = chains[chainId];
+        require(chain.registered    == true,    "Invalid chain data: Non-registered chain");
+        require(chain.totalVesting  > 0,        "Invalid chain data: current chain total_vesting == 0");
         
-    //     require(validators.length       > 0,                           "Invalid statistics data: validators.length == 0");
-    //     require(validators.length       == blocksMined.length,         "Invalid statistics data: validators.length != num of block mined");
-    //     if (chain.maxNumOfValidators != 0) {
-    //         require(validators.length   <= chain.maxNumOfValidators,   "Invalid statistics data: validators.length > maxNumOfValidators");
-    //         require(v.length            <= chain.maxNumOfValidators,   "Invalid statistics data: signatures.length > maxNumOfValidators");
-    //     }
+        require(validators.length       > 0,                           "Invalid statistics data: validators.length == 0");
+        require(validators.length       == blocksMined.length,         "Invalid statistics data: validators.length != num of block mined");
+        if (chain.maxNumOfValidators != 0) {
+            require(validators.length   <= chain.maxNumOfValidators,   "Invalid statistics data: validators.length > maxNumOfValidators");
+            require(v.length            <= chain.maxNumOfValidators,   "Invalid statistics data: signatures.length > maxNumOfValidators");
+        }
         
-    //     if (chain.maxNumOfTransactors != 0) {
-    //         require(users.length    <= chain.maxNumOfTransactors,   "Invalid statistics data: users.length > maxNumOfTransactors");
-    //     }
-    //     require(users.length        > 0,                            "Invalid statistics data: users.length == 0");
-    //     require(users.length        == userGas.length,              "Invalid statistics data: users.length != usersGas.length");
+        if (chain.maxNumOfTransactors != 0) {
+            require(users.length    <= chain.maxNumOfTransactors,   "Invalid statistics data: users.length > maxNumOfTransactors");
+        }
+        require(users.length        > 0,                            "Invalid statistics data: users.length == 0");
+        require(users.length        == userGas.length,              "Invalid statistics data: users.length != usersGas.length");
         
-    //     require(v.length            == r.length,                    "Invalid statistics data: v.length != r.length");
-    //     require(v.length            == s.length,                    "Invalid statistics data: v.length != s.length");
-    //     require(notaryStartBlock    >  chain.lastNotary.block,      "Invalid statistics data: notaryBlock_start <= last known notary block");
-    //     require(notaryEndBlock      >  notaryStartBlock,            "Invalid statistics data: notaryEndBlock <= notaryStartBlock");
-    //     require(largestTx           >  0,                           "Invalid statistics data: Largest tx <= 0");
+        require(v.length            == r.length,                    "Invalid statistics data: v.length != r.length");
+        require(v.length            == s.length,                    "Invalid statistics data: v.length != s.length");
+        require(notaryStartBlock    >  chain.lastNotary.block,      "Invalid statistics data: notaryBlock_start <= last known notary block");
+        require(notaryEndBlock      >  notaryStartBlock,            "Invalid statistics data: notaryEndBlock <= notaryStartBlock");
+        require(largestTx           >  0,                           "Invalid statistics data: Largest tx <= 0");
         
-    //     bytes32 signatureHash = keccak256(abi.encodePacked(notaryEndBlock, validators, blocksMined, users, userGas, largestTx));
+        bytes32 signatureHash = keccak256(abi.encodePacked(notaryEndBlock, validators, blocksMined, users, userGas, largestTx));
         
-    //     // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
-    //     validateNotaryConditions(chainId, signatureHash, v, r, s);
+        // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
+        validateNotaryConditions(chainId, signatureHash, v, r, s);
         
-    //     // Calculates total cost based on user's usage durint current notary window
-    //     uint256 totalCost = processUsersConsumptions(chainId, users, userGas, largestTx);
+        // Calculates total cost based on user's usage durint current notary window
+        uint256 totalCost = processUsersConsumptions(chainId, users, userGas, largestTx);
         
-    //     // In case totalCost == 0, something is wrong and there is no need for notary to continue as there is no tokens to be distributed to the validators.
-    //     // There is probably ongoing coordinated attack based on invalid statistics sent to the notary
-    //     require(totalCost > 0, "Invalid statistics data: users totalUsageCost == 0");
+        // In case totalCost == 0, something is wrong and there is no need for notary to continue as there is no tokens to be distributed to the validators.
+        // There is probably ongoing coordinated attack based on invalid statistics sent to the notary
+        require(totalCost > 0, "Invalid statistics data: users totalUsageCost == 0");
         
-    //     // Calculates and process validator's rewards based on their participation rate and vesting balance
-    //     processValidatorsRewards(chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
+        // Calculates and process validator's rewards based on their participation rate and vesting balance
+        processValidatorsRewards(chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
         
-    //     // Remove validators who signed no block during this notary window and have mining flag == true
-    //     removeInactiveValidators(chainId);
+        // Remove validators who signed no block during this notary window and have mining flag == true
+        removeInactiveValidators(chainId);
         
-    //     // Updates info when the last notary was processed 
-    //     chain.lastNotary.block = notaryEndBlock;
-    //     chain.lastNotary.timestamp = now;
+        // Updates info when the last notary was processed 
+        chain.lastNotary.block = notaryEndBlock;
+        chain.lastNotary.timestamp = now;
         
-    //     if (chain.active == false) {
-    //         chain.active = true;
-    //     }
+        if (chain.active == false) {
+            chain.active = true;
+        }
         
-    //     emit Notary(chainId, notaryEndBlock, true);
-    // }
+        emit Notary(chainId, notaryEndBlock, true);
+    }
     
     // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
     function validateNotaryConditions(uint256 chainId, bytes32 signatureHash, uint8[] memory v, bytes32[] memory r, bytes32[] memory s) internal view {
