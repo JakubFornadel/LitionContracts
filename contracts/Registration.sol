@@ -655,7 +655,7 @@ contract LitionRegistry {
                 continue;
             }
             
-            uint256 validatorIdx = chain.validators.listIndex[signerAcc];
+            uint256 validatorIdx = chain.validators.listIndex[signerAcc] - 1;
             
             // In case there is duplicit signature from the same validator, ignore it
             if (signedValidators[validatorIdx] == true) {
