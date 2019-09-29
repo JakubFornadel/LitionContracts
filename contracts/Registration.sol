@@ -644,16 +644,33 @@ contract LitionRegistry {
         uint256 involvedVestingSum = 0;
         uint256 involvedSignaturesCount = 0;
         
+        bool[] memory signedValidators = new bool[](chain.validators.list.length); 
+        
         address signerAcc;
         for(uint256 i = 0; i < v.length; i++) {
             signerAcc = ecrecover(signatureHash, v[i], r[i], s[i]);
             
             // In case statistics is signed by validator, who is not registered in SC, ignore him   
-            if (activeValidatorExist(chainId, signerAcc) == true) {
-                involvedVestingSum += chain.users[signerAcc].validator.vesting;
-                involvedSignaturesCount++;
+            if (activeValidatorExist(chainId, signerAcc) == false) {
+                continue;
             }
+            
+            uint256 validatorIdx = chain.validators.listIndex[signerAcc];
+            
+            // In case there is duplicit signature from the same validator, ignore it
+            if (signedValidators[validatorIdx] == true) {
+                continue;
+            }
+            else {
+                signedValidators[validatorIdx] = true;
+            }
+            
+            
+            involvedVestingSum += chain.users[signerAcc].validator.vesting;
+            involvedSignaturesCount++;
         }
+        
+        delete signedValidators;
         
         // There must be more than 50% out of total possible vesting involved in signatures
         if (chain.involvedVestingNotaryCond == true) {
