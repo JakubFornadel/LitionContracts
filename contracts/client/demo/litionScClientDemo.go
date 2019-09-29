@@ -22,7 +22,7 @@ func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelist) {
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0x9099bE999cc495f1c3C6Ba6c02c0B8d788e95063"
+	contractAddress := "0x932F49Beb3DB8934c19Aa14c9E4F0C41198aa07b"
 	privateKeyStr := ""
 	chainID := 0
 
