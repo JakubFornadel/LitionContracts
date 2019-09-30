@@ -229,6 +229,8 @@ func (contractClient *ContractClient) Notary(auth *bind.TransactOpts,
 	r [][32]byte,
 	s [][32]byte) (*types.Transaction, error) {
 
+	auth.GasLimit = 4000000
+
 	return contractClient.scClient.Notary(auth, contractClient.chainID, notary_start_block, notary_end_block, miners, blocks_mined, users, user_gas, largest_tx, v, r, s)
 }
 
