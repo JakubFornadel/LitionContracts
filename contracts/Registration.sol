@@ -16,22 +16,6 @@ interface ERC20 {
    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-// contract LitionChainValidator is ChainValidator {
-//   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
-//       if(vesting >= 10000*(10**18) && vesting <= 500000*(10**18)) {
-//         return true;   
-//       }
-//       return false;
-//   }
-
-//   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool) {
-//       if(deposit >= 2000*(10**18)) {
-//          return true;
-//       }
-//       return false;
-//   }
-// }
-
 contract LitionRegistry {
     using SafeMath for uint256;
     
@@ -60,18 +44,12 @@ contract LitionRegistry {
     
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function checkLitionMinVesting(uint256 vesting) private pure returns (bool) {
-        if(vesting >= 1000*LIT_PRECISION) {
-            return true;   
-        }
-        return false;
+        return vesting >= 1000*LIT_PRECISION;
     }
     
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function checkLitionMinDeposit(uint256 deposit) private pure returns (bool) {
-        if(deposit >= 1000*LIT_PRECISION) {
-            return true;   
-        }
-        return false; 
+        return deposit >= 1000*LIT_PRECISION;
     }
     
     
@@ -221,17 +199,18 @@ contract LitionRegistry {
         ChainValidator                  chainValidator;
         
         // Mapping data holder for users (validators & transactors) data
-        mapping(address => User)        users;
+        mapping(address => User)        usersData;
+        
+        // List of existing users - all users, who have deposited or vested
+        IterableMap                     users;
         
         // List of existing validators - only those who vested enough and are actively mining are here
+        // Active validator are in separate array because of heavy processing furing notary (no need to filter them out of users thanks tot this)
         IterableMap                     validators;
         
         // Validator with the smallest vesting balance among all existing validators
         // In case someone vests more tokens, he will replace the one with smallest vesting balance
         address                         lastValidator;
-        
-        // List of existing transactors - all users, who have deposited (even if they cannot transact anymore)
-        IterableMap                     transactors;
         
         // Actual number of whitelisted transactors (their current depost > min.required deposit)
         uint256                         actNumOfTransactors;
@@ -286,11 +265,11 @@ contract LitionRegistry {
         
         // Enable users to vest into registered (but non-active) chain and start minig so it becomes active
         require(chain.registered == true,                                   "Non-registered chain");
-        //require(transactorExist(chainId, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
+        require(transactorExist(chainId, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
         require(vestingRequestExist(chainId, msg.sender) == false,          "There is already one vesting request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
-        checkAndSetChainActivity(chainId);
+        checkAndSetChainActivity(chain);
             
         // Full vesting withdrawal
         if (vesting == 0) {
@@ -300,11 +279,11 @@ contract LitionRegistry {
         // Vest in chain or withdraw just part of vesting
         else {
             require(vesting <= MAX_VESTING,                                 "vesting is greater than uint96_max_value");
-            require(chain.users[msg.sender].validator.vesting != vesting,   "Cannot vest the same amount of tokens as you already has vested");
+            require(chain.usersData[msg.sender].validator.vesting != vesting,   "Cannot vest the same amount of tokens as you already has vested");
             require(checkLitionMinVesting(vesting) == true,                 "user does not meet Lition's min.required vesting condition");
             
             if (chain.chainValidator != ChainValidator(0)) {
-                require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not yet mining */, chain.validators.list.length), "Validator not allowed by external chainvalidator SC");
+                require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length), "Validator not allowed by external chainvalidator SC");
             }
         }
         
@@ -316,11 +295,11 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         // Enable users to confirm vesting request into registered (but non-active) chain and start minig so it becomes active
-        require(chain.registered == true, "Non-registered chain");
+        require(chain.registered == true,                         "Non-registered chain");
         require(vestingRequestExist(chainId, msg.sender) == true, "Non-existing vesting request");
         
         // Checks if chain is active, if not set it active flag to false 
-        checkAndSetChainActivity(chainId);
+        checkAndSetChainActivity(chain);
         
         // Chain is active
         if (chain.active == true) {
@@ -339,11 +318,11 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         require(chain.registered == true,                                               "Non-registered chain");
-        //require(validatorExist(chainId, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
+        require(validatorExist(chainId, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
         require(depositWithdrawalRequestExist(chainId, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
-        checkAndSetChainActivity(chainId);
+        checkAndSetChainActivity(chain);
         
         // Withdraw whole deposit
         if (deposit == 0) {
@@ -355,7 +334,7 @@ contract LitionRegistry {
         }
         // Deposit in chain or withdraw just part of deposit
         else {
-            require(chain.users[msg.sender].transactor.deposit != deposit,              "Cannot deposit the same amount of tokens as you already has deposited");
+            require(chain.usersData[msg.sender].transactor.deposit != deposit,          "Cannot deposit the same amount of tokens as you already has deposited");
             require(checkLitionMinDeposit(deposit),                                     "user does not meet Lition's min.required deposit condition");
             require(deposit <= MAX_DEPOSIT,                                             "deposit is greater than uint96_max_value");
             
@@ -380,7 +359,7 @@ contract LitionRegistry {
         require(depositWithdrawalRequestExist(chainId, msg.sender) == true, "Non-existing deposit withdrawal request");
         
         // Checks if chain is active, if not set it active flag to false 
-        checkAndSetChainActivity(chainId);
+        checkAndSetChainActivity(chain);
         
         // Chain is active or it's been inactive for less than 2*CHAIN_INACTIVITY_TIMEOUT
         if (chain.active == true) {
@@ -395,26 +374,20 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 vesting, uint256 deposit, uint256 maxNumOfValidators,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 vesting, uint256 maxNumOfValidators,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
         require(checkLitionMinVesting(vesting) == true,                                                 "Chain creator does not meet Lition's min.required vesting condition");
         require(vesting <= MAX_VESTING,                                                                 "Vesting is greater than uint96_max_value");
-        require(checkLitionMinDeposit(deposit) == true,                                                 "Chain creator does not meet Lition's min.required deposit condition");
-        require(deposit <= MAX_DEPOSIT,                                                                 "Deposit is greater than uint96_max_value");
     
         chainId                         = nextId;
         ChainInfo storage chain         = chains[chainId];
         
         if (chainValidator != ChainValidator(0)) {
+            require(chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length) == true, "Chain creator not allowed by external chainvalidator SC (vesting)");
             chain.chainValidator = chainValidator;
-            
-            bool isAllowed = chain.chainValidator.validateNewValidator(vesting, msg.sender, true /* creator is automatically added to the list of active validators */, chain.validators.list.length);
-            require(isAllowed == true, "Chain creator not allowed by external chainvalidator SC (vesting)");
-            
-            require(chain.chainValidator.validateNewTransactor(deposit, msg.sender, chain.actNumOfTransactors) == true, "Chain creator not allowed by external chainvalidator SC (deposit)");
         }
         
         chain.description               = description;
@@ -429,18 +402,11 @@ contract LitionRegistry {
         // Transfers vesting tokens
         token.transferFrom(msg.sender, address(this), vesting);
         
-        // Transfers deposit tokens
-        token.transferFrom(msg.sender, address(this), deposit);
-        
         emit NewChain(chainId, description, initEndpoint);
         emit VestInChain(chainId, msg.sender, vesting, 0 /* zero block */, true);
-        emit DepositInChain(chainId, msg.sender, deposit, 0 /* zero block */, true);
         
         // Creates validator
         validatorCreate(chainId, msg.sender, vesting);
-        
-        // Creates transactor
-        transactorCreate(chainId, msg.sender, deposit);
         
         nextId++;
     }
@@ -451,7 +417,7 @@ contract LitionRegistry {
         require(msg.sender == chain.creator, "Only chain creator can call this method");
     
         require(bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
-        require(bytes(endpoint).length <= MAX_URL_LENGTH,               "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
+        require(bytes(endpoint).length <= MAX_URL_LENGTH,              "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
         
         if (bytes(description).length > 0) {
             chain.description = description;
@@ -476,7 +442,7 @@ contract LitionRegistry {
     // Returns true if user's remaining deposit balance >= min. required deposit and is allowed to transact
     function isAllowedToTransact(uint256 chainId, address acc) view public returns (bool) {
         // No need to check deposit balance as whitelisted flag should be alwyas set accordingly
-        return chains[chainId].users[acc].transactor.whitelisted;
+        return chains[chainId].usersData[acc].transactor.whitelisted;
     }
     
     
@@ -503,7 +469,7 @@ contract LitionRegistry {
         totalVesting         = chain.totalVesting;
         validatorsCount      = chain.validators.list.length;
         transactorsCount     = chain.actNumOfTransactors;
-        lastValidatorVesting = chain.users[chain.lastValidator].validator.vesting;   
+        lastValidatorVesting = chain.usersData[chain.lastValidator].validator.vesting;   
         lastNotaryBlock      = chain.lastNotary.block;
         lastNotaryTimestamp  = chain.lastNotary.timestamp;
     }
@@ -515,12 +481,12 @@ contract LitionRegistry {
                                                                                  bool depositFullWithdrawalReqExist, uint256 depositReqNotary) {
         ChainInfo storage chain = chains[chainId];
          
-        deposit                 = chain.users[acc].transactor.deposit;
-        whitelisted             = chain.users[acc].transactor.whitelisted;
-        vesting                 = chain.users[acc].validator.vesting;
+        deposit                 = chain.usersData[acc].transactor.deposit;
+        whitelisted             = chain.usersData[acc].transactor.whitelisted;
+        vesting                 = chain.usersData[acc].validator.vesting;
         mining                  = activeValidatorExist(chainId, acc);
-        prevNotaryMined         = chain.users[acc].validator.currentNotaryMined;  
-        secondPrevNotaryMined   = chain.users[acc].validator.prevNotaryMined;  
+        prevNotaryMined         = chain.usersData[acc].validator.currentNotaryMined;  
+        secondPrevNotaryMined   = chain.usersData[acc].validator.prevNotaryMined;  
         
         if (vestingRequestExist(chainId, acc)) {
             vestingReqExist    = true;
@@ -647,7 +613,7 @@ contract LitionRegistry {
             }
             
             
-            involvedVestingSum += chain.users[signerAcc].validator.vesting;
+            involvedVestingSum += chain.usersData[signerAcc].validator.vesting;
             involvedSignaturesCount++;
         }
         
@@ -677,36 +643,17 @@ contract LitionRegistry {
         }
     }
     
-    // Returns list of user's addresses that are allowed to transact - their deposit >= min. required deposit
+    // Returns list of transactors that are allowed to transact - they pass min. reuqired deposit conditios
     function getTransactors(uint256 chainId, uint256 batch) external view returns (address[100] memory transactors, uint256 count, bool end) {
-        ChainInfo storage chain = chains[chainId];
-        
-        count = 0;
-        uint256 transactorsTotalCount = chain.transactors.list.length;
-        
-        address acc;
-        uint256 i;
-        for(i = batch * 100; i < (batch + 1)*100 && i < transactorsTotalCount; i++) {
-            acc = chain.transactors.list[i];
-            
-            // Get transactors
-            if (chain.users[acc].transactor.whitelisted == false) {
-                continue;
-            } 
-            
-            transactors[count] = acc;
-            count++;
-        }
-        
-        if (i >= transactorsTotalCount) {
-            end = true;
-        }
-        else {
-            end = false;
-        }
+        return getUsers(chainId, true, batch);
     }
     
-    // Returns list of addresses of active validators
+    // Returns list of active and non-active validators
+    function getAllowedToValidate(uint256 chainId, uint256 batch) view external returns (address[100] memory validators, uint256 count, bool end) {
+        return getUsers(chainId, false, batch);
+    }
+    
+    // Returns list of active validators
     function getValidators(uint256 chainId, uint256 batch) view external returns (address[100] memory validators, uint256 count, bool end) {
         ChainInfo storage chain = chains[chainId];
         
@@ -730,11 +677,48 @@ contract LitionRegistry {
         }
     }
     
+    // Returns list of whitelisted transactors in case transactorsFlag == true, otherwise list of validators (active and non-active)
+    function getUsers(uint256 chainId, bool transactorsFlag, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
+        ChainInfo storage chain = chains[chainId];
+        
+        count = 0;
+        uint256 usersTotalCount = chain.users.list.length;
+        
+        address acc;
+        uint256 i;
+        for(i = batch * 100; i < (batch + 1)*100 && i < usersTotalCount; i++) {
+            acc = chain.users.list[i];
+            
+            // Get transactors (only those who are whitelisted - their depist passed min.required conditions)
+            if (transactorsFlag == true) {
+                if (chain.usersData[acc].transactor.whitelisted == false) {
+                    continue;
+                } 
+            }
+            // Get validators (active and non-active)
+            else {
+                if (chain.usersData[acc].validator.vesting == 0) {
+                    continue;
+                }
+            }
+            
+            users[count] = acc;
+            count++;
+        }
+        
+        if (i >= usersTotalCount) {
+            end = true;
+        }
+        else {
+            end = false;
+        }
+    }
+    
     // Sets mining validator's mining flag to true and emit event so other nodes vote him
     function startMining(uint256 chainId) external {
         ChainInfo storage chain = chains[chainId];
         address acc = msg.sender;
-        uint256 validatorVesting = chain.users[acc].validator.vesting;
+        uint256 validatorVesting = chain.usersData[acc].validator.vesting;
         
         require(chain.registered == true,                           "Non-registered chain");
         require(validatorExist(chainId, acc) == true,               "Non-existing validator (0 vesting balance)");
@@ -754,12 +738,12 @@ contract LitionRegistry {
             
         // Upper limit of validators reached
         if (chain.maxNumOfValidators != 0 && chain.validators.list.length >= chain.maxNumOfValidators) {
-            require(validatorVesting > chain.users[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to replace him");
-            validatorReplace(chainId, acc);
+            require(validatorVesting > chain.usersData[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to replace him");
+            activeValidatorReplace(chainId, acc);
         }
         // There is still empty place for new validator
         else {
-            validatorInsert(chainId, acc);
+            activeValidatorInsert(chainId, acc);
         }
     }
   
@@ -779,7 +763,7 @@ contract LitionRegistry {
             return;
         }
         
-        validatorRemove(chainId, acc);
+        activeValidatorRemove(chainId, acc);
     }
     
 
@@ -816,38 +800,44 @@ contract LitionRegistry {
         return map.listIndex[acc] != 0;
     }
     
-    // Inits validator data holder in the users mapping 
+    // Inits validator data holder in the users mapping and inserts it into the list of users
     function validatorCreate(uint256 chainId, address acc, uint256 vesting) internal {
-        Validator storage validator     = chains[chainId].users[acc].validator;
+        Validator storage validator     = chains[chainId].usersData[acc].validator;
         validator.vesting               = uint96(vesting);
         
         // Inits previously notary windows as mined so validator does not get removed from the list of actively mining validators right after the creation
         validator.currentNotaryMined    = true;
         validator.prevNotaryMined       = true;
         validator.secondPrevNotaryMined = true;
+        
+        // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
+        insertAcc(chains[chainId].users, acc);
     }
     
-    // Deinits validator data holder in the users mapping 
+    // Deinits validator data holder in the users mapping and removes it from the list of users
     function validatorDelete(uint256 chainId, address acc) internal {
-        Validator storage validator = chains[chainId].users[acc].validator;
+        Validator storage validator = chains[chainId].usersData[acc].validator;
         
         if (activeValidatorExist(chainId, acc) == true) {
-            validatorRemove(chainId, acc);
+            activeValidatorRemove(chainId, acc);
         }
         
         if (validator.vesting               != 0)       validator.vesting = 0;
         if (validator.currentNotaryMined    == true)    validator.currentNotaryMined = false;
         if (validator.prevNotaryMined       == true)    validator.prevNotaryMined = false;
         if (validator.secondPrevNotaryMined == true)    validator.secondPrevNotaryMined = false;
+        
+        // No need to check if transactorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
+        removeAcc(chains[chainId].users, acc);
     }
     
     // Inserts validator into the list of actively mining validators
-    function validatorInsert(uint256 chainId, address acc) internal {
+    function activeValidatorInsert(uint256 chainId, address acc) internal {
         ChainInfo storage chain     = chains[chainId];
-        Validator storage validator = chain.users[acc].validator;
+        Validator storage validator = chain.usersData[acc].validator;
         
         // Updates lastValidator in case this is first validator or new validator's vesting balance is less
-        if (chain.validators.list.length == 0 || validator.vesting < chain.users[chain.lastValidator].validator.vesting) {
+        if (chain.validators.list.length == 0 || validator.vesting < chain.usersData[chain.lastValidator].validator.vesting) {
             chain.lastValidator = acc;
         }
         
@@ -860,9 +850,9 @@ contract LitionRegistry {
     }
     
     // Removes validator from the list of actively mining validators
-    function validatorRemove(uint256 chainId, address acc) internal {
+    function activeValidatorRemove(uint256 chainId, address acc) internal {
         ChainInfo storage chain     = chains[chainId];
-        Validator storage validator = chain.users[acc].validator;
+        Validator storage validator = chain.usersData[acc].validator;
         
         removeAcc(chain.validators, acc);   
         
@@ -879,7 +869,7 @@ contract LitionRegistry {
         else {
             // If lastValidator is being removed, find a new validator with the smallest vesting balance
             if (chain.lastValidator == acc) {
-                resetLastValidator(chainId);
+                resetLastActiveValidator(chainId);
             }
         }
         
@@ -887,12 +877,12 @@ contract LitionRegistry {
     }
     
     // Replaces lastValidator for the new one in the list of actively mining validators
-    function validatorReplace(uint256 chainId, address acc) internal {
+    function activeValidatorReplace(uint256 chainId, address acc) internal {
         ChainInfo storage chain                 = chains[chainId];
         
         address accToBeReplaced                 = chain.lastValidator;
-        Validator memory validatorToBeReplaced  = chain.users[accToBeReplaced].validator;
-        Validator memory newValidator           = chain.users[acc].validator;
+        Validator memory validatorToBeReplaced  = chain.usersData[accToBeReplaced].validator;
+        Validator memory newValidator           = chain.usersData[acc].validator;
         
         // Updates chain total vesting
         chain.totalVesting = chain.totalVesting.sub(validatorToBeReplaced.vesting);
@@ -903,23 +893,23 @@ contract LitionRegistry {
         insertAcc(chain.validators, acc);
         
         // Finds a new validator with the smallest vesting balance
-        resetLastValidator(chainId);
+        resetLastActiveValidator(chainId);
         
         emit AccountMining(chainId, accToBeReplaced, false);
         emit AccountMining(chainId, acc, true);
     }
     
     // Resets last validator - the one with the smallest vesting balance
-    function resetLastValidator(uint256 chainId) internal {
+    function resetLastActiveValidator(uint256 chainId) internal {
         ChainInfo storage chain             = chains[chainId];
         address foundLastValidatorAcc       = chain.validators.list[0];
-        Validator memory foundLastValidator = chain.users[foundLastValidatorAcc].validator;
+        Validator memory foundLastValidator = chain.usersData[foundLastValidatorAcc].validator;
         
         address actValidatorAcc;
         Validator memory actValidator;
         for (uint256 i = 1; i < chain.validators.list.length; i++) {
             actValidatorAcc = chain.validators.list[i];
-            actValidator    = chain.users[actValidatorAcc].validator;
+            actValidator    = chain.usersData[actValidatorAcc].validator;
             
             if (actValidator.vesting < foundLastValidator.vesting) {
                 foundLastValidatorAcc = actValidatorAcc;
@@ -937,38 +927,40 @@ contract LitionRegistry {
     
     // Returns true, if acc hase vesting > 0, otherwise false
     function validatorExist(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].users[acc].validator.vesting > 0;
+        return chains[chainId].usersData[acc].validator.vesting > 0;
     }
     
-    // Inits transactor data holder in the users mapping and inserts it into the list of transactors
+    // Inits transactor data holder in the users mapping and inserts it into the list of users
     function transactorCreate(uint256 chainId, address acc, uint256 deposit) internal {
-        Transactor storage transactor = chains[chainId].users[acc].transactor;
+        Transactor storage transactor = chains[chainId].usersData[acc].transactor;
         
         transactor.deposit            = uint96(deposit);
         transactorWhitelist(chainId, acc);
         
-        insertAcc(chains[chainId].transactors, acc);
+        // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
+        insertAcc(chains[chainId].users, acc);
     }
     
-    // Deinits transactor data holder in the users mapping and removes it from the list of transactors
+    // Deinits transactor data holder in the users mapping and removes it from the list of users
     function transactorDelete(uint256 chainId, address acc) internal {
-        Transactor storage transactor = chains[chainId].users[acc].transactor;
+        Transactor storage transactor = chains[chainId].usersData[acc].transactor;
         
         if (transactor.deposit != 0) transactor.deposit = 0;
         transactorBlacklist(chainId, acc);
         
-        removeAcc(chains[chainId].transactors, acc);
+        // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
+        removeAcc(chains[chainId].users, acc);
     }
     
-    // Returns true, if acc is in the list of transactors
+    // Returns true, if acc hase deposit > 0, otherwise false
     function transactorExist(uint256 chainId, address acc) internal view returns (bool) {
-        return existAcc(chains[chainId].transactors, acc);
+        return chains[chainId].usersData[acc].transactor.deposit > 0;
     }
     
     // Blacklists transactor
     function transactorBlacklist(uint256 chainId, address acc) internal {
         ChainInfo storage chain         = chains[chainId];
-        Transactor storage transactor   = chain.users[acc].transactor;
+        Transactor storage transactor   = chain.usersData[acc].transactor;
         
         if (transactor.whitelisted == true) {
             chain.actNumOfTransactors--;
@@ -981,7 +973,7 @@ contract LitionRegistry {
     // Whitelists transactor
     function transactorWhitelist(uint256 chainId, address acc) internal {
         ChainInfo storage chain         = chains[chainId];
-        Transactor storage transactor   = chain.users[acc].transactor;
+        Transactor storage transactor   = chain.usersData[acc].transactor;
         
         if (transactor.whitelisted == false) {
             chain.actNumOfTransactors++;
@@ -1096,7 +1088,7 @@ contract LitionRegistry {
     
     function requestVest(uint256 chainId, uint256 vesting, address acc) internal {
         ChainInfo storage chain     = chains[chainId];
-        Validator storage validator = chain.users[acc].validator;
+        Validator storage validator = chain.usersData[acc].validator;
         
         uint256 validatorVesting = validator.vesting;
         
@@ -1138,7 +1130,7 @@ contract LitionRegistry {
     
     function confirmVest(uint256 chainId, address acc) internal {
         ChainInfo storage chain                 = chains[chainId];
-        Validator storage validator             = chain.users[acc].validator;
+        Validator storage validator             = chain.usersData[acc].validator;
         VestingRequest memory request           = chain.requests.accounts[acc].vestingRequest;
         
         vestingRequestDelete(chainId, acc);
@@ -1173,7 +1165,7 @@ contract LitionRegistry {
     
     function requestDeposit(uint256 chainId, uint256 deposit, address acc) internal {
         ChainInfo storage chain       = chains[chainId];
-        Transactor storage transactor = chain.users[acc].transactor;
+        Transactor storage transactor = chain.usersData[acc].transactor;
         
         // If user wants to withdraw whole deposit
         if (deposit == 0) {
@@ -1226,7 +1218,7 @@ contract LitionRegistry {
     function confirmDepositWithdrawal(uint256 chainId, address acc) internal {
         ChainInfo storage chain = chains[chainId];
         
-        uint256 toWithdraw = chain.users[acc].transactor.deposit;
+        uint256 toWithdraw = chain.usersData[acc].transactor.deposit;
         uint256 requestNotaryBlock = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
         
         transactorDelete(chainId, acc);
@@ -1264,7 +1256,7 @@ contract LitionRegistry {
      address acc;
      for(uint256 i = 0; i < users.length; i++) {
         acc = users[i];
-        Transactor storage transactor = chain.users[acc].transactor;
+        Transactor storage transactor = chain.usersData[acc].transactor;
         transactorDeposit = transactor.deposit;
         
         // This can happen only if there is non-registered transactor(user) in statistics, which means that there is probaly
@@ -1338,12 +1330,12 @@ contract LitionRegistry {
         }
         
         // Updates validator's mining flags statistics
-        Validator storage validator     = chain.users[actValidatorAcc].validator;
+        Validator storage validator     = chain.usersData[actValidatorAcc].validator;
         validator.secondPrevNotaryMined = validator.prevNotaryMined;
         validator.prevNotaryMined       = validator.currentNotaryMined;
         validator.currentNotaryMined    = true;
         
-        validatorVesting = chain.users[actValidatorAcc].validator.vesting;
+        validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
         
         // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
         if (validatorVesting >= minTrustNodeVesting) {
@@ -1375,7 +1367,7 @@ contract LitionRegistry {
             continue;
         } 
         
-        validatorVesting = chain.users[actValidatorAcc].validator.vesting;
+        validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
         
         // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
         if (validatorVesting >= minTrustNodeVesting) {
@@ -1405,21 +1397,19 @@ contract LitionRegistry {
         address validatorAcc;
         for (uint256 i = 0; i < chain.validators.list.length; i++) {
             validatorAcc = chain.validators.list[i];
-            Validator memory validator = chain.users[validatorAcc].validator;
+            Validator memory validator = chain.usersData[validatorAcc].validator;
            
             if (validator.currentNotaryMined || validator.prevNotaryMined || validator.secondPrevNotaryMined) {
                 continue;
             }
            
-            validatorRemove(chainId, validatorAcc);
+            activeValidatorRemove(chainId, validatorAcc);
         } 
     }
    
     // Checks if chain is active(successfull notary processed during last CHAIN_INACTIVITY_TIMEOUT), if not set it active flag to false
     // If last notary is older than CHAIN_INACTIVITY_TIMEOUT, it means that validators cannot reach consensus or there is no active validator and chain is basically stuck.
-    function checkAndSetChainActivity(uint256 chainId) internal {
-        ChainInfo storage chain = chains[chainId];
-        
+    function checkAndSetChainActivity(ChainInfo storage chain) internal {
         if (chain.active == true && chain.lastNotary.timestamp + CHAIN_INACTIVITY_TIMEOUT < now) {
             chain.active = false;   
         }
