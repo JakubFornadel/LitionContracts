@@ -267,8 +267,8 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         // Enable users to vest into registered (but non-active) chain and start minig so it becomes active
-        require(chain.registered == true,                                   "Non-registered chain");
-        //require(transactorExist(chain, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
+        require(chain.registered == true,                                 "Non-registered chain");
+        require(transactorExist(chain, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
         require(vestingRequestExist(chain, msg.sender) == false,          "There is already one vesting request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
@@ -321,7 +321,7 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         require(chain.registered == true,                                               "Non-registered chain");
-        //require(validatorExist(chain, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
+        require(validatorExist(chain, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
         require(depositWithdrawalRequestExist(chain, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
@@ -488,7 +488,7 @@ contract LitionRegistry {
         deposit                 = chain.usersData[acc].transactor.deposit;
         whitelisted             = chain.usersData[acc].transactor.whitelisted;
         vesting                 = chain.usersData[acc].validator.vesting;
-        mining                  = activeValidatorExist(chainId, acc);
+        mining                  = activeValidatorExist(chain, acc);
         prevNotaryMined         = chain.usersData[acc].validator.currentNotaryMined;  
         secondPrevNotaryMined   = chain.usersData[acc].validator.prevNotaryMined;  
         
@@ -684,11 +684,11 @@ contract LitionRegistry {
         // Upper limit of validators reached
         if (chain.maxNumOfValidators != 0 && chain.validators.list.length >= chain.maxNumOfValidators) {
             require(validatorVesting > chain.usersData[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to replace him");
-            activeValidatorReplace(chainId, acc);
+            activeValidatorReplace(chain, acc);
         }
         // There is still empty place for new validator
         else {
-            activeValidatorInsert(chainId, acc);
+            activeValidatorInsert(chain, acc);
         }
     }
   
@@ -708,7 +708,7 @@ contract LitionRegistry {
             return;
         }
         
-        activeValidatorRemove(chainId, acc);
+        activeValidatorRemove(chain, acc);
     }
     
 
@@ -746,8 +746,8 @@ contract LitionRegistry {
     }
     
     // Inits validator data holder in the users mapping and inserts it into the list of users
-    function validatorCreate(uint256 chainId, address acc, uint256 vesting) internal {
-        Validator storage validator     = chains[chainId].usersData[acc].validator;
+    function validatorCreate(ChainInfo storage chain, address acc, uint256 vesting) internal {
+        Validator storage validator     = chain.usersData[acc].validator;
         validator.vesting               = uint96(vesting);
         
         // Inits previously notary windows as mined so validator does not get removed from the list of actively mining validators right after the creation
@@ -756,15 +756,15 @@ contract LitionRegistry {
         validator.secondPrevNotaryMined = true;
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
-        insertAcc(chains[chainId].users, acc);
+        insertAcc(chain.users, acc);
     }
     
     // Deinits validator data holder in the users mapping and removes it from the list of users
-    function validatorDelete(uint256 chainId, address acc) internal {
-        Validator storage validator = chains[chainId].usersData[acc].validator;
+    function validatorDelete(ChainInfo storage chain, address acc) internal {
+        Validator storage validator = chain.usersData[acc].validator;
         
-        if (activeValidatorExist(chainId, acc) == true) {
-            activeValidatorRemove(chainId, acc);
+        if (activeValidatorExist(chain, acc) == true) {
+            activeValidatorRemove(chain, acc);
         }
         
         if (validator.vesting               != 0)       validator.vesting = 0;
@@ -773,12 +773,11 @@ contract LitionRegistry {
         if (validator.secondPrevNotaryMined == true)    validator.secondPrevNotaryMined = false;
         
         // No need to check if transactorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
-        removeAcc(chains[chainId].users, acc);
+        removeAcc(chain.users, acc);
     }
     
     // Inserts validator into the list of actively mining validators
-    function activeValidatorInsert(uint256 chainId, address acc) internal {
-        ChainInfo storage chain     = chains[chainId];
+    function activeValidatorInsert(ChainInfo storage chain, address acc) internal {
         Validator storage validator = chain.usersData[acc].validator;
         
         // Updates lastValidator in case this is first validator or new validator's vesting balance is less
@@ -795,8 +794,7 @@ contract LitionRegistry {
     }
     
     // Removes validator from the list of actively mining validators
-    function activeValidatorRemove(uint256 chainId, address acc) internal {
-        ChainInfo storage chain     = chains[chainId];
+    function activeValidatorRemove(ChainInfo storage chain, address acc) internal {
         Validator storage validator = chain.usersData[acc].validator;
         
         removeAcc(chain.validators, acc);   
@@ -814,7 +812,7 @@ contract LitionRegistry {
         else {
             // If lastValidator is being removed, find a new validator with the smallest vesting balance
             if (chain.lastValidator == acc) {
-                resetLastActiveValidator(chainId);
+                resetLastActiveValidator(chain);
             }
         }
         
@@ -822,9 +820,7 @@ contract LitionRegistry {
     }
     
     // Replaces lastValidator for the new one in the list of actively mining validators
-    function activeValidatorReplace(uint256 chainId, address acc) internal {
-        ChainInfo storage chain                 = chains[chainId];
-        
+    function activeValidatorReplace(ChainInfo storage chain, address acc) internal {
         address accToBeReplaced                 = chain.lastValidator;
         Validator memory validatorToBeReplaced  = chain.usersData[accToBeReplaced].validator;
         Validator memory newValidator           = chain.usersData[acc].validator;
@@ -838,15 +834,14 @@ contract LitionRegistry {
         insertAcc(chain.validators, acc);
         
         // Finds a new validator with the smallest vesting balance
-        resetLastActiveValidator(chainId);
+        resetLastActiveValidator(chain);
         
         emit AccountMining(chain.id, accToBeReplaced, false);
         emit AccountMining(chain.id, acc, true);
     }
     
     // Resets last validator - the one with the smallest vesting balance
-    function resetLastActiveValidator(uint256 chainId) internal {
-        ChainInfo storage chain             = chains[chainId];
+    function resetLastActiveValidator(ChainInfo storage chain) internal {
         address foundLastValidatorAcc       = chain.validators.list[0];
         Validator memory foundLastValidator = chain.usersData[foundLastValidatorAcc].validator;
         
@@ -866,45 +861,44 @@ contract LitionRegistry {
     }
     
     // Returns true, if acc is in the list of actively mining validators, otherwise false
-    function activeValidatorExist(uint256 chainId, address acc) internal view returns (bool) {
-        return existAcc(chains[chainId].validators, acc);
+    function activeValidatorExist(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return existAcc(chain.validators, acc);
     }
     
     // Returns true, if acc hase vesting > 0, otherwise false
-    function validatorExist(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].usersData[acc].validator.vesting > 0;
+    function validatorExist(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return chain.usersData[acc].validator.vesting > 0;
     }
     
     // Inits transactor data holder in the users mapping and inserts it into the list of users
-    function transactorCreate(uint256 chainId, address acc, uint256 deposit) internal {
-        Transactor storage transactor = chains[chainId].usersData[acc].transactor;
+    function transactorCreate(ChainInfo storage chain, address acc, uint256 deposit) internal {
+        Transactor storage transactor = chain.usersData[acc].transactor;
         
         transactor.deposit            = uint96(deposit);
         transactorWhitelist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
-        insertAcc(chains[chainId].users, acc);
+        insertAcc(chain.users, acc);
     }
     
     // Deinits transactor data holder in the users mapping and removes it from the list of users
-    function transactorDelete(uint256 chainId, address acc) internal {
-        Transactor storage transactor = chains[chainId].usersData[acc].transactor;
+    function transactorDelete(ChainInfo storage chain, address acc) internal {
+        Transactor storage transactor = chain.usersData[acc].transactor;
         
         if (transactor.deposit != 0) transactor.deposit = 0;
         transactorBlacklist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
-        removeAcc(chains[chainId].users, acc);
+        removeAcc(chain.users, acc);
     }
     
     // Returns true, if acc hase deposit > 0, otherwise false
-    function transactorExist(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].usersData[acc].transactor.deposit > 0;
+    function transactorExist(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return chain.usersData[acc].transactor.deposit > 0;
     }
     
     // Blacklists transactor
-    function transactorBlacklist(uint256 chainId, address acc) internal {
-        ChainInfo storage chain         = chains[chainId];
+    function transactorBlacklist(ChainInfo storage chain, address acc) internal {
         Transactor storage transactor   = chain.usersData[acc].transactor;
         
         if (transactor.whitelisted == true) {
@@ -916,8 +910,7 @@ contract LitionRegistry {
     }
     
     // Whitelists transactor
-    function transactorWhitelist(uint256 chainId, address acc) internal {
-        ChainInfo storage chain         = chains[chainId];
+    function transactorWhitelist(ChainInfo storage chain, address acc) internal {
         Transactor storage transactor   = chain.usersData[acc].transactor;
         
         if (transactor.whitelisted == false) {
@@ -1024,8 +1017,7 @@ contract LitionRegistry {
         return chain.requests.accounts[acc].depositWithdrawalRequest.exist;
     }
     
-    function requestVest(uint256 chainId, uint256 vesting, address acc) internal {
-        ChainInfo storage chain     = chains[chainId];
+    function requestVest(ChainInfo storage chain, uint256 vesting, address acc) internal {
         Validator storage validator = chain.usersData[acc].validator;
         
         uint256 validatorVesting = validator.vesting;
@@ -1066,8 +1058,7 @@ contract LitionRegistry {
         return;
     }
     
-    function confirmVest(uint256 chainId, address acc) internal {
-        ChainInfo storage chain                 = chains[chainId];
+    function confirmVest(ChainInfo storage chain, address acc) internal {
         Validator storage validator             = chain.usersData[acc].validator;
         VestingRequest memory request           = chain.requests.accounts[acc].vestingRequest;
         
@@ -1101,8 +1092,7 @@ contract LitionRegistry {
         emit VestInChain(chain.id, acc, request.newVesting, request.notaryBlock, true);
     }
     
-    function requestDeposit(uint256 chainId, uint256 deposit, address acc) internal {
-        ChainInfo storage chain       = chains[chainId];
+    function requestDeposit(ChainInfo storage chain, uint256 deposit, address acc) internal {
         Transactor storage transactor = chain.usersData[acc].transactor;
         
         // If user wants to withdraw whole deposit
@@ -1153,9 +1143,7 @@ contract LitionRegistry {
         emit DepositInChain(chain.id, acc, deposit, chain.lastNotary.block, true);
     }
     
-    function confirmDepositWithdrawal(uint256 chainId, address acc) internal {
-        ChainInfo storage chain = chains[chainId];
-        
+    function confirmDepositWithdrawal(ChainInfo storage chain, address acc) internal {
         uint256 toWithdraw = chain.usersData[acc].transactor.deposit;
         uint256 requestNotaryBlock = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
         
@@ -1172,11 +1160,159 @@ contract LitionRegistry {
     /*************************************************** Other functions ******************************************************/
     /**************************************************************************************************************************/
 
-   constructor(ERC20 _token) public {
-      token = _token;
-   }
+    constructor(ERC20 _token) public {
+        token = _token;
+    }
+  
+    // Process users consumption based on their usage
+    function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint32[] memory userGas, uint32 largestTx) internal returns (uint256 totalCost) {
+        // Total usage cost in LIT tokens
+        totalCost = 0;
+        
+        // largest tx fee fixed at 0.1 LIT
+        uint256 largestReward = 10**17;
+        
+        // Individual user's usage cost in LIT tokens
+        uint256 userCost;
+        
+        // Use uint256 transactorDeposit instead of stored uint96 transactor.deposit because of simplified math  
+        uint256 transactorDeposit;
+        address acc;
+        for(uint256 i = 0; i < users.length; i++) {
+            acc = users[i];
+            Transactor storage transactor = chain.usersData[acc].transactor;
+            transactorDeposit = transactor.deposit;
+            
+            // This can happen only if there is non-registered transactor(user) in statistics, which means that there is probaly
+            // ongoing coordinated attack based on invalid statistics sent to the notary
+            // Ignores non-registred user
+            if (transactorExist(chain, acc) == false || userGas[i] == 0) {
+                // Let nodes know that this user is not allowed to transact only if chain is active - in case it is not and becomes active again 
+                // there might be some users that already withdrawed their deposit  
+                if (chain.active == true) {
+                    emit AccountWhitelist(chain.id, users[i], false);
+                }
+                continue;
+            }
+            
+            userCost = (userGas[i] * largestReward) / largestTx;
+            
+            // This can happen only if user runs out of tokens(which should not happen due to min.required deposit)
+            if(userCost > transactorDeposit ) {
+                userCost = transactorDeposit;
+            
+                transactorDelete(chain, acc);
+            }
+            else {
+                transactorDeposit -= userCost;
+                
+                // Updates user's stored deposit balance based on his usage
+                transactor.deposit = uint96(transactorDeposit);
+                
+                // Check if user's deposit balance is >= min. required deposit conditions
+                if (checkLitionMinDeposit(transactorDeposit) == false) {
+                    transactorBlacklist(chain, acc);
+                }
+                else if (chain.chainValidator != ChainValidator(0) && chain.chainValidator.validateNewTransactor(transactorDeposit, acc, chain.actNumOfTransactors) == false) {
+                    // If not, do not allow him to transact anymore
+                    transactorBlacklist(chain, acc);
+                } 
+            }
+            
+            // Adds user's cost to the total cost
+            // No need for safe math as max possible userCost is 10^32 * 10^17 allows 10^207 users to ovewflow uint256 and that is impossible because of gas 
+            totalCost += userCost;  
+        }
+    }
+
+    // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
+    function processValidatorsRewards(ChainInfo storage chain, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
+        // Min. vesting balance to be a trust node. Trust Nodes haved doubled(virtually) vesting
+        uint256 minTrustNodeVesting = 50000*LIT_PRECISION; 
+        
+        // How many block could validator mined since the last notary in case he did sign every possible block 
+        uint256 maxBlocksMined = endNotaryBlock - startNotaryBlock;
+        
+        // Total involved vesting 
+        uint256 totalInvolvedVesting = 0;
+        
+        // Selected validator's vesting balance
+        uint256 validatorVesting;
+        
+        address actValidatorAcc;
+        // Runs through all validators and calculates total involved vesting.
+        // in the statistics
+        for(uint256 i = 0; i < validators.length; i++) {
+            actValidatorAcc = validators[i];
+            
+            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
+            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
+            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
+                continue;
+            }
+            
+            // Updates validator's mining flags statistics
+            Validator storage validator     = chain.usersData[actValidatorAcc].validator;
+            validator.secondPrevNotaryMined = validator.prevNotaryMined;
+            validator.prevNotaryMined       = validator.currentNotaryMined;
+            validator.currentNotaryMined    = true;
+            
+            validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
+            
+            // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
+            if (validatorVesting >= minTrustNodeVesting) {
+                // Validator's stored vesting is max uint96
+                validatorVesting *= 2;
+            }
+            
+            // No need for safe math
+            // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
+            // so to overflow uint256 there would have to be 10^32 validators, which is impossible because of gas
+            totalInvolvedVesting += (maxBlocksMined * validatorVesting) / blocksMined[i];
+        }
+        
+        // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
+        // as edge case when the last validator stopped mining durint current notary window or there is ongoing coordinated attack based on invalid statistics sent to the notary
+        require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active validators left in the chain");
+        
+        
+        uint256 validatorReward;
+        // Runs through all validators and calculates their reward based on:
+        //     1. How many blocks out of max_blocks_mined each validator signed
+        //     2. How many token each validator vested
+        for(uint256 i = 0; i < validators.length; i++) {
+            actValidatorAcc = validators[i];
+            
+            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
+            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
+            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
+                continue;
+            } 
+            
+            validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
+            
+            // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
+            if (validatorVesting >= minTrustNodeVesting) {
+                // Validator's stored vesting is max uint96
+                validatorVesting *= 2;
+            }
+            
+            // No need for safe math as max value of (maxBlocksMined / blocksMined[i]) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
+            // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible validator reward is 10^32 * 1 * 10^97 = 10^129
+            validatorReward = (validatorVesting * maxBlocksMined * litToDistribute) / blocksMined[i] / totalInvolvedVesting;
+            token.transfer(validators[i], validatorReward);
+            
+            // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
+            litToDistribute -= validatorReward;
+        }
+        
+        if(litToDistribute > 0) {
+            // Sends the rest(math rounding) to the validator, who called notary function
+            token.transfer(msg.sender, litToDistribute);
+        }
+    }
    
-    // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
+   // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
     function validateNotaryConditions(ChainInfo storage chain, bytes32 signatureHash, uint8[] memory v, bytes32[] memory r, bytes32[] memory s) internal view {
         uint256 involvedVestingSum = 0;
         uint256 involvedSignaturesCount = 0;
@@ -1203,7 +1339,7 @@ contract LitionRegistry {
             }
             
             
-            involvedVestingSum += chain.users[signerAcc].validator.vesting;
+            involvedVestingSum += chain.usersData[signerAcc].validator.vesting;
             involvedSignaturesCount++;
         }
         
@@ -1232,155 +1368,7 @@ contract LitionRegistry {
             }
         }
     }
-  
-  // Process users consumption based on their usage
-  function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint32[] memory userGas, uint32 largestTx) internal returns (uint256 totalCost) {
-     // Total usage cost in LIT tokens
-     totalCost = 0;
-     
-     // largest tx fee fixed at 0.1 LIT
-     uint256 largestReward = 10**17;
-     
-     // Individual user's usage cost in LIT tokens
-     uint256 userCost;
-     
-     // Use uint256 transactorDeposit instead of stored uint96 transactor.deposit because of simplified math  
-     uint256 transactorDeposit;
-     address acc;
-     for(uint256 i = 0; i < users.length; i++) {
-        acc = users[i];
-        Transactor storage transactor = chain.usersData[acc].transactor;
-        transactorDeposit = transactor.deposit;
-        
-        // This can happen only if there is non-registered transactor(user) in statistics, which means that there is probaly
-        // ongoing coordinated attack based on invalid statistics sent to the notary
-        // Ignores non-registred user
-        if (transactorExist(chain, acc) == false || userGas[i] == 0) {
-            // Let nodes know that this user is not allowed to transact only if chain is active - in case it is not and becomes active again 
-            // there might be some users that already withdrawed their deposit  
-            if (chain.active == true) {
-                emit AccountWhitelist(chain.id, users[i], false);
-            }
-            continue;
-        }
-        
-        userCost = (userGas[i] * largestReward) / largestTx;
-        
-        // This can happen only if user runs out of tokens(which should not happen due to min.required deposit)
-        if(userCost > transactorDeposit ) {
-            userCost = transactorDeposit;
-        
-            transactorDelete(chain, acc);
-        }
-        else {
-            transactorDeposit -= userCost;
-            
-            // Updates user's stored deposit balance based on his usage
-            transactor.deposit = uint96(transactorDeposit);
-            
-            // Check if user's deposit balance is >= min. required deposit conditions
-            if (checkLitionMinDeposit(transactorDeposit) == false) {
-                transactorBlacklist(chain, acc);
-            }
-            else if (chain.chainValidator != ChainValidator(0) && chain.chainValidator.validateNewTransactor(transactorDeposit, acc, chain.actNumOfTransactors) == false) {
-                // If not, do not allow him to transact anymore
-                transactorBlacklist(chain, acc);
-            } 
-        }
-        
-        // Adds user's cost to the total cost
-        // No need for safe math as max possible userCost is 10^32 * 10^17 allows 10^207 users to ovewflow uint256 and that is impossible because of gas 
-        totalCost += userCost;  
-     }
-   }
-
-   // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
-   function processValidatorsRewards(ChainInfo storage chain, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
-     // Min. vesting balance to be a trust node. Trust Nodes haved doubled(virtually) vesting
-     uint256 minTrustNodeVesting = 50000*LIT_PRECISION; 
-     
-     // How many block could validator mined since the last notary in case he did sign every possible block 
-     uint256 maxBlocksMined = endNotaryBlock - startNotaryBlock;
-
-     // Total involved vesting 
-     uint256 totalInvolvedVesting = 0;
-     
-     // Selected validator's vesting balance
-     uint256 validatorVesting;
-     
-     address actValidatorAcc;
-     // Runs through all validators and calculates total involved vesting.
-     // in the statistics
-     for(uint256 i = 0; i < validators.length; i++) {
-        actValidatorAcc = validators[i];
-        
-        // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
-        // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-        if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
-            continue;
-        }
-        
-        // Updates validator's mining flags statistics
-        Validator storage validator     = chain.usersData[actValidatorAcc].validator;
-        validator.secondPrevNotaryMined = validator.prevNotaryMined;
-        validator.prevNotaryMined       = validator.currentNotaryMined;
-        validator.currentNotaryMined    = true;
-        
-        validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
-        
-        // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
-        if (validatorVesting >= minTrustNodeVesting) {
-            // Validator's stored vesting is max uint96
-            validatorVesting *= 2;
-        }
-
-        // No need for safe math
-        // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
-        // so to overflow uint256 there would have to be 10^32 validators, which is impossible because of gas
-        totalInvolvedVesting += (maxBlocksMined * validatorVesting) / blocksMined[i];
-     }
-     
-     // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
-     // as edge case when the last validator stopped mining durint current notary window or there is ongoing coordinated attack based on invalid statistics sent to the notary
-     require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active validators left in the chain");
-
-     
-     uint256 validatorReward;
-     // Runs through all validators and calculates their reward based on:
-     //     1. How many blocks out of max_blocks_mined each validator signed
-     //     2. How many token each validator vested
-     for(uint256 i = 0; i < validators.length; i++) {
-        actValidatorAcc = validators[i];
-        
-        // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
-        // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-        if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
-            continue;
-        } 
-        
-        validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
-        
-        // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
-        if (validatorVesting >= minTrustNodeVesting) {
-            // Validator's stored vesting is max uint96
-            validatorVesting *= 2;
-        }
-        
-        // No need for safe math as max value of (maxBlocksMined / blocksMined[i]) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
-        // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible validator reward is 10^32 * 1 * 10^97 = 10^129
-        validatorReward = (validatorVesting * maxBlocksMined * litToDistribute) / blocksMined[i] / totalInvolvedVesting;
-        token.transfer(validators[i], validatorReward);
-        
-        // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
-        litToDistribute -= validatorReward;
-     }
-
-     if(litToDistribute > 0) {
-        // Sends the rest(math rounding) to the validator, who called notary function
-        token.transfer(msg.sender, litToDistribute);
-     }
-   }
-   
+    
     // Removes validators that did not mine at all during the last 3 notary windows
     function removeInactiveValidators(ChainInfo storage chain) internal {
         address validatorAcc;
@@ -1392,7 +1380,7 @@ contract LitionRegistry {
                 continue;
             }
            
-            activeValidatorRemove(chainId, validatorAcc);
+            activeValidatorRemove(chain, validatorAcc);
         } 
     }
    
