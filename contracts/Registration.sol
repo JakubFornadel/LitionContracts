@@ -590,12 +590,12 @@ contract LitionRegistry {
     
     // Returns list of user's addresses that are allowed to transact - their deposit >= min. required deposit
     function getTransactors(uint256 chainId, uint256 batch) external view returns (address[100] memory transactors, uint256 count, bool end) {
-        return getUsers(chainId, true, batch);
+        return getUsers(chains[chainId], true, batch);
     }
     
     // Returns list of active and non-active validators
     function getAllowedToValidate(uint256 chainId, uint256 batch) view external returns (address[100] memory validators, uint256 count, bool end) {
-        return getUsers(chainId, false, batch);
+        return getUsers(chains[chainId], false, batch);
     }
     
     // Returns list of active validators
@@ -623,9 +623,7 @@ contract LitionRegistry {
     }
     
     // Returns list of whitelisted transactors in case transactorsFlag == true, otherwise list of validators (active and non-active)
-    function getUsers(uint256 chainId, bool transactorsFlag, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
-        ChainInfo storage chain = chains[chainId];
-        
+    function getUsers(ChainInfo storage chain, bool transactorsFlag, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
         count = 0;
         uint256 usersTotalCount = chain.users.list.length;
         

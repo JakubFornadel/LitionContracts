@@ -204,7 +204,7 @@ func (contractClient *ContractClient) GetAllowedToValidate() ([]common.Address, 
 			return nil, err
 		}
 
-		cmpResult := transactorsList.Count.Cmp(zeroCount)
+		cmpResult := validatorsList.Count.Cmp(zeroCount)
 		if cmpResult == 1 {
 			validators = append(validators, validatorsList.Validators[0:validatorsList.Count.Int64()]...)
 		}
