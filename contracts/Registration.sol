@@ -1269,9 +1269,13 @@ contract LitionRegistry {
         
         // This can happen only if there is non-registered transactor(user) in statistics, which means that there is probaly
         // ongoing coordinated attack based on invalid statistics sent to the notary
+        // Ignores non-registred user
         if (transactorExist(chainId, acc) == false || userGas[i] == 0) {
-            // Ignores non-registred user and let nodes know he is not allowed to transact eventhough they should not let such user to transact
-            emit AccountWhitelist(chainId, users[i], false);
+            // Let nodes know that this user is not allowed to transact only if chain is active - in case it is not and becomes active again 
+            // there might be some users that already withdrawed their deposit  
+            if (chain.active == true) {
+                emit AccountWhitelist(chainId, users[i], false);
+            }
             continue;
         }
         
