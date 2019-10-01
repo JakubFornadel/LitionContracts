@@ -174,6 +174,9 @@ contract LitionRegistry {
     }
     
     struct ChainInfo {
+        // Internal chain ID
+        uint256                         id;
+        
         // Address of the chain creator
         address                         creator;
         
@@ -265,16 +268,16 @@ contract LitionRegistry {
         
         // Enable users to vest into registered (but non-active) chain and start minig so it becomes active
         require(chain.registered == true,                                   "Non-registered chain");
-        require(transactorExist(chainId, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
-        require(vestingRequestExist(chainId, msg.sender) == false,          "There is already one vesting request being processed for this acc");
+        //require(transactorExist(chain, msg.sender) == false,              "Validator cannot be transactor at the same time. Withdraw your depoist or use different account");
+        require(vestingRequestExist(chain, msg.sender) == false,          "There is already one vesting request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
             
         // Full vesting withdrawal
         if (vesting == 0) {
-            require(validatorExist(chainId, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
-            require(activeValidatorExist(chainId, msg.sender) == false,     "StopMinig must be called first");  
+            require(validatorExist(chain, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
+            require(activeValidatorExist(chain, msg.sender) == false,     "StopMinig must be called first");  
         }
         // Vest in chain or withdraw just part of vesting
         else {
@@ -287,7 +290,7 @@ contract LitionRegistry {
             }
         }
         
-        requestVest(chainId, vesting, msg.sender);
+        requestVest(chain, vesting, msg.sender);
     }
     
     // Confirms vesting request
@@ -295,8 +298,8 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         // Enable users to confirm vesting request into registered (but non-active) chain and start minig so it becomes active
-        require(chain.registered == true,                         "Non-registered chain");
-        require(vestingRequestExist(chainId, msg.sender) == true, "Non-existing vesting request");
+        require(chain.registered == true, "Non-registered chain");
+        require(vestingRequestExist(chain, msg.sender) == true, "Non-existing vesting request");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
@@ -306,7 +309,7 @@ contract LitionRegistry {
             require(chain.lastNotary.block > chain.requests.accounts[msg.sender].vestingRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");    
         }
         
-        confirmVest(chainId, msg.sender);
+        confirmVest(chain, msg.sender);
     }
     
     // Requests deposit in chain. It will be processed and applied to the actual user state after next:
@@ -318,15 +321,15 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         
         require(chain.registered == true,                                               "Non-registered chain");
-        require(validatorExist(chainId, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
-        require(depositWithdrawalRequestExist(chainId, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
+        //require(validatorExist(chain, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
+        require(depositWithdrawalRequestExist(chain, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
         
         // Withdraw whole deposit
         if (deposit == 0) {
-            require(transactorExist(chainId, msg.sender) == true,                       "Non-existing transactor account (0 deposit balance)");
+            require(transactorExist(chain, msg.sender) == true,                       "Non-existing transactor account (0 deposit balance)");
             
             if (chain.active == false) {
                 require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now,  "Chain is inactive, for instant full deposit withdrawal wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
@@ -348,7 +351,7 @@ contract LitionRegistry {
             }
         }
                 
-        requestDeposit(chainId, deposit, msg.sender);
+        requestDeposit(chain, deposit, msg.sender);
     }
     
     // Confirms deposit withdrawal request, token transfer is processed during confirmation
@@ -356,21 +359,21 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
 
         require(chain.registered == true, "Non-registered chain");
-        require(depositWithdrawalRequestExist(chainId, msg.sender) == true, "Non-existing deposit withdrawal request");
+        require(depositWithdrawalRequestExist(chain, msg.sender) == true, "Non-existing deposit withdrawal request");
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
         
         // Chain is active or it's been inactive for less than 2*CHAIN_INACTIVITY_TIMEOUT
         if (chain.active == true) {
-            require(chain.lastNotary.block > chains[chainId].requests.accounts[msg.sender].depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
+            require(chain.lastNotary.block > chain.requests.accounts[msg.sender].depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
         }
         // Chain is inactive
         else {
             require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now, "Chain is inactive, for instant full deposit withdrawal confirm wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
         }
         
-        confirmDepositWithdrawal(chainId, msg.sender);
+        confirmDepositWithdrawal(chain, msg.sender);
     }
     
     // Internally creates/registers new chain.
@@ -390,6 +393,7 @@ contract LitionRegistry {
             chain.chainValidator = chainValidator;
         }
         
+        chain.id                        = chainId;
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
         chain.registered                = true;
@@ -406,7 +410,7 @@ contract LitionRegistry {
         emit VestInChain(chainId, msg.sender, vesting, 0 /* zero block */, true);
         
         // Creates validator
-        validatorCreate(chainId, msg.sender, vesting);
+        validatorCreate(chain, msg.sender, vesting);
         
         nextId++;
     }
@@ -430,13 +434,13 @@ contract LitionRegistry {
     // Returns true, if user has vested enough tokens to become validator, othervise false
     function isAllowedToValidate(uint256 chainId, address acc) view external returns (bool) {
         // No need to check vesting balance as it cannot be lover than min. required
-        return validatorExist(chainId, acc);
+        return validatorExist(chains[chainId], acc);
     }
     
     // Returns true, if user has vested enough tokens to become validator and is actively mining, othervise false
     function isActiveValidator(uint256 chainId, address acc) view external returns (bool) {
         // No need to check vesting balance as it cannot be lover than min. required
-        return activeValidatorExist(chainId, acc);
+        return activeValidatorExist(chains[chainId], acc);
     }
     
     // Returns true if user's remaining deposit balance >= min. required deposit and is allowed to transact
@@ -488,13 +492,13 @@ contract LitionRegistry {
         prevNotaryMined         = chain.usersData[acc].validator.currentNotaryMined;  
         secondPrevNotaryMined   = chain.usersData[acc].validator.prevNotaryMined;  
         
-        if (vestingRequestExist(chainId, acc)) {
+        if (vestingRequestExist(chain, acc)) {
             vestingReqExist    = true;
             vestingReqNotary           = chain.requests.accounts[acc].vestingRequest.notaryBlock;
             vestingReqValue            = chain.requests.accounts[acc].vestingRequest.newVesting;
         }
         
-        if (depositWithdrawalRequestExist(chainId, acc)) {
+        if (depositWithdrawalRequestExist(chain, acc)) {
             depositFullWithdrawalReqExist  = true;
             depositReqNotary               = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
         }
@@ -505,10 +509,10 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         require(msg.sender == chain.creator, "Only chain creator can call this method");
         
-        emit Notary(chainId, chain.lastNotary.block + 1, false);
+        emit Notary(chain.id, chain.lastNotary.block + 1, false);
         
         // Remove validators who signed no block during this notary window and have mining flag == true
-        removeInactiveValidators(chainId);
+        removeInactiveValidators(chain);
     
         // Updates info when the last notary was processed 
         chain.lastNotary.block++;
@@ -558,20 +562,20 @@ contract LitionRegistry {
         bytes32 signatureHash = keccak256(abi.encodePacked(notaryEndBlock, validators, blocksMined, users, userGas, largestTx));
         
         // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
-        validateNotaryConditions(chainId, signatureHash, v, r, s);
+        validateNotaryConditions(chain, signatureHash, v, r, s);
         
         // Calculates total cost based on user's usage durint current notary window
-        uint256 totalCost = processUsersConsumptions(chainId, users, userGas, largestTx);
+        uint256 totalCost = processUsersConsumptions(chain, users, userGas, largestTx);
         
         // In case totalCost == 0, something is wrong and there is no need for notary to continue as there is no tokens to be distributed to the validators.
         // There is probably ongoing coordinated attack based on invalid statistics sent to the notary
         require(totalCost > 0, "Invalid statistics data: users totalUsageCost == 0");
         
         // Calculates and process validator's rewards based on their participation rate and vesting balance
-        processValidatorsRewards(chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
+        processValidatorsRewards(chain, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
         
         // Remove validators who signed no block during this notary window and have mining flag == true
-        removeInactiveValidators(chainId);
+        removeInactiveValidators(chain);
         
         // Updates info when the last notary was processed 
         chain.lastNotary.block = notaryEndBlock;
@@ -584,66 +588,7 @@ contract LitionRegistry {
         emit Notary(chainId, notaryEndBlock, true);
     }
     
-    // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
-    function validateNotaryConditions(uint256 chainId, bytes32 signatureHash, uint8[] memory v, bytes32[] memory r, bytes32[] memory s) internal view {
-        ChainInfo storage chain = chains[chainId];
-        
-        uint256 involvedVestingSum = 0;
-        uint256 involvedSignaturesCount = 0;
-        
-        bool[] memory signedValidators = new bool[](chain.validators.list.length); 
-        
-        address signerAcc;
-        for(uint256 i = 0; i < v.length; i++) {
-            signerAcc = ecrecover(signatureHash, v[i], r[i], s[i]);
-            
-            // In case statistics is signed by validator, who is not registered in SC, ignore him   
-            if (activeValidatorExist(chainId, signerAcc) == false) {
-                continue;
-            }
-            
-            uint256 validatorIdx = chain.validators.listIndex[signerAcc] - 1;
-            
-            // In case there is duplicit signature from the same validator, ignore it
-            if (signedValidators[validatorIdx] == true) {
-                continue;
-            }
-            else {
-                signedValidators[validatorIdx] = true;
-            }
-            
-            
-            involvedVestingSum += chain.usersData[signerAcc].validator.vesting;
-            involvedSignaturesCount++;
-        }
-        
-        delete signedValidators;
-        
-        // There must be more than 50% out of total possible vesting involved in signatures
-        if (chain.involvedVestingNotaryCond == true) {
-            // There must be more than 50% out of total possible vesting involved
-            require(involvedVestingSum*2 > chain.totalVesting, "Invalid statistics data: involvedVesting <= 50% of chain.totalVesting");
-        }
-        
-        
-        // There must be more than 2/3 + 1 out of all active validators unique signatures
-        if (chain.participationNotaryCond == true) {
-            uint256 actNumOfValidators = chain.validators.list.length;
-            
-            // min. number of active validators for BFT to work properly is 4
-            if (actNumOfValidators >= 4) {
-                uint256 minRequiredSignaturesCount = ((2 * actNumOfValidators) / 3) + 1;
-                
-                require(involvedSignaturesCount >= minRequiredSignaturesCount, "Invalid statistics data: Not enough signatures provided (2/3 + 1 cond)");
-            }
-            // if there is less than 4 active validators, everyone has to sign statistics
-            else {
-                require(involvedSignaturesCount == actNumOfValidators, "Invalid statistics data: Not enough signatures provided (involvedSignatures == activeValidatorsCount)");
-            }
-        }
-    }
-    
-    // Returns list of transactors that are allowed to transact - they pass min. reuqired deposit conditios
+    // Returns list of user's addresses that are allowed to transact - their deposit >= min. required deposit
     function getTransactors(uint256 chainId, uint256 batch) external view returns (address[100] memory transactors, uint256 count, bool end) {
         return getUsers(chainId, true, batch);
     }
@@ -721,14 +666,14 @@ contract LitionRegistry {
         uint256 validatorVesting = chain.usersData[acc].validator.vesting;
         
         require(chain.registered == true,                           "Non-registered chain");
-        require(validatorExist(chainId, acc) == true,               "Non-existing validator (0 vesting balance)");
-        require(vestingRequestExist(chainId, acc) == false,         "Cannot start mining - there is ongoing vesting request");
+        require(validatorExist(chain, acc) == true,               "Non-existing validator (0 vesting balance)");
+        require(vestingRequestExist(chain, acc) == false,         "Cannot start mining - there is ongoing vesting request");
         
         if (chain.chainValidator != ChainValidator(0)) {
             require(chain.chainValidator.validateNewValidator(validatorVesting, acc, true /* mining */, chain.validators.list.length) == true, "Validator not allowed by external chainvalidator SC");
         }
         
-        if (activeValidatorExist(chainId, acc) == true) {
+        if (activeValidatorExist(chain, acc) == true) {
             // Emit event even if validator is already active - user might want to explicitely emit this event in case something went wrong on the nodes and
             // others did not vote him
             emit AccountMining(chainId, acc, true);
@@ -753,9 +698,9 @@ contract LitionRegistry {
         address acc = msg.sender;
         
         require(chain.registered == true, "Non-registered chain");
-        require(validatorExist(chainId, acc) == true, "Non-existing validator (0 vesting balance)");
+        require(validatorExist(chain, acc) == true, "Non-existing validator (0 vesting balance)");
     
-        if (activeValidatorExist(chainId, acc) == false) {
+        if (activeValidatorExist(chain, acc) == false) {
             // Emit event even if validator is already inactive - user might want to explicitely emit this event in case something went wrong on the nodes and
             // others did not unvote him
             emit AccountMining(chainId, acc, false);
@@ -846,7 +791,7 @@ contract LitionRegistry {
         // Updates chain total vesting
         chain.totalVesting = chain.totalVesting.add(validator.vesting);
         
-        emit AccountMining(chainId, acc, true);
+        emit AccountMining(chain.id, acc, true);
     }
     
     // Removes validator from the list of actively mining validators
@@ -873,7 +818,7 @@ contract LitionRegistry {
             }
         }
         
-        emit AccountMining(chainId, acc, false);
+        emit AccountMining(chain.id, acc, false);
     }
     
     // Replaces lastValidator for the new one in the list of actively mining validators
@@ -895,8 +840,8 @@ contract LitionRegistry {
         // Finds a new validator with the smallest vesting balance
         resetLastActiveValidator(chainId);
         
-        emit AccountMining(chainId, accToBeReplaced, false);
-        emit AccountMining(chainId, acc, true);
+        emit AccountMining(chain.id, accToBeReplaced, false);
+        emit AccountMining(chain.id, acc, true);
     }
     
     // Resets last validator - the one with the smallest vesting balance
@@ -935,7 +880,7 @@ contract LitionRegistry {
         Transactor storage transactor = chains[chainId].usersData[acc].transactor;
         
         transactor.deposit            = uint96(deposit);
-        transactorWhitelist(chainId, acc);
+        transactorWhitelist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         insertAcc(chains[chainId].users, acc);
@@ -946,7 +891,7 @@ contract LitionRegistry {
         Transactor storage transactor = chains[chainId].usersData[acc].transactor;
         
         if (transactor.deposit != 0) transactor.deposit = 0;
-        transactorBlacklist(chainId, acc);
+        transactorBlacklist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         removeAcc(chains[chainId].users, acc);
@@ -966,7 +911,7 @@ contract LitionRegistry {
             chain.actNumOfTransactors--;
             
             transactor.whitelisted = false;
-            emit AccountWhitelist(chainId, acc, false);
+            emit AccountWhitelist(chain.id, acc, false);
         }
     }
     
@@ -979,7 +924,7 @@ contract LitionRegistry {
             chain.actNumOfTransactors++;
             
             transactor.whitelisted = true;
-            emit AccountWhitelist(chainId, acc, true);
+            emit AccountWhitelist(chain.id, acc, true);
         }
     }
     
@@ -988,8 +933,7 @@ contract LitionRegistry {
     /**************************************************************************************************************************/
     
     // Creates new vesting request
-    function vestingRequestCreate(uint256 chainId, address acc, uint256 vesting) internal {
-        ChainInfo storage chain     = chains[chainId];
+    function vestingRequestCreate(ChainInfo storage chain, address acc, uint256 vesting) internal {
         RequestsEntry storage entry = chain.requests.accounts[acc];
         
         entry.vestingRequest.exist       = true;
@@ -997,7 +941,7 @@ contract LitionRegistry {
         entry.vestingRequest.notaryBlock = chain.lastNotary.block; 
         
         // There is no deposit or vesting ongoing request - create new RequestsEntry structure
-        if (entry.index == 0) { // anyRequestExists(chainId, acc) == false could be used instead
+        if (entry.index == 0) { // anyRequestExists(chain, acc) == false could be used instead
             // There is no ongoing deposit request - create new requests pair structure
             chain.requests.list.push(acc);    
             entry.index = chain.requests.list.length; // indexes are stored + 1
@@ -1005,15 +949,14 @@ contract LitionRegistry {
     }
 
     // Creates new deposit withdrawal request
-    function depositWithdrawalRequestCreate(uint256 chainId, address acc) internal {
-        ChainInfo storage chain     = chains[chainId];
+    function depositWithdrawalRequestCreate(ChainInfo storage chain, address acc) internal {
         RequestsEntry storage entry = chain.requests.accounts[acc];
         
         entry.depositWithdrawalRequest.exist       = true;
         entry.depositWithdrawalRequest.notaryBlock = chain.lastNotary.block; 
         
         // There is no deposit or vesting ongoing request - create new RequestsEntry structure
-        if (entry.index == 0) { // anyRequestExists(chainId, acc) == false could be used instead
+        if (entry.index == 0) { // anyRequestExists(chain, acc) == false could be used instead
             // There is no ongoing deposit request - create new requests pair structure
             chain.requests.list.push(acc);    
             entry.index = chain.requests.list.length; // indexes are stored + 1
@@ -1022,8 +965,7 @@ contract LitionRegistry {
 
     // Deletes existing requests pair(vesting & deposit) from the internal list of requests
     // This method should never be called directly, vestingRequestDelete & depositWithdrawalRequestDelete should be called instead
-    function requestsPairDelete(uint256 chainId, address acc) internal {
-        ChainInfo storage chain         = chains[chainId];
+    function requestsPairDelete(ChainInfo storage chain, address acc) internal {
         address[] storage requestsList  = chain.requests.list;
         
         uint256 index = chain.requests.accounts[acc].index;
@@ -1040,12 +982,10 @@ contract LitionRegistry {
         delete chain.requests.accounts[acc];
     }
     
-    function vestingRequestDelete(uint256 chainId, address acc) internal {
-        ChainInfo storage chain = chains[chainId];
-        
+    function vestingRequestDelete(ChainInfo storage chain, address acc) internal {
         // There is no ongoing deposit request for this account - delete whole requests struct 
         if (chain.requests.accounts[acc].depositWithdrawalRequest.exist == false) {
-            requestsPairDelete(chainId, acc);
+            requestsPairDelete(chain, acc);
             return;
         } 
         
@@ -1056,12 +996,10 @@ contract LitionRegistry {
         request.newVesting     = 0;
     }
     
-    function depositWithdrawalRequestDelete(uint256 chainId, address acc) internal {
-        ChainInfo storage chain = chains[chainId];
-        
+    function depositWithdrawalRequestDelete(ChainInfo storage chain, address acc) internal {
         // There is no ongoing vesting request for this account - delete whole requests struct 
         if (chain.requests.accounts[acc].vestingRequest.exist == false) {
-            requestsPairDelete(chainId, acc);
+            requestsPairDelete(chain, acc);
             return;
         } 
         
@@ -1072,18 +1010,18 @@ contract LitionRegistry {
     }
     
     // Checks if acc has any ongoing vesting or deposit request
-    function anyRequestExists(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].requests.accounts[acc].index != 0;
+    function anyRequestExists(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return chain.requests.accounts[acc].index != 0;
     }
     
     // Checks if acc has any ongoing vesting request
-    function vestingRequestExist(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].requests.accounts[acc].vestingRequest.exist;
+    function vestingRequestExist(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return chain.requests.accounts[acc].vestingRequest.exist;
     }
     
     // Checks if acc has any ongoing DEPOSIT WITHDRAWAL request
-    function depositWithdrawalRequestExist(uint256 chainId, address acc) internal view returns (bool) {
-        return chains[chainId].requests.accounts[acc].depositWithdrawalRequest.exist;
+    function depositWithdrawalRequestExist(ChainInfo storage chain, address acc) internal view returns (bool) {
+        return chain.requests.accounts[acc].depositWithdrawalRequest.exist;
     }
     
     function requestVest(uint256 chainId, uint256 vesting, address acc) internal {
@@ -1096,21 +1034,21 @@ contract LitionRegistry {
         if (vesting == 0) {
             // Immediate full vesting withdrawal is not allowed as validators might already mine some blocks so they can get rewards 
             // based on theirs vesting balance for that
-            vestingRequestCreate(chainId, acc, vesting);
+            vestingRequestCreate(chain, acc, vesting);
         }
         // Vesting increase - process in 2 steps
         else if (vesting > validatorVesting) {
             uint256 toVest = vesting - validatorVesting;
             token.transferFrom(acc, address(this), toVest);
             
-            vestingRequestCreate(chainId, acc, vesting);
+            vestingRequestCreate(chain, acc, vesting);
         }
         // Vesting decrease - process immediately
         else {
             uint256 toWithdraw = validatorVesting - vesting;
             
             // If validator is actively mining, decrease chain's total vesting
-            if (activeValidatorExist(chainId, acc) == true) {
+            if (activeValidatorExist(chain, acc) == true) {
                 chain.totalVesting = chain.totalVesting.sub(toWithdraw);
             }
          
@@ -1119,12 +1057,12 @@ contract LitionRegistry {
             // Transfers tokens
             token.transfer(acc, toWithdraw);
             
-            emit VestInChain(chainId, acc, vesting, chain.lastNotary.block, true);
+            emit VestInChain(chain.id, acc, vesting, chain.lastNotary.block, true);
             return;
         }
         
         
-        emit VestInChain(chainId, acc, vesting, chain.requests.accounts[acc].vestingRequest.notaryBlock, false);
+        emit VestInChain(chain.id, acc, vesting, chain.requests.accounts[acc].vestingRequest.notaryBlock, false);
         return;
     }
     
@@ -1133,20 +1071,20 @@ contract LitionRegistry {
         Validator storage validator             = chain.usersData[acc].validator;
         VestingRequest memory request           = chain.requests.accounts[acc].vestingRequest;
         
-        vestingRequestDelete(chainId, acc);
+        vestingRequestDelete(chain, acc);
         uint256 origVesting = validator.vesting;
         
         // Vesting increase
         if (request.newVesting > origVesting) {
             // Non-existing validator - internally creates new one
-            if (validatorExist(chainId, acc) == false) {
-                validatorCreate(chainId, acc, request.newVesting);
+            if (validatorExist(chain, acc) == false) {
+                validatorCreate(chain, acc, request.newVesting);
             }
             // Existing validator
             else {
                 validator.vesting = uint96(request.newVesting);
                 
-                if (activeValidatorExist(chainId, acc) == true) {
+                if (activeValidatorExist(chain, acc) == true) {
                     chain.totalVesting = chain.totalVesting.add(request.newVesting - origVesting);
                 }    
             }
@@ -1154,13 +1092,13 @@ contract LitionRegistry {
         // Full vesting withdrawal - stopMining must be called before
         else {
             uint256 toWithdraw = origVesting;
-            validatorDelete(chainId, acc);
+            validatorDelete(chain, acc);
             
             // Transfers tokens
             token.transfer(acc, toWithdraw);
         }
         
-        emit VestInChain(chainId, acc, request.newVesting, request.notaryBlock, true);
+        emit VestInChain(chain.id, acc, request.newVesting, request.notaryBlock, true);
     }
     
     function requestDeposit(uint256 chainId, uint256 deposit, address acc) internal {
@@ -1172,19 +1110,19 @@ contract LitionRegistry {
             // Chain is not active and last notary is older than 2*CHAIN_INACTIVITY_TIMEOUT - enable full deposit withdrawal immmediately
             if (chain.active == false) {
                 uint256 toWithdraw = transactor.deposit;
-                transactorDelete(chainId, acc);
+                transactorDelete(chain, acc);
                 
                 // Withdraw whole deposit
                 token.transfer(acc, toWithdraw);
                 
-                emit DepositInChain(chainId, acc, deposit, chain.lastNotary.block, true);
+                emit DepositInChain(chain.id, acc, deposit, chain.lastNotary.block, true);
             }
             // Chain is active - create withdrawal request and process full deposit withdrawal in 2 steps
             else {
-                depositWithdrawalRequestCreate(chainId, acc);
+                depositWithdrawalRequestCreate(chain, acc);
                 
-                transactorBlacklist(chainId, acc);
-                emit DepositInChain(chainId, acc, deposit, chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock, false);  
+                transactorBlacklist(chain, acc);
+                emit DepositInChain(chain.id, acc, deposit, chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock, false);  
             }  
           
             return;
@@ -1203,16 +1141,16 @@ contract LitionRegistry {
             token.transferFrom(acc, address(this), toDeposit);
          
             // First deposit - create internally new user
-            if (transactorExist(chainId, acc) == false) {
-                transactorCreate(chainId, acc, deposit);
+            if (transactorExist(chain, acc) == false) {
+                transactorCreate(chain, acc, deposit);
             }
             else {
                 transactor.deposit = uint96(deposit);
-                transactorWhitelist(chainId, acc);
+                transactorWhitelist(chain, acc);
             }
         }
         
-        emit DepositInChain(chainId, acc, deposit, chain.lastNotary.block, true);
+        emit DepositInChain(chain.id, acc, deposit, chain.lastNotary.block, true);
     }
     
     function confirmDepositWithdrawal(uint256 chainId, address acc) internal {
@@ -1221,13 +1159,13 @@ contract LitionRegistry {
         uint256 toWithdraw = chain.usersData[acc].transactor.deposit;
         uint256 requestNotaryBlock = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
         
-        transactorDelete(chainId, acc);
-        depositWithdrawalRequestDelete(chainId, acc);
+        transactorDelete(chain, acc);
+        depositWithdrawalRequestDelete(chain, acc);
         
         // Withdraw whole deposit
         token.transfer(acc, toWithdraw);
         
-        emit DepositInChain(chainId, acc, 0, requestNotaryBlock, true);
+        emit DepositInChain(chain.id, acc, 0, requestNotaryBlock, true);
     }
     
     /**************************************************************************************************************************/
@@ -1237,11 +1175,66 @@ contract LitionRegistry {
    constructor(ERC20 _token) public {
       token = _token;
    }
+   
+    // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
+    function validateNotaryConditions(ChainInfo storage chain, bytes32 signatureHash, uint8[] memory v, bytes32[] memory r, bytes32[] memory s) internal view {
+        uint256 involvedVestingSum = 0;
+        uint256 involvedSignaturesCount = 0;
+        
+        bool[] memory signedValidators = new bool[](chain.validators.list.length); 
+        
+        address signerAcc;
+        for(uint256 i = 0; i < v.length; i++) {
+            signerAcc = ecrecover(signatureHash, v[i], r[i], s[i]);
+            
+            // In case statistics is signed by validator, who is not registered in SC, ignore him   
+            if (activeValidatorExist(chain, signerAcc) == false) {
+                continue;
+            }
+            
+            uint256 validatorIdx = chain.validators.listIndex[signerAcc] - 1;
+            
+            // In case there is duplicit signature from the same validator, ignore it
+            if (signedValidators[validatorIdx] == true) {
+                continue;
+            }
+            else {
+                signedValidators[validatorIdx] = true;
+            }
+            
+            
+            involvedVestingSum += chain.users[signerAcc].validator.vesting;
+            involvedSignaturesCount++;
+        }
+        
+        delete signedValidators;
+        
+        // There must be more than 50% out of total possible vesting involved in signatures
+        if (chain.involvedVestingNotaryCond == true) {
+            // There must be more than 50% out of total possible vesting involved
+            require(involvedVestingSum*2 > chain.totalVesting, "Invalid statistics data: involvedVesting <= 50% of chain.totalVesting");
+        }
+        
+        
+        // There must be more than 2/3 + 1 out of all active validators unique signatures
+        if (chain.participationNotaryCond == true) {
+            uint256 actNumOfValidators = chain.validators.list.length;
+            
+            // min. number of active validators for BFT to work properly is 4
+            if (actNumOfValidators >= 4) {
+                uint256 minRequiredSignaturesCount = ((2 * actNumOfValidators) / 3) + 1;
+                
+                require(involvedSignaturesCount >= minRequiredSignaturesCount, "Invalid statistics data: Not enough signatures provided (2/3 + 1 cond)");
+            }
+            // if there is less than 4 active validators, everyone has to sign statistics
+            else {
+                require(involvedSignaturesCount == actNumOfValidators, "Invalid statistics data: Not enough signatures provided (involvedSignatures == activeValidatorsCount)");
+            }
+        }
+    }
   
   // Process users consumption based on their usage
-  function processUsersConsumptions(uint256 chainId, address[] memory users, uint32[] memory userGas, uint32 largestTx) internal returns (uint256 totalCost) {
-     ChainInfo storage chain = chains[chainId];
-     
+  function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint32[] memory userGas, uint32 largestTx) internal returns (uint256 totalCost) {
      // Total usage cost in LIT tokens
      totalCost = 0;
      
@@ -1262,11 +1255,11 @@ contract LitionRegistry {
         // This can happen only if there is non-registered transactor(user) in statistics, which means that there is probaly
         // ongoing coordinated attack based on invalid statistics sent to the notary
         // Ignores non-registred user
-        if (transactorExist(chainId, acc) == false || userGas[i] == 0) {
+        if (transactorExist(chain, acc) == false || userGas[i] == 0) {
             // Let nodes know that this user is not allowed to transact only if chain is active - in case it is not and becomes active again 
             // there might be some users that already withdrawed their deposit  
             if (chain.active == true) {
-                emit AccountWhitelist(chainId, users[i], false);
+                emit AccountWhitelist(chain.id, users[i], false);
             }
             continue;
         }
@@ -1277,7 +1270,7 @@ contract LitionRegistry {
         if(userCost > transactorDeposit ) {
             userCost = transactorDeposit;
         
-            transactorDelete(chainId, acc);
+            transactorDelete(chain, acc);
         }
         else {
             transactorDeposit -= userCost;
@@ -1287,11 +1280,11 @@ contract LitionRegistry {
             
             // Check if user's deposit balance is >= min. required deposit conditions
             if (checkLitionMinDeposit(transactorDeposit) == false) {
-                transactorBlacklist(chainId, acc);
+                transactorBlacklist(chain, acc);
             }
             else if (chain.chainValidator != ChainValidator(0) && chain.chainValidator.validateNewTransactor(transactorDeposit, acc, chain.actNumOfTransactors) == false) {
                 // If not, do not allow him to transact anymore
-                transactorBlacklist(chainId, acc);
+                transactorBlacklist(chain, acc);
             } 
         }
         
@@ -1302,9 +1295,7 @@ contract LitionRegistry {
    }
 
    // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
-   function processValidatorsRewards(uint256 chainId, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
-     ChainInfo storage chain = chains[chainId];
-     
+   function processValidatorsRewards(ChainInfo storage chain, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
      // Min. vesting balance to be a trust node. Trust Nodes haved doubled(virtually) vesting
      uint256 minTrustNodeVesting = 50000*LIT_PRECISION; 
      
@@ -1325,7 +1316,7 @@ contract LitionRegistry {
         
         // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
         // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-        if (validatorExist(chainId, actValidatorAcc) == false || blocksMined[i] == 0) {
+        if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
             continue;
         }
         
@@ -1363,7 +1354,7 @@ contract LitionRegistry {
         
         // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
         // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-        if (validatorExist(chainId, actValidatorAcc) == false || blocksMined[i] == 0) {
+        if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
             continue;
         } 
         
@@ -1391,9 +1382,7 @@ contract LitionRegistry {
    }
    
     // Removes validators that did not mine at all during the last 3 notary windows
-    function removeInactiveValidators(uint256 chainId) internal {
-        ChainInfo storage chain = chains[chainId];
-        
+    function removeInactiveValidators(ChainInfo storage chain) internal {
         address validatorAcc;
         for (uint256 i = 0; i < chain.validators.list.length; i++) {
             validatorAcc = chain.validators.list[i];
