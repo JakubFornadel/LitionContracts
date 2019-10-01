@@ -511,7 +511,7 @@ contract LitionRegistry {
     // Returns user details
     function getUserDetails(uint256 chainId, address acc) external view returns (uint256 deposit, bool whitelisted, uint256 vesting, 
                                                                                  bool mining, bool prevNotaryMined, bool secondPrevNotaryMined,
-                                                                                 bool vestingIncreaceReqExist, uint256 vestingReqNotary, uint256 vestingReqValue,
+                                                                                 bool vestingReqExist, uint256 vestingReqNotary, uint256 vestingReqValue,
                                                                                  bool depositFullWithdrawalReqExist, uint256 depositReqNotary) {
         ChainInfo storage chain = chains[chainId];
          
@@ -523,7 +523,7 @@ contract LitionRegistry {
         secondPrevNotaryMined   = chain.users[acc].validator.prevNotaryMined;  
         
         if (vestingRequestExist(chainId, acc)) {
-            vestingIncreaceReqExist    = true;
+            vestingReqExist    = true;
             vestingReqNotary           = chain.requests.accounts[acc].vestingRequest.notaryBlock;
             vestingReqValue            = chain.requests.accounts[acc].vestingRequest.newVesting;
         }
