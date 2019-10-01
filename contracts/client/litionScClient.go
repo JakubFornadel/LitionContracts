@@ -195,26 +195,26 @@ func (contractClient *ContractClient) GetTransactors() ([]common.Address, error)
 }
 
 func (contractClient *ContractClient) GetAllowedToValidate() ([]common.Address, error) {
-	var accountsWhitelist []common.Address
+	var validators []common.Address
 	zeroCount := big.NewInt(0)
 
 	for batchID := big.NewInt(0); ; batchID.Add(batchID, big.NewInt(1)) {
-		transactorsList, err := contractClient.scClient.GetAllowedToValidate(&bind.CallOpts{}, contractClient.chainID, batchID)
+		validatorsList, err := contractClient.scClient.GetAllowedToValidate(&bind.CallOpts{}, contractClient.chainID, batchID)
 		if err != nil {
 			return nil, err
 		}
 
 		cmpResult := transactorsList.Count.Cmp(zeroCount)
 		if cmpResult == 1 {
-			accountsWhitelist = append(accountsWhitelist, transactorsList.Transactors[0:transactorsList.Count.Int64()]...)
+			validators = append(validators, validatorsList.Validators[0:validatorsList.Count.Int64()]...)
 		}
 
-		if transactorsList.End == true {
+		if validatorsList.End == true {
 			break
 		}
 	}
 
-	return accountsWhitelist, nil
+	return validators, nil
 }
 
 func (contractClient *ContractClient) GetValidators() ([]common.Address, error) {
