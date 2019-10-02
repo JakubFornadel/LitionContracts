@@ -144,6 +144,39 @@ func (contractClient *ContractClient) Start_accMiningEventListener(f func(*Litio
 	}
 }
 
+func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*LitionScClientAccountWhitelist)) {
+	listener := contractClient.accWhitelistEventListener
+	if listener == nil {
+		log.Fatal("Trying to start 'AccountWhitelist' listener without previous initialization")
+		return
+	}
+
+	// Infinite loop - try to initialze listeners until it succeeds
+	initialized := true
+	for {
+		if initialized == true {
+			retErr := listener.Start(f)
+			// Listener was manually stopped, do not try to start it again
+			if retErr == nil {
+				return
+			}
+			log.Error("Start AccountWhitelistEventListener err: '", retErr, "'. Try to reinit.")
+		}
+
+		// Wait some time before trying to reinit and start listener again
+		time.Sleep(1 * time.Second)
+
+		err := listener.ReInit()
+		if err == nil {
+			log.Info("Reinit successfull")
+			initialized = true
+		} else {
+			log.Error("Reinit fail")
+			initialized = false
+		}
+	}
+}
+
 func (contractClient *ContractClient) Start_vestInChainEventListener(f func(*LitionScClientVestInChain)) {
 	listener := contractClient.vestInChainEventListener
 	if listener == nil {
