@@ -532,7 +532,7 @@ contract LitionRegistry {
     // check if there is enough signers (total vesting of signers > 50% of all vestings) or total num of signes >= 2/3+1 out of all validators
     // then, calculate reward
     function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] memory validators, uint32[] memory blocksMined,
-                    address[] memory users, uint32[] memory userGas, uint32 largestTx,
+                    address[] memory users, uint64[] memory userGas, uint64 largestTx,
                     uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
         
         emit Notary(chainId, notaryEndBlock, false);
@@ -1165,7 +1165,7 @@ contract LitionRegistry {
     }
   
     // Process users consumption based on their usage
-    function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint32[] memory userGas, uint32 largestTx) internal returns (uint256 totalCost) {
+    function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint64[] memory userGas, uint64 largestTx) internal returns (uint256 totalCost) {
         // Total usage cost in LIT tokens
         totalCost = 0;
         
@@ -1220,7 +1220,7 @@ contract LitionRegistry {
             }
             
             // Adds user's cost to the total cost
-            // No need for safe math as max possible userCost is 10^32 * 10^17 allows 10^207 users to ovewflow uint256 and that is impossible because of gas 
+            // No need for safe math as max possible userCost is 10^64 * 10^17 allows 10^175 users to ovewflow uint256 and that is impossible because of gas 
             totalCost += userCost;  
         }
     }
