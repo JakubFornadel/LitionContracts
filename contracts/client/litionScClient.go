@@ -13,12 +13,14 @@ import (
 
 // ContractClient contains variables needed for communication with lition smart contract
 type ContractClient struct {
-	ethClient                 *ethclient.Client
-	scAddress                 common.Address
-	scClient                  *LitionScClient
-	chainID                   *big.Int // chainID on top of which all sc calls are made
-	accMiningEventListener    *AccMiningEventListener
-	accWhitelistEventListener *AccWhitelistEventListener
+	ethClient                   *ethclient.Client
+	scAddress                   common.Address
+	scClient                    *LitionScClient
+	chainID                     *big.Int // chainID on top of which all sc calls are made
+	accMiningEventListener      *AccMiningEventListener
+	accWhitelistEventListener   *AccWhitelistEventListener
+	vestInChainEventListener    *VestInChainEventListener
+	depositInChainEventListener *DepositInChainEventListener
 }
 
 func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
@@ -41,6 +43,8 @@ func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*Contra
 
 	contractClient.accMiningEventListener = nil
 	contractClient.accWhitelistEventListener = nil
+	contractClient.vestInChainEventListener = nil
+	contractClient.depositInChainEventListener = nil
 
 	return contractClient, nil
 }
@@ -65,6 +69,26 @@ func (contractClient *ContractClient) InitAccWhitelistEventListener() error {
 	return nil
 }
 
+func (contractClient *ContractClient) InitVestInChainEventListener() error {
+	var err error
+	contractClient.vestInChainEventListener, err = NewVestInChainEventListener(contractClient.scClient, contractClient.chainID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (contractClient *ContractClient) InitDepositInChainEventListener() error {
+	var err error
+	contractClient.depositInChainEventListener, err = NewDepositInChainEventListener(contractClient.scClient, contractClient.chainID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (contractClient *ContractClient) DeInit() {
 	if contractClient.accMiningEventListener != nil {
 		contractClient.accMiningEventListener.DeInit()
@@ -72,10 +96,18 @@ func (contractClient *ContractClient) DeInit() {
 	if contractClient.accWhitelistEventListener != nil {
 		contractClient.accWhitelistEventListener.DeInit()
 	}
+	if contractClient.vestInChainEventListener != nil {
+		contractClient.vestInChainEventListener.DeInit()
+	}
+	if contractClient.depositInChainEventListener != nil {
+		contractClient.depositInChainEventListener.DeInit()
+	}
 
 	contractClient.chainID = nil
 	contractClient.accMiningEventListener = nil
 	contractClient.accWhitelistEventListener = nil
+	contractClient.vestInChainEventListener = nil
+	contractClient.depositInChainEventListener = nil
 	contractClient.ethClient.Close()
 }
 
@@ -112,10 +144,10 @@ func (contractClient *ContractClient) Start_accMiningEventListener(f func(*Litio
 	}
 }
 
-func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*LitionScClientAccountWhitelist)) {
-	listener := contractClient.accWhitelistEventListener
+func (contractClient *ContractClient) Start_vestInChainEventListener(f func(*LitionScClientVestInChain)) {
+	listener := contractClient.vestInChainEventListener
 	if listener == nil {
-		log.Fatal("Trying to start 'AccountWhitelist' listener without previous initialization")
+		log.Fatal("Trying to start 'VestInChain' listener without previous initialization")
 		return
 	}
 
@@ -128,7 +160,40 @@ func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*Li
 			if retErr == nil {
 				return
 			}
-			log.Error("Start accWhitelistEventListener err: '", retErr, "'. Try to reinit.")
+			log.Error("Start VestInChainEventListener err: '", retErr, "'. Try to reinit.")
+		}
+
+		// Wait some time before trying to reinit and start listener again
+		time.Sleep(1 * time.Second)
+
+		err := listener.ReInit()
+		if err == nil {
+			log.Info("Reinit successfull")
+			initialized = true
+		} else {
+			log.Error("Reinit fail")
+			initialized = false
+		}
+	}
+}
+
+func (contractClient *ContractClient) Start_depositInChainEventListener(f func(*LitionScClientDepositInChain)) {
+	listener := contractClient.depositInChainEventListener
+	if listener == nil {
+		log.Fatal("Trying to start 'DepositInChain' listener without previous initialization")
+		return
+	}
+
+	// Infinite loop - try to initialze listeners until it succeeds
+	initialized := true
+	for {
+		if initialized == true {
+			retErr := listener.Start(f)
+			// Listener was manually stopped, do not try to start it again
+			if retErr == nil {
+				return
+			}
+			log.Error("Start DepositInChainEventListener err: '", retErr, "'. Try to reinit.")
 		}
 
 		// Wait some time before trying to reinit and start listener again
