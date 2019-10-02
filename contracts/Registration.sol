@@ -1017,26 +1017,21 @@ contract LitionRegistry {
         return chain.requests.accounts[acc].depositWithdrawalRequest.exist;
     }
     
+    // Full vesting withdrawal  and vesting increase are procesed in 2 steps with confirmaition
+    // Immediate full withdrawal is not allowed as validators might already mine some blocks so they can get rewards 
+    // based on theirs vesting balance for that
     function requestVest(ChainInfo storage chain, uint256 vesting, address acc) internal {
         Validator storage validator = chain.usersData[acc].validator;
         
         uint256 validatorVesting = validator.vesting;
         
-        // Full vesting withdrawal - process in 2 steps
-        if (vesting == 0) {
-            // Immediate full vesting withdrawal is not allowed as validators might already mine some blocks so they can get rewards 
-            // based on theirs vesting balance for that
-            vestingRequestCreate(chain, acc, vesting);
-        }
         // Vesting increase - process in 2 steps
-        else if (vesting > validatorVesting) {
+        if (vesting > validatorVesting) {
             uint256 toVest = vesting - validatorVesting;
             token.transferFrom(acc, address(this), toVest);
-            
-            vestingRequestCreate(chain, acc, vesting);
         }
         // Vesting decrease - process immediately
-        else {
+        else if (vesting != 0) {
             uint256 toWithdraw = validatorVesting - vesting;
             
             // If validator is actively mining, decrease chain's total vesting
@@ -1053,8 +1048,9 @@ contract LitionRegistry {
             return;
         }
         
-        
+        vestingRequestCreate(chain, acc, vesting);
         emit VestInChain(chain.id, acc, vesting, chain.requests.accounts[acc].vestingRequest.notaryBlock, false);
+        
         return;
     }
     
