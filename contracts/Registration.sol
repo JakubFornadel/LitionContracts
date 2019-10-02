@@ -432,13 +432,13 @@ contract LitionRegistry {
     }
     
     // Returns true, if user has vested enough tokens to become validator, othervise false
-    function isAllowedToValidate(uint256 chainId, address acc) view external returns (bool) {
+    function isAllowedToValidate(uint256 chainId, address acc) view public returns (bool) {
         // No need to check vesting balance as it cannot be lover than min. required
         return validatorExist(chains[chainId], acc);
     }
     
     // Returns true, if user has vested enough tokens to become validator and is actively mining, othervise false
-    function isActiveValidator(uint256 chainId, address acc) view external returns (bool) {
+    function isActiveValidator(uint256 chainId, address acc) view public returns (bool) {
         // No need to check vesting balance as it cannot be lover than min. required
         return activeValidatorExist(chains[chainId], acc);
     }
@@ -504,6 +504,7 @@ contract LitionRegistry {
         }
     }
     
+    // TODO: delete for mainnet
     // Test Notary increases last notayry block and timestamp - testing method to see vesting/deposit changes that need confirmation
     function testNotary(uint256 chainId) external {
         ChainInfo storage chain = chains[chainId];
@@ -537,14 +538,15 @@ contract LitionRegistry {
         emit Notary(chainId, notaryEndBlock, false);
                   
         ChainInfo storage chain = chains[chainId];
-        require(chain.registered    == true,    "Invalid chain data: Non-registered chain");
-        require(chain.totalVesting  > 0,        "Invalid chain data: current chain total_vesting == 0");
+        require(chain.registered    == true,                            "Invalid chain data: Non-registered chain");
+        require(isAllowedToValidate(chainId, msg.sender) == true,       "Sender must have vesting balance > 0");
+        require(chain.totalVesting  > 0,                                "Current chain total_vesting == 0, there are no active validators");
         
-        require(validators.length       > 0,                           "Invalid statistics data: validators.length == 0");
-        require(validators.length       == blocksMined.length,         "Invalid statistics data: validators.length != num of block mined");
+        require(validators.length       > 0,                            "Invalid statistics data: validators.length == 0");
+        require(validators.length       == blocksMined.length,          "Invalid statistics data: validators.length != num of block mined");
         if (chain.maxNumOfValidators != 0) {
-            require(validators.length   <= chain.maxNumOfValidators,   "Invalid statistics data: validators.length > maxNumOfValidators");
-            require(v.length            <= chain.maxNumOfValidators,   "Invalid statistics data: signatures.length > maxNumOfValidators");
+            require(validators.length   <= chain.maxNumOfValidators,    "Invalid statistics data: validators.length > maxNumOfValidators");
+            require(v.length            <= chain.maxNumOfValidators,    "Invalid statistics data: signatures.length > maxNumOfValidators");
         }
         
         if (chain.maxNumOfTransactors != 0) {
