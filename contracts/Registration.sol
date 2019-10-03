@@ -32,6 +32,9 @@ contract LitionRegistry {
     // Max vesting value
     uint256 constant MAX_VESTING                 = ~uint96(0);
     
+    // Min notary period = 1440 blocks (2 housr)
+    uint256 constant MIN_NOTARY_PERIOD           = 1440;
+    
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
     
@@ -185,6 +188,9 @@ contract LitionRegistry {
         
         // Chain endpoint
         string                          endpoint;
+        
+        // Number of blocks after which notary is called, 1 block is generated every 5 seconds, e.g notaryPeriod = 1440 blocks = 2 hours
+        uint256                         notaryPeriod;
         
         // Flag that says if the chain was already(& sucessfully) registered
         bool                            registered;
@@ -377,10 +383,11 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 vesting, uint256 maxNumOfValidators,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 notaryPeriod, uint256 vesting, uint256 maxNumOfValidators,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
-        require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
-        require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
+        require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
+        require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
+        require(notaryPeriod >= MIN_NOTARY_PERIOD,                                                      "Notary period must be bigger than MIN_NOTARY_PERIOD(1440)");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
         require(checkLitionMinVesting(vesting) == true,                                                 "Chain creator does not meet Lition's min.required vesting condition");
         require(vesting <= MAX_VESTING,                                                                 "Vesting is greater than uint96_max_value");
@@ -396,6 +403,7 @@ contract LitionRegistry {
         chain.id                        = chainId;
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
+        chain.notaryPeriod              = notaryPeriod;
         chain.registered                = true;
         chain.maxNumOfValidators        = maxNumOfValidators;
         chain.maxNumOfTransactors       = maxNumOfTransactors;
@@ -420,8 +428,8 @@ contract LitionRegistry {
         ChainInfo storage chain = chains[chainId];
         require(msg.sender == chain.creator, "Only chain creator can call this method");
     
-        require(bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH");
-        require(bytes(endpoint).length <= MAX_URL_LENGTH,              "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH");
+        require(bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
+        require(bytes(endpoint).length <= MAX_URL_LENGTH,              "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
         
         if (bytes(description).length > 0) {
             chain.description = description;
@@ -451,13 +459,14 @@ contract LitionRegistry {
     
     
     // Returns static chain details
-    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 maxNumOfValidators, uint256 maxNumOfTransactors,
+    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors,
                                                                            bool involvedVestingNotaryCond, bool participationNotaryCond) {
         ChainInfo storage chain = chains[chainId];
         
         description                 = chain.description;
         endpoint                    = chain.endpoint;
         registered                  = chain.registered;
+        notaryPeriod                = chain.notaryPeriod;
         maxNumOfValidators          = chain.maxNumOfValidators;
         maxNumOfTransactors         = chain.maxNumOfTransactors;
         involvedVestingNotaryCond   = chain.involvedVestingNotaryCond;

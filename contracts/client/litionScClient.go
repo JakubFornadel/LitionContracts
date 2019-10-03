@@ -357,6 +357,7 @@ func (contractClient *ContractClient) GetChainStaticDetails() (struct {
 	Description               string
 	Endpoint                  string
 	Registered                bool
+	NotaryPeriod              *big.Int
 	MaxNumOfValidators        *big.Int
 	MaxNumOfTransactors       *big.Int
 	InvolvedVestingNotaryCond bool
