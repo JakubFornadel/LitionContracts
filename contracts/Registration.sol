@@ -1236,7 +1236,7 @@ contract LitionRegistry {
         uint256 minTrustNodeVesting = 50000*LIT_PRECISION; 
         
         // How many block could validator mined since the last notary in case he did sign every possible block 
-        uint256 maxBlocksMined = endNotaryBlock - startNotaryBlock;
+        uint256 maxBlocksMined = (endNotaryBlock - startNotaryBlock) + 1;
         
         // Total involved vesting 
         uint256 totalInvolvedVesting = 0;
@@ -1271,15 +1271,18 @@ contract LitionRegistry {
             }
             
             // No need for safe math
-            // max possible (blocksMined[i] / maxBlocksMined) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
-            // so to overflow uint256 there would have to be 10^32 validators, which is impossible because of gas
-            totalInvolvedVesting += (blocksMined[i] * validatorVesting) / maxBlocksMined;
+            // max possible (blocksMined[i] * validatorVesting) valuse is 10^32 * 10^96 = 10^128,
+            // so to overflow uint256 there would have to be 10^128 validators, which is impossible because of gas
+            totalInvolvedVesting += (blocksMined[i] * validatorVesting); 
         }
+        totalInvolvedVesting /= maxBlocksMined;
         
         // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
         // as edge case when the last validator stopped mining durint current notary window or there is ongoing coordinated attack based on invalid statistics sent to the notary
         require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active validators left in the chain");
         
+        // Whats left after all rewards are distributed (math rounding)
+        uint256 litToDistributeRest = litToDistribute;
         
         uint256 validatorReward;
         // Runs through all validators and calculates their reward based on:
@@ -1308,12 +1311,12 @@ contract LitionRegistry {
             token.transfer(validators[i], validatorReward);
             
             // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
-            litToDistribute -= validatorReward;
+            litToDistributeRest -= validatorReward;
         }
         
-        if(litToDistribute > 0) {
+        if(litToDistributeRest > 0) {
             // Sends the rest(math rounding) to the validator, who called notary function
-            token.transfer(msg.sender, litToDistribute);
+            token.transfer(msg.sender, litToDistributeRest);
         }
     }
    
