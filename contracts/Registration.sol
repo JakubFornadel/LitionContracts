@@ -1262,9 +1262,9 @@ contract LitionRegistry {
             }
             
             // No need for safe math
-            // max possible (maxBlocksMined / blocksMined[i]) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
+            // max possible (blocksMined[i] / maxBlocksMined) valuse is 10^32, max possible validatorVesting value is 10^96, when virtually doubled it is 10^192, in total 42*10^224
             // so to overflow uint256 there would have to be 10^32 validators, which is impossible because of gas
-            totalInvolvedVesting += (maxBlocksMined * validatorVesting) / blocksMined[i];
+            totalInvolvedVesting += (blocksMined[i] * validatorVesting) / maxBlocksMined;
         }
         
         // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
@@ -1293,9 +1293,9 @@ contract LitionRegistry {
                 validatorVesting *= 2;
             }
             
-            // No need for safe math as max value of (maxBlocksMined / blocksMined[i]) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
+            // No need for safe math as max value of (blocksMined[i] / maxBlocksMined) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
             // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible validator reward is 10^32 * 1 * 10^97 = 10^129
-            validatorReward = (validatorVesting * maxBlocksMined * litToDistribute) / blocksMined[i] / totalInvolvedVesting;
+            validatorReward = (validatorVesting * blocksMined[i] * litToDistribute) / maxBlocksMined / totalInvolvedVesting;
             token.transfer(validators[i], validatorReward);
             
             // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
