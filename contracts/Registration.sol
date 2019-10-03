@@ -548,6 +548,8 @@ contract LitionRegistry {
                   
         ChainInfo storage chain = chains[chainId];
         require(chain.registered    == true,                            "Invalid chain data: Non-registered chain");
+        // TODO: uncomment this for mainnet
+        //require(notaryEndBlock - notaryStartBlock + 1 >= chain.notaryPeriod,"Invalid statistics data: less than chain.notaryPeriod blocks sent to notary");
         require(isAllowedToValidate(chainId, msg.sender) == true,       "Sender must have vesting balance > 0");
         require(chain.totalVesting  > 0,                                "Current chain total_vesting == 0, there are no active validators");
         
