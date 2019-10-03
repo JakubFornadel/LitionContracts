@@ -792,7 +792,7 @@ contract LitionRegistry {
         Validator storage validator = chain.usersData[acc].validator;
         
         // Updates lastValidator in case this is first validator or new validator's vesting balance is less
-        if (chain.validators.list.length == 0 || validator.vesting < chain.usersData[chain.lastValidator].validator.vesting) {
+        if (chain.validators.list.length == 0 || validator.vesting <= chain.usersData[chain.lastValidator].validator.vesting) {
             chain.lastValidator = acc;
         }
         
