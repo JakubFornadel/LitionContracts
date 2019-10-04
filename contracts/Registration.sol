@@ -108,20 +108,41 @@ contract LitionRegistry {
         address[]                   list;        
     }
     
+    struct VestingRequest {
+        // Flag if there is ongoing request for user
+        bool                    exist;
+        // Last notary block number when the request was accepted 
+        uint256                 notaryBlock;
+        // New value of vesting to be set
+        uint96                  newVesting;
+    }
+    
     struct Validator {
         // Actual user's vesting
-        uint96  vesting;
+        uint96                  vesting;
         // Flag if validator mined at least 1 block in current notary window
-        bool    currentNotaryMined;
+        bool                    currentNotaryMined;
         // Flag if validator mined at least 1 block in the previous notary window
-        bool    prevNotaryMined;
+        bool                    prevNotaryMined;
+        // Vesting request
+        VestingRequest          vestingRequest;
+    }
+    
+    // Only full deposit withdrawals are saved as deposit requests - other types of deposits do not need to be confirmed
+    struct DepositWithdrawalRequest {
+        // Flag if there is ongoing request for user
+        bool                     exist;
+        // Last notary block number when the request was accepted 
+        uint256                  notaryBlock;
     }
     
     struct Transactor {
         // Actual user's deposit
-        uint96  deposit;
+        uint96                   deposit;
         // Flag if user is whitelisted (allowed to transact) -> actual deposit must be greater than min. required deposit condition 
-        bool    whitelisted;
+        bool                     whitelisted;
+        // DepositWithdrawalRequest request
+        DepositWithdrawalRequest depositWithdrawalRequest;
     }
     
     struct User {
@@ -130,43 +151,7 @@ contract LitionRegistry {
         // Transactor's data
         Transactor   transactor;
     }
-    
-    
-    /**************************************************************************************************************************/
-    /*********************************** Structs related to the vesting/deposit requests **************************************/
-    /**************************************************************************************************************************/
-    
-    struct VestingRequest {
-        // Flag if there is ongoing request for user
-        bool                            exist;
-        // Last notary block number when the request was accepted 
-        uint256                         notaryBlock;
-        // New value of vesting to be set
-        uint96                          newVesting;
-    }
-    
-    // Only full deposit withdrawals are saved as deposit requests - other types of deposits do not need to be confirmed
-    struct DepositWithdrawalRequest {
-        // Flag if there is ongoing request for user
-        bool                            exist;
-        // Last notary block number when the request was accepted 
-        uint256                         notaryBlock;
-    }
-    
-    struct RequestsEntry {
-        // index to the requestsList, indexes are shifted +1 compared to the real indexes of this list, because 0 means non-existing request
-        uint256                         index;
-        // Deposit withdrawal request details
-        DepositWithdrawalRequest        depositWithdrawalRequest;
-        // Vesting request details
-        VestingRequest                  vestingRequest;   
-    }
-    
-    struct Requests {
-        mapping(address => RequestsEntry)   accounts;
-        address[]                           list;        
-    }
-    
+
     
     /**************************************************************************************************************************/
     /***************************************************** Other structs ******************************************************/
@@ -227,9 +212,6 @@ contract LitionRegistry {
         
         // Actual number of whitelisted transactors (their current depost > min.required deposit)
         uint256                         actNumOfTransactors;
-        
-        // List of users requests for changing their vesting/deposit balance
-        Requests                        requests;
         
         // Max number of active validators for chain. There is no limit to how many users can vest.
         // Tthis is limit for active validators (startMining function) 
@@ -316,7 +298,7 @@ contract LitionRegistry {
         
         // Chain is active
         if (chain.active == true) {
-            require(chain.lastNotary.block > chain.requests.accounts[msg.sender].vestingRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");    
+            require(chain.lastNotary.block > chain.usersData[msg.sender].validator.vestingRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");    
         }
         
         confirmVest(chain, msg.sender);
@@ -356,7 +338,7 @@ contract LitionRegistry {
             }
             
             // Upper limit of transactors reached
-            if (chain.maxNumOfTransactors != 0 && isAllowedToTransact(chainId, msg.sender) == false) {
+            if (chain.maxNumOfTransactors != 0 && chain.usersData[msg.sender].transactor.whitelisted  == false) {
                 require(chain.actNumOfTransactors <= chain.maxNumOfTransactors, "Upper limit of transactors reached");
             }
         }
@@ -376,7 +358,7 @@ contract LitionRegistry {
         
         // Chain is active or it's been inactive for less than 2*CHAIN_INACTIVITY_TIMEOUT
         if (chain.active == true) {
-            require(chain.lastNotary.block > chain.requests.accounts[msg.sender].depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
+            require(chain.lastNotary.block > chain.usersData[msg.sender].transactor.depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
         }
         // Chain is inactive
         else {
@@ -387,20 +369,17 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 notaryPeriod, uint256 vesting, uint256 maxNumOfValidators,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 notaryPeriod, uint256 maxNumOfValidators,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
         require(notaryPeriod >= MIN_NOTARY_PERIOD,                                                      "Notary period must be bigger than MIN_NOTARY_PERIOD(1440)");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
-        require(checkLitionMinVesting(vesting) == true,                                                 "Chain creator does not meet Lition's min.required vesting condition");
-        require(vesting <= MAX_VESTING,                                                                 "Vesting is greater than uint96_max_value");
     
         chainId                         = nextId;
         ChainInfo storage chain         = chains[chainId];
         
         if (chainValidator != ChainValidator(0)) {
-            require(chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length) == true, "Chain creator not allowed by external chainvalidator SC (vesting)");
             chain.chainValidator = chainValidator;
         }
         
@@ -415,14 +394,7 @@ contract LitionRegistry {
         chain.participationNotaryCond   = participationNotaryCond;
         chain.creator                   = msg.sender;
         
-        // Transfers vesting tokens
-        token.transferFrom(msg.sender, address(this), vesting);
-        
         emit NewChain(chainId, description, initEndpoint);
-        emit VestInChain(chainId, msg.sender, vesting, 0 /* zero block */, true);
-        
-        // Creates validator
-        validatorCreate(chain, msg.sender, vesting);
         
         nextId++;
     }
@@ -442,25 +414,6 @@ contract LitionRegistry {
             chain.endpoint = endpoint;
         }
     }
-    
-    // Returns true, if user has vested enough tokens to become validator, othervise false
-    function isAllowedToValidate(uint256 chainId, address acc) view public returns (bool) {
-        // No need to check vesting balance as it cannot be lover than min. required
-        return validatorExist(chains[chainId], acc);
-    }
-    
-    // Returns true, if user has vested enough tokens to become validator and is actively mining, othervise false
-    function isActiveValidator(uint256 chainId, address acc) view public returns (bool) {
-        // No need to check vesting balance as it cannot be lover than min. required
-        return activeValidatorExist(chains[chainId], acc);
-    }
-    
-    // Returns true if user's remaining deposit balance >= min. required deposit and is allowed to transact
-    function isAllowedToTransact(uint256 chainId, address acc) view public returns (bool) {
-        // No need to check deposit balance as whitelisted flag should be alwyas set accordingly
-        return chains[chainId].usersData[acc].transactor.whitelisted;
-    }
-    
     
     // Returns static chain details
     function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors,
@@ -497,23 +450,24 @@ contract LitionRegistry {
                                                                                  bool vestingReqExist, uint256 vestingReqNotary, uint256 vestingReqValue,
                                                                                  bool depositFullWithdrawalReqExist, uint256 depositReqNotary) {
         ChainInfo storage chain = chains[chainId];
+        User storage user       = chain.usersData[acc];
          
-        deposit                 = chain.usersData[acc].transactor.deposit;
-        whitelisted             = chain.usersData[acc].transactor.whitelisted;
-        vesting                 = chain.usersData[acc].validator.vesting;
+        deposit                 = user.transactor.deposit;
+        whitelisted             = user.transactor.whitelisted;
+        vesting                 = user.validator.vesting;
         mining                  = activeValidatorExist(chain, acc);
-        prevNotaryMined         = chain.usersData[acc].validator.currentNotaryMined;  
-        secondPrevNotaryMined   = chain.usersData[acc].validator.prevNotaryMined;  
+        prevNotaryMined         = user.validator.currentNotaryMined;  
+        secondPrevNotaryMined   = user.validator.prevNotaryMined;  
         
         if (vestingRequestExist(chain, acc)) {
-            vestingReqExist    = true;
-            vestingReqNotary           = chain.requests.accounts[acc].vestingRequest.notaryBlock;
-            vestingReqValue            = chain.requests.accounts[acc].vestingRequest.newVesting;
+            vestingReqExist            = true;
+            vestingReqNotary           = user.validator.vestingRequest.notaryBlock;
+            vestingReqValue            = user.validator.vestingRequest.newVesting;
         }
         
         if (depositWithdrawalRequestExist(chain, acc)) {
             depositFullWithdrawalReqExist  = true;
-            depositReqNotary               = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
+            depositReqNotary               = user.transactor.depositWithdrawalRequest.notaryBlock;
         }
     }
     
@@ -530,7 +484,7 @@ contract LitionRegistry {
                   
         ChainInfo storage chain = chains[chainId];
         require(chain.registered    == true,                            "Invalid chain data: Non-registered chain");
-        require(isAllowedToValidate(chainId, msg.sender) == true,       "Sender must have vesting balance > 0");
+        require(validatorExist(chain, msg.sender) == true,              "Sender must have vesting balance > 0");
         require(chain.totalVesting  > 0,                                "Current chain total_vesting == 0, there are no active validators");
         
         require(validators.length       > 0,                            "Invalid statistics data: validators.length == 0");
@@ -663,7 +617,7 @@ contract LitionRegistry {
         address acc = msg.sender;
         uint256 validatorVesting = chain.usersData[acc].validator.vesting;
         
-        require(chain.registered == true,                           "Non-registered chain");
+        require(chain.registered == true,                         "Non-registered chain");
         require(validatorExist(chain, acc) == true,               "Non-existing validator (0 vesting balance)");
         require(vestingRequestExist(chain, acc) == false,         "Cannot start mining - there is ongoing vesting request");
         
@@ -923,94 +877,44 @@ contract LitionRegistry {
     
     // Creates new vesting request
     function vestingRequestCreate(ChainInfo storage chain, address acc, uint256 vesting) internal {
-        RequestsEntry storage entry = chain.requests.accounts[acc];
+        VestingRequest storage request = chain.usersData[acc].validator.vestingRequest;
         
-        entry.vestingRequest.exist       = true;
-        entry.vestingRequest.newVesting  = uint96(vesting);
-        entry.vestingRequest.notaryBlock = chain.lastNotary.block; 
-        
-        // There is no deposit or vesting ongoing request - create new RequestsEntry structure
-        if (entry.index == 0) { // anyRequestExists(chain, acc) == false could be used instead
-            // There is no ongoing deposit request - create new requests pair structure
-            chain.requests.list.push(acc);    
-            entry.index = chain.requests.list.length; // indexes are stored + 1
-        }
+        request.exist       = true;
+        request.newVesting  = uint96(vesting);
+        request.notaryBlock = chain.lastNotary.block; 
     }
 
     // Creates new deposit withdrawal request
     function depositWithdrawalRequestCreate(ChainInfo storage chain, address acc) internal {
-        RequestsEntry storage entry = chain.requests.accounts[acc];
+        DepositWithdrawalRequest storage request = chain.usersData[acc].transactor.depositWithdrawalRequest;
         
-        entry.depositWithdrawalRequest.exist       = true;
-        entry.depositWithdrawalRequest.notaryBlock = chain.lastNotary.block; 
-        
-        // There is no deposit or vesting ongoing request - create new RequestsEntry structure
-        if (entry.index == 0) { // anyRequestExists(chain, acc) == false could be used instead
-            // There is no ongoing deposit request - create new requests pair structure
-            chain.requests.list.push(acc);    
-            entry.index = chain.requests.list.length; // indexes are stored + 1
-        }
-    }
-
-    // Deletes existing requests pair(vesting & deposit) from the internal list of requests
-    // This method should never be called directly, vestingRequestDelete & depositWithdrawalRequestDelete should be called instead
-    function requestsPairDelete(ChainInfo storage chain, address acc) internal {
-        address[] storage requestsList  = chain.requests.list;
-        
-        uint256 index = chain.requests.accounts[acc].index;
-        require(index > 0 && index <= requestsList.length, "RequestsPair delete: invalid index");
-    
-        // Move an last element of array into the vacated key slot.
-        uint256 foundIndex = index - 1;
-        uint256 lastIndex  = requestsList.length - 1;
-    
-        chain.requests.accounts[requestsList[lastIndex]].index = foundIndex + 1;
-        requestsList[foundIndex] = requestsList[lastIndex];
-        requestsList.length--;
-    
-        delete chain.requests.accounts[acc];
+        request.exist       = true;
+        request.notaryBlock = chain.lastNotary.block; 
     }
     
     function vestingRequestDelete(ChainInfo storage chain, address acc) internal {
-        // There is no ongoing deposit request for this account - delete whole requests struct 
-        if (chain.requests.accounts[acc].depositWithdrawalRequest.exist == false) {
-            requestsPairDelete(chain, acc);
-            return;
-        } 
-        
         // There is ongoing deposit request for this account - only reset vesting request
-        VestingRequest storage request = chain.requests.accounts[acc].vestingRequest;
+        VestingRequest storage request = chain.usersData[acc].validator.vestingRequest;
         request.exist          = false;
         request.notaryBlock    = 0;
         request.newVesting     = 0;
     }
     
     function depositWithdrawalRequestDelete(ChainInfo storage chain, address acc) internal {
-        // There is no ongoing vesting request for this account - delete whole requests struct 
-        if (chain.requests.accounts[acc].vestingRequest.exist == false) {
-            requestsPairDelete(chain, acc);
-            return;
-        } 
-        
         // There is ongoing vesting request for this account - only reset vesting request
-        DepositWithdrawalRequest storage request = chain.requests.accounts[acc].depositWithdrawalRequest;
+        DepositWithdrawalRequest storage request = chain.usersData[acc].transactor.depositWithdrawalRequest;
         request.exist          = false;
         request.notaryBlock    = 0;
     }
     
-    // Checks if acc has any ongoing vesting or deposit request
-    function anyRequestExists(ChainInfo storage chain, address acc) internal view returns (bool) {
-        return chain.requests.accounts[acc].index != 0;
-    }
-    
     // Checks if acc has any ongoing vesting request
     function vestingRequestExist(ChainInfo storage chain, address acc) internal view returns (bool) {
-        return chain.requests.accounts[acc].vestingRequest.exist;
+        return chain.usersData[acc].validator.vestingRequest.exist;
     }
     
     // Checks if acc has any ongoing DEPOSIT WITHDRAWAL request
     function depositWithdrawalRequestExist(ChainInfo storage chain, address acc) internal view returns (bool) {
-        return chain.requests.accounts[acc].depositWithdrawalRequest.exist;
+        return chain.usersData[acc].transactor.depositWithdrawalRequest.exist;
     }
     
     // Full vesting withdrawal  and vesting increase are procesed in 2 steps with confirmaition
@@ -1051,14 +955,14 @@ contract LitionRegistry {
         }
         
         vestingRequestCreate(chain, acc, vesting);
-        emit VestInChain(chain.id, acc, vesting, chain.requests.accounts[acc].vestingRequest.notaryBlock, false);
+        emit VestInChain(chain.id, acc, vesting, chain.usersData[acc].validator.vestingRequest.notaryBlock, false);
         
         return;
     }
     
     function confirmVest(ChainInfo storage chain, address acc) internal {
         Validator storage validator             = chain.usersData[acc].validator;
-        VestingRequest memory request           = chain.requests.accounts[acc].vestingRequest;
+        VestingRequest memory request           = chain.usersData[acc].validator.vestingRequest;
         
         vestingRequestDelete(chain, acc);
         uint256 origVesting = validator.vesting;
@@ -1115,7 +1019,7 @@ contract LitionRegistry {
                 depositWithdrawalRequestCreate(chain, acc);
                 
                 transactorBlacklist(chain, acc);
-                emit DepositInChain(chain.id, acc, deposit, chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock, false);  
+                emit DepositInChain(chain.id, acc, deposit, chain.usersData[acc].transactor.depositWithdrawalRequest.notaryBlock, false);  
             }  
           
             return;
@@ -1147,8 +1051,10 @@ contract LitionRegistry {
     }
     
     function confirmDepositWithdrawal(ChainInfo storage chain, address acc) internal {
-        uint256 toWithdraw = chain.usersData[acc].transactor.deposit;
-        uint256 requestNotaryBlock = chain.requests.accounts[acc].depositWithdrawalRequest.notaryBlock;
+        Transactor storage transactor   = chain.usersData[acc].transactor;
+        
+        uint256 toWithdraw              = transactor.deposit;
+        uint256 requestNotaryBlock      = transactor.depositWithdrawalRequest.notaryBlock;
         
         transactorDelete(chain, acc);
         depositWithdrawalRequestDelete(chain, acc);

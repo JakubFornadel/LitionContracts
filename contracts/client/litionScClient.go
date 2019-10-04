@@ -251,24 +251,6 @@ func (contractClient *ContractClient) StopMining(auth *bind.TransactOpts) (*type
 	return contractClient.scClient.StopMining(auth, contractClient.chainID)
 }
 
-func (contractClient *ContractClient) IsAllowedToValidate(userAddressStr string) (bool, error) {
-	userAddress := common.HexToAddress(userAddressStr)
-
-	return contractClient.scClient.IsAllowedToValidate(&bind.CallOpts{}, contractClient.chainID, userAddress)
-}
-
-func (contractClient *ContractClient) IsActiveValidator(userAddressStr string) (bool, error) {
-	userAddress := common.HexToAddress(userAddressStr)
-
-	return contractClient.scClient.IsActiveValidator(&bind.CallOpts{}, contractClient.chainID, userAddress)
-}
-
-func (contractClient *ContractClient) IsAllowedToTransact(userAddressStr string) (bool, error) {
-	userAddress := common.HexToAddress(userAddressStr)
-
-	return contractClient.scClient.IsAllowedToTransact(&bind.CallOpts{}, contractClient.chainID, userAddress)
-}
-
 func (contractClient *ContractClient) GetTransactors() ([]common.Address, error) {
 	var accountsWhitelist []common.Address
 	zeroCount := big.NewInt(0)
