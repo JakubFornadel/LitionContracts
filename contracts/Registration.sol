@@ -26,6 +26,12 @@ contract LitionRegistry {
     // Token precision. 1 LIT token = 1*10^18
     uint256 constant LIT_PRECISION               = 10**18;
     
+    // How many toknes user must vest to be a trust node
+    uint256 constant TRUST_NODE_VESTING          = 50000*LIT_PRECISION;
+    
+    // Largest tx fee fixed at 0.1 LIT
+    uint256 constant LARGEST_TX_FEE              = LIT_PRECISION/10;
+    
     // Max deposit value
     uint256 constant MAX_DEPOSIT                 = ~uint96(0);
     
@@ -558,11 +564,18 @@ contract LitionRegistry {
         // There is probably ongoing coordinated attack based on invalid statistics sent to the notary
         require(totalCost > 0, "Invalid statistics data: users totalUsageCost == 0");
         
-        // Calculates and process validator's rewards based on their participation rate and vesting balance
-        processValidatorsRewards(chain, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
+        // How many block could validator mined since the last notary in case he did sign every possible block 
+        uint256 maxBlocksMined = (notaryEndBlock - notaryStartBlock) + 1;
         
-        // Remove validators who signed no block during this notary window and have mining flag == true
-        removeInactiveValidators(chain, validators);
+        // Calculates total involved vesting from provided list of validators and removes all validators that did not mine during last 2 notyary windows
+        uint256 totalInvolvedVesting = processNotaryValidators(chain, validators, blocksMined, maxBlocksMined);
+        
+        // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
+        // as edge case when the last validator stopped mining durint current notary window or there is ongoing coordinated attack based on invalid statistics sent to the notary
+        require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active validators left in the chain");
+        
+        // Calculates and process validator's rewards based on their participation rate and vesting balance
+        processValidatorsRewards(chain, totalInvolvedVesting, validators, blocksMined, maxBlocksMined, totalCost);
         
         // Updates info when the last notary was processed 
         chain.lastNotary.block = notaryEndBlock;
@@ -1155,12 +1168,9 @@ contract LitionRegistry {
     }
   
     // Process users consumption based on their usage
-    function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint64[] memory userGas, uint64 largestTx) internal returns (uint256 totalCost) {
+    function processUsersConsumptions(ChainInfo storage chain, address[] memory users, uint64[] memory userGas, uint64 largestTxGas) internal returns (uint256 totalCost) {
         // Total usage cost in LIT tokens
         totalCost = 0;
-        
-        // largest tx fee fixed at 0.1 LIT
-        uint256 largestReward = 10**17;
         
         // Individual user's usage cost in LIT tokens
         uint256 userCost;
@@ -1185,7 +1195,7 @@ contract LitionRegistry {
                 continue;
             }
             
-            userCost = (userGas[i] * largestReward) / largestTx;
+            userCost = (userGas[i] * LARGEST_TX_FEE) / largestTxGas;
             
             // This can happen only if user runs out of tokens(which should not happen due to min.required deposit)
             if(userCost > transactorDeposit ) {
@@ -1215,20 +1225,44 @@ contract LitionRegistry {
         }
     }
     
-    // Removes validators that did not mine at all during the last 3 notary windows
-    function removeInactiveValidators(ChainInfo storage chain, address[] memory validators) internal {
+    // Calculates validators invloved total vesting and removes validators that did not mine at all during the last 2 notary windows
+    function processNotaryValidators(ChainInfo storage chain, address[] memory validators, uint32[] memory blocksMined, uint256 maxBlocksMined) internal returns (uint256 totalInvolvedVesting) {
         // Array of flags if active validators mined this notary window 
         bool[] memory miningValidators = new bool[](chain.validators.list.length); 
         
+        // Selected validator's account address, index and vesting balance
         address actValidatorAcc;
-        uint256 validatorIdx;
+        uint256 actValidatorIdx;
+        uint256 actValidatorVesting;
         
         for(uint256 i = 0; i < validators.length; i++) {
-            validatorIdx = chain.validators.listIndex[actValidatorAcc] - 1;
-            miningValidators[validatorIdx] = true;
+            actValidatorAcc = validators[i];
+        
+            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
+            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
+            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
+                continue;
+            }
+            
+            actValidatorIdx = chain.validators.listIndex[actValidatorAcc] - 1;
+            miningValidators[actValidatorIdx] = true;
+            
+            actValidatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
+            
+            // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
+            if (actValidatorVesting >= TRUST_NODE_VESTING) {
+                // Validator's stored vesting is max uint96
+                actValidatorVesting *= 2;
+            }
+            
+            // No need for safe math
+            // max possible (blocksMined[i] * actValidatorVesting) valuse is 10^32 * 10^96 = 10^128,
+            // so to overflow uint256 there would have to be 10^128 validators, which is impossible because of gas
+            totalInvolvedVesting += (blocksMined[i] * actValidatorVesting); 
         }
+        totalInvolvedVesting /= maxBlocksMined;
 
-        // Process miningValidators and set their mining flags accordingly
+        // Process miningValidators and set current validators mining flags accordingly
         for(uint256 i = 0; i < miningValidators.length; i++) {
             actValidatorAcc = chain.validators.list[i];
             
@@ -1243,69 +1277,34 @@ contract LitionRegistry {
             }
         }
         
-        for (uint256 i = 0; i < chain.validators.list.length; i++) {
+        // Deletes validators who did not mine in the last 2 notary windows 
+        uint256 activeValidatorsCount = chain.validators.list.length; 
+        for (uint256 i = 0; i < activeValidatorsCount; ) {
             actValidatorAcc = chain.validators.list[i];
             Validator memory validator = chain.usersData[actValidatorAcc].validator;
            
             if (validator.currentNotaryMined == true || validator.prevNotaryMined == true) {
+                i++;
                 continue;
             }
            
             activeValidatorRemove(chain, actValidatorAcc);
+            activeValidatorsCount--;
         } 
      
         delete miningValidators;   
     }
 
     // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
-    function processValidatorsRewards(ChainInfo storage chain, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
-        // Min. vesting balance to be a trust node. Trust Nodes haved doubled(virtually) vesting
-        uint256 minTrustNodeVesting = 50000*LIT_PRECISION; 
-        
-        // How many block could validator mined since the last notary in case he did sign every possible block 
-        uint256 maxBlocksMined = (endNotaryBlock - startNotaryBlock) + 1;
-        
-        // Total involved vesting 
-        uint256 totalInvolvedVesting = 0;
-        
-        // Selected validator's vesting balance
-        uint256 validatorVesting;
-        
+    function processValidatorsRewards(ChainInfo storage chain, uint256 totalInvolvedVesting, address[] memory validators, uint32[] memory blocksMined, uint256 maxBlocksMined, uint256 litToDistribute) internal {
+        // Selected validator's account address and vesting balance
         address actValidatorAcc;
-        // Runs through all validators and calculates total involved vesting.
-        // in the statistics
-        for(uint256 i = 0; i < validators.length; i++) {
-            actValidatorAcc = validators[i];
-            
-            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
-            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
-                continue;
-            }
-            
-            validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
-            
-            // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
-            if (validatorVesting >= minTrustNodeVesting) {
-                // Validator's stored vesting is max uint96
-                validatorVesting *= 2;
-            }
-            
-            // No need for safe math
-            // max possible (blocksMined[i] * validatorVesting) valuse is 10^32 * 10^96 = 10^128,
-            // so to overflow uint256 there would have to be 10^128 validators, which is impossible because of gas
-            totalInvolvedVesting += (blocksMined[i] * validatorVesting); 
-        }
-        totalInvolvedVesting /= maxBlocksMined;
-        
-        // In case totalInvolvedVesting == 0, something is wrong and there is no need for notary to continue as rewards cannot be calculated. It might happen
-        // as edge case when the last validator stopped mining durint current notary window or there is ongoing coordinated attack based on invalid statistics sent to the notary
-        require(totalInvolvedVesting > 0, "totalInvolvedVesting == 0. Invalid statistics or 0 active validators left in the chain");
+        uint256 actValidatorVesting;
+        uint256 actValidatorReward;
         
         // Whats left after all rewards are distributed (math rounding)
         uint256 litToDistributeRest = litToDistribute;
         
-        uint256 validatorReward;
         // Runs through all validators and calculates their reward based on:
         //     1. How many blocks out of max_blocks_mined each validator signed
         //     2. How many token each validator vested
@@ -1318,21 +1317,21 @@ contract LitionRegistry {
                 continue;
             } 
             
-            validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
+            actValidatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
             
             // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
-            if (validatorVesting >= minTrustNodeVesting) {
+            if (actValidatorVesting >= TRUST_NODE_VESTING) {
                 // Validator's stored vesting is max uint96
-                validatorVesting *= 2;
+                actValidatorVesting *= 2;
             }
             
-            // No need for safe math as max value of (blocksMined[i] / maxBlocksMined) is 10^32, max value of (validatorVesting / totalInvolvedVesting) is 1 and 
+            // No need for safe math as max value of (blocksMined[i] / maxBlocksMined) is 10^32, max value of (actValidatorVesting / totalInvolvedVesting) is 1 and 
             // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible validator reward is 10^32 * 1 * 10^97 = 10^129
-            validatorReward = (validatorVesting * blocksMined[i] * litToDistribute) / maxBlocksMined / totalInvolvedVesting;
-            token.transfer(validators[i], validatorReward);
+            actValidatorReward = (actValidatorVesting * blocksMined[i] * litToDistribute) / maxBlocksMined / totalInvolvedVesting;
+            token.transfer(validators[i], actValidatorReward);
             
             // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
-            litToDistributeRest -= validatorReward;
+            litToDistributeRest -= actValidatorReward;
         }
         
         if(litToDistributeRest > 0) {
