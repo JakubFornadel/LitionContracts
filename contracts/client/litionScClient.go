@@ -359,3 +359,21 @@ func (contractClient *ContractClient) GetChainDynamicDetails() (struct {
 }, error) {
 	return contractClient.scClient.GetChainDynamicDetails(&bind.CallOpts{}, contractClient.chainID)
 }
+
+func (contractClient *ContractClient) GetUserDetails(userAddressStr string) (struct {
+	Deposit                       *big.Int
+	Whitelisted                   bool
+	Vesting                       *big.Int
+	Mining                        bool
+	PrevNotaryMined               bool
+	SecondPrevNotaryMined         bool
+	VestingReqExist               bool
+	VestingReqNotary              *big.Int
+	VestingReqValue               *big.Int
+	DepositFullWithdrawalReqExist bool
+	DepositReqNotary              *big.Int
+}, error) {
+	userAddress := common.HexToAddress(userAddressStr)
+
+	return contractClient.scClient.GetUserDetails(&bind.CallOpts{}, contractClient.chainID, userAddress)
+}
