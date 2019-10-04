@@ -109,8 +109,6 @@ contract LitionRegistry {
         bool    currentNotaryMined;
         // Flag if validator mined at least 1 block in the previous notary window
         bool    prevNotaryMined;
-        // Flag if validator mined at least 1 block in second the previous notary window
-        bool    secondPrevNotaryMined;
     }
     
     struct Transactor {
@@ -513,28 +511,6 @@ contract LitionRegistry {
         }
     }
     
-    // TODO: delete for mainnet
-    // Test Notary increases last notayry block and timestamp - testing method to see vesting/deposit changes that need confirmation
-    function testNotary(uint256 chainId) external {
-        ChainInfo storage chain = chains[chainId];
-        require(msg.sender == chain.creator, "Only chain creator can call this method");
-        
-        emit Notary(chain.id, chain.lastNotary.block + 1, false);
-        
-        // Remove validators who signed no block during this notary window and have mining flag == true
-        removeInactiveValidators(chain);
-    
-        // Updates info when the last notary was processed 
-        chain.lastNotary.block++;
-        chain.lastNotary.timestamp = now;
-    
-        if (chain.active == false) {
-            chain.active = true;
-        }
-    
-        emit Notary(chainId, chain.lastNotary.block, true);               
-    }
-    
     // Notarization function - calculates user consumption as well as validators rewards
     // First, calculate hash from validators, block_mined, users and userGas
     // then, do ec_recover of the signatures to determine signers
@@ -586,7 +562,7 @@ contract LitionRegistry {
         processValidatorsRewards(chain, notaryStartBlock, notaryEndBlock, validators, blocksMined, totalCost);
         
         // Remove validators who signed no block during this notary window and have mining flag == true
-        removeInactiveValidators(chain);
+        removeInactiveValidators(chain, validators);
         
         // Updates info when the last notary was processed 
         chain.lastNotary.block = notaryEndBlock;
@@ -762,7 +738,6 @@ contract LitionRegistry {
         // Inits previously notary windows as mined so validator does not get removed from the list of actively mining validators right after the creation
         validator.currentNotaryMined    = true;
         validator.prevNotaryMined       = true;
-        validator.secondPrevNotaryMined = true;
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         insertAcc(chain.users, acc);
@@ -779,7 +754,6 @@ contract LitionRegistry {
         if (validator.vesting               != 0)       validator.vesting = 0;
         if (validator.currentNotaryMined    == true)    validator.currentNotaryMined = false;
         if (validator.prevNotaryMined       == true)    validator.prevNotaryMined = false;
-        if (validator.secondPrevNotaryMined == true)    validator.secondPrevNotaryMined = false;
         
         // No need to check if transactorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         removeAcc(chain.users, acc);
@@ -860,7 +834,7 @@ contract LitionRegistry {
             actValidatorAcc = chain.validators.list[i];
             actValidator    = chain.usersData[actValidatorAcc].validator;
             
-            if (actValidator.vesting < foundLastValidator.vesting) {
+            if (actValidator.vesting <= foundLastValidator.vesting) {
                 foundLastValidatorAcc = actValidatorAcc;
                 foundLastValidator    = actValidator;
             }
@@ -1043,12 +1017,18 @@ contract LitionRegistry {
         else if (vesting != 0) {
             uint256 toWithdraw = validatorVesting - vesting;
             
+            validator.vesting = uint96(vesting);    
+            
             // If validator is actively mining, decrease chain's total vesting
             if (activeValidatorExist(chain, acc) == true) {
                 chain.totalVesting = chain.totalVesting.sub(toWithdraw);
+                
+                // Updates lastValidator in case it is needed - if user is decreasing vesting and there ist last validator 
+                // with the same amount of tokens, keep him as last one because he had lower vesting for more time
+                if (acc != chain.lastValidator && validator.vesting < chain.usersData[chain.lastValidator].validator.vesting) {
+                    chain.lastValidator = acc;
+                }
             }
-         
-            validator.vesting = uint96(vesting);    
             
             // Transfers tokens
             token.transfer(acc, toWithdraw);
@@ -1082,6 +1062,11 @@ contract LitionRegistry {
                 
                 if (activeValidatorExist(chain, acc) == true) {
                     chain.totalVesting = chain.totalVesting.add(request.newVesting - origVesting);
+                    
+                    // Updates last validator in case it is him who is increasing vesting balance
+                    if (acc == chain.lastValidator) {
+                        resetLastActiveValidator(chain);
+                    }
                 }    
             }
         }
@@ -1229,6 +1214,48 @@ contract LitionRegistry {
             totalCost += userCost;  
         }
     }
+    
+    // Removes validators that did not mine at all during the last 3 notary windows
+    function removeInactiveValidators(ChainInfo storage chain, address[] memory validators) internal {
+        // Array of flags if active validators mined this notary window 
+        bool[] memory miningValidators = new bool[](chain.validators.list.length); 
+        
+        address actValidatorAcc;
+        uint256 validatorIdx;
+        
+        for(uint256 i = 0; i < validators.length; i++) {
+            validatorIdx = chain.validators.listIndex[actValidatorAcc] - 1;
+            miningValidators[validatorIdx] = true;
+        }
+
+        // Process miningValidators and set their mining flags accordingly
+        for(uint256 i = 0; i < miningValidators.length; i++) {
+            actValidatorAcc = chain.validators.list[i];
+            
+            Validator storage validator = chain.usersData[actValidatorAcc].validator;
+            validator.prevNotaryMined   = validator.currentNotaryMined;
+            
+            if (miningValidators[i] == true) {
+                validator.currentNotaryMined = true;
+            }
+            else {
+                validator.currentNotaryMined = false;
+            }
+        }
+        
+        for (uint256 i = 0; i < chain.validators.list.length; i++) {
+            actValidatorAcc = chain.validators.list[i];
+            Validator memory validator = chain.usersData[actValidatorAcc].validator;
+           
+            if (validator.currentNotaryMined == true || validator.prevNotaryMined == true) {
+                continue;
+            }
+           
+            activeValidatorRemove(chain, actValidatorAcc);
+        } 
+     
+        delete miningValidators;   
+    }
 
     // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
     function processValidatorsRewards(ChainInfo storage chain, uint256 startNotaryBlock, uint256 endNotaryBlock, address[] memory validators, uint32[] memory blocksMined, uint256 litToDistribute) internal {
@@ -1255,12 +1282,6 @@ contract LitionRegistry {
             if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
                 continue;
             }
-            
-            // Updates validator's mining flags statistics
-            Validator storage validator     = chain.usersData[actValidatorAcc].validator;
-            validator.secondPrevNotaryMined = validator.prevNotaryMined;
-            validator.prevNotaryMined       = validator.currentNotaryMined;
-            validator.currentNotaryMined    = true;
             
             validatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
             
@@ -1375,21 +1396,6 @@ contract LitionRegistry {
                 require(involvedSignaturesCount == actNumOfValidators, "Invalid statistics data: Not enough signatures provided (involvedSignatures == activeValidatorsCount)");
             }
         }
-    }
-    
-    // Removes validators that did not mine at all during the last 3 notary windows
-    function removeInactiveValidators(ChainInfo storage chain) internal {
-        address validatorAcc;
-        for (uint256 i = 0; i < chain.validators.list.length; i++) {
-            validatorAcc = chain.validators.list[i];
-            Validator memory validator = chain.usersData[validatorAcc].validator;
-           
-            if (validator.currentNotaryMined || validator.prevNotaryMined || validator.secondPrevNotaryMined) {
-                continue;
-            }
-           
-            activeValidatorRemove(chain, validatorAcc);
-        } 
     }
    
     // Checks if chain is active(successfull notary processed during last CHAIN_INACTIVITY_TIMEOUT), if not set it active flag to false
