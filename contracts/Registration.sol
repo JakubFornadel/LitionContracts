@@ -38,18 +38,25 @@ contract LitionRegistry {
     // Max vesting value
     uint256 constant MAX_VESTING                 = ~uint96(0);
     
-    // Min notary period = 1440 blocks (2 housr)
+    // Min notary period = 1440 blocks (2 hours)
     uint256 constant MIN_NOTARY_PERIOD           = 1440;
+    
+    // Max notary period = 1440 blocks (24 hours)
+    uint256 constant MAX_NOTARY_PERIOD           = 17280;
+    
+    // Time after which chain becomes inactive in case there was no successfull notary processed
+    // Users can then increase their vesting instantly and bypass 2-step process. For instant full deposit withdrawal users must wait 2*CHAIN_INACTIVITY_TIMEOUT
+    // Vesting decrease or full withdrawal is always allowed only after VESTING_LOCKUP_TIMEOUT no matter if chain is active or not
+    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 14 days;
+    
+    // Time after which validators can withdraw their vesting
+    uint256 constant VESTING_LOCKUP_TIMEOUT      = 30 days;
     
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
     
     // Max num of characters in chain description
     uint256 constant MAX_DESCRIPTION_LENGTH      = 200;
-    
-    // Time after which chain becomes inactive in case there was no successfull notary processed
-    // Users can then increase their vesting instantly and bypass 2-step process. For instant full deposit withdrawal users must wait 2*CHAIN_INACTIVITY_TIMEOUT
-    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 14 days;
     
     // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
     function checkLitionMinVesting(uint256 vesting) private pure returns (bool) {
@@ -109,40 +116,42 @@ contract LitionRegistry {
     }
     
     struct VestingRequest {
-        // Flag if there is ongoing request for user
-        bool                    exist;
         // Last notary block number when the request was accepted 
         uint256                 notaryBlock;
+        // Flag if there is ongoing request for user
+        bool                    exist;
         // New value of vesting to be set
         uint96                  newVesting;
     }
     
     struct Validator {
+        // Vesting request
+        VestingRequest          vestingRequest;
         // Actual user's vesting
         uint96                  vesting;
         // Flag if validator mined at least 1 block in current notary window
         bool                    currentNotaryMined;
         // Flag if validator mined at least 1 block in the previous notary window
         bool                    prevNotaryMined;
-        // Vesting request
-        VestingRequest          vestingRequest;
+        // Last time when the user increased his vesting balance. It is used to calculate the time when he can withdraw his vesting 
+        uint256                 lastVestingIncreaseTime;
     }
     
     // Only full deposit withdrawals are saved as deposit requests - other types of deposits do not need to be confirmed
     struct DepositWithdrawalRequest {
-        // Flag if there is ongoing request for user
-        bool                     exist;
         // Last notary block number when the request was accepted 
         uint256                  notaryBlock;
+        // Flag if there is ongoing request for user
+        bool                     exist;
     }
     
     struct Transactor {
+        // DepositWithdrawalRequest request
+        DepositWithdrawalRequest depositWithdrawalRequest;
         // Actual user's deposit
         uint96                   deposit;
         // Flag if user is whitelisted (allowed to transact) -> actual deposit must be greater than min. required deposit condition 
         bool                     whitelisted;
-        // DepositWithdrawalRequest request
-        DepositWithdrawalRequest depositWithdrawalRequest;
     }
     
     struct User {
@@ -169,47 +178,6 @@ contract LitionRegistry {
         // Internal chain ID
         uint256                         id;
         
-        // Address of the chain creator
-        address                         creator;
-        
-        // Chain description
-        string                          description;
-        
-        // Chain endpoint
-        string                          endpoint;
-        
-        // Number of blocks after which notary is called, 1 block is generated every 5 seconds, e.g notaryPeriod = 1440 blocks = 2 hours
-        uint256                         notaryPeriod;
-        
-        // Flag that says if the chain was already(& sucessfully) registered
-        bool                            registered;
-        
-        // Flag that says if chain is active - num of active validators > 0 && first block was already mined 
-        bool                            active;
-        
-        // How much vesting in total is vested in the chain by the active validators
-        uint256                         totalVesting;
-        
-        // When was the last notary function called (block and time)
-        LastNotary                      lastNotary;
-        
-        // Smart-contract for validating min.required deposit and vesting
-        ChainValidator                  chainValidator;
-        
-        // Mapping data holder for users (validators & transactors) data
-        mapping(address => User)        usersData;
-        
-        // List of existing users - all users, who have deposited or vested
-        IterableMap                     users;
-        
-        // List of existing validators - only those who vested enough and are actively mining are here
-        // Active validator are in separate array because of heavy processing furing notary (no need to filter them out of users thanks tot this)
-        IterableMap                     validators;
-        
-        // Validator with the smallest vesting balance among all existing validators
-        // In case someone vests more tokens, he will replace the one with smallest vesting balance
-        address                         lastValidator;
-        
         // Actual number of whitelisted transactors (their current depost > min.required deposit)
         uint256                         actNumOfTransactors;
         
@@ -227,6 +195,15 @@ contract LitionRegistry {
         // too small num of validators limit with too low min. required deposit condition might lead to chain being stuck
         uint256                         maxNumOfTransactors;
         
+        // How much vesting in total is vested in the chain by the active validators
+        uint256                         totalVesting;
+        
+        // Number of blocks after which notary is called, 1 block is generated every 5 seconds, e.g notaryPeriod = 1440 blocks = 2 hours
+        uint256                         notaryPeriod;
+        
+        // When was the last notary function called (block and time)
+        LastNotary                      lastNotary;
+        
         // Flag for condition to be checked during notary:
         // InvolvedVesting of validators who signed notary statistics must be greater than 50% of chain total vesting(sum of all active validator's vesting)
         // to notary statistics to be accepted is accepted
@@ -236,6 +213,38 @@ contract LitionRegistry {
         // Number of validators who signed notary statistics must be greater or equal than 2/3+1 of all active validators
         // to notary statistics to be accepted is accepted
         bool                            participationNotaryCond;
+        
+        // Flag that says if the chain was already(& sucessfully) registered
+        bool                            registered;
+        
+        // Flag that says if chain is active - num of active validators > 0 && first block was already mined 
+        bool                            active;
+        
+        // Address of the chain creator
+        address                         creator;
+        
+        // Validator with the smallest vesting balance among all existing validators
+        // In case someone vests more tokens, he will replace the one with smallest vesting balance
+        address                         lastValidator;
+        
+        // Smart-contract for validating min.required deposit and vesting
+        ChainValidator                  chainValidator;
+        
+        // Chain description
+        string                          description;
+        
+        // Chain endpoint
+        string                          endpoint;
+        
+        // List of existing users - all users, who have deposited or vested
+        IterableMap                     users;
+        
+        // List of existing validators - only those who vested enough and are actively mining are here
+        // Active validator are in separate array because of heavy processing furing notary (no need to filter them out of users thanks tot this)
+        IterableMap                     validators;
+        
+        // Mapping data holder for users (validators & transactors) data
+        mapping(address => User)        usersData;
     }
     
     // Registered chains
@@ -257,6 +266,7 @@ contract LitionRegistry {
     // and his internal vesting balance is updated 
     function requestVestInChain(uint256 chainId, uint256 vesting) external {
         ChainInfo storage chain = chains[chainId];
+        Validator storage validator = chain.usersData[msg.sender].validator;
         
         // Enable users to vest into registered (but non-active) chain and start minig so it becomes active
         require(chain.registered == true,                                 "Non-registered chain");
@@ -265,20 +275,31 @@ contract LitionRegistry {
         
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
-            
+        
         // Full vesting withdrawal
         if (vesting == 0) {
             require(validatorExist(chain, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
-            require(activeValidatorExist(chain, msg.sender) == false,     "StopMinig must be called first");  
+            require(activeValidatorExist(chain, msg.sender) == false,     "StopMinig must be called first");
+            // In case user wants to withdraw full vesting, check vesting lockup timeout
+            require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(30 days) since the last increase");
         }
         // Vest in chain or withdraw just part of vesting
         else {
-            require(vesting <= MAX_VESTING,                                 "vesting is greater than uint96_max_value");
-            require(chain.usersData[msg.sender].validator.vesting != vesting,   "Cannot vest the same amount of tokens as you already has vested");
-            require(checkLitionMinVesting(vesting) == true,                 "user does not meet Lition's min.required vesting condition");
+            require(vesting <= MAX_VESTING,                               "vesting is greater than uint96_max_value");
+            require(validator.vesting != vesting,                         "Cannot vest the same amount of tokens as you already has vested");
+            require(checkLitionMinVesting(vesting) == true,               "user does not meet Lition's min.required vesting condition");
             
             if (chain.chainValidator != ChainValidator(0)) {
                 require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length), "Validator not allowed by external chainvalidator SC");
+            }
+            
+            // In case user wants to decrease vesting, check vesting lockup timeout
+            if (vesting < validator.vesting) {
+                require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(30 days) since the last increase");
+            }
+            // In case user wants to increase vesting, do not allow him if there is no more places for active validators and user does not vest more than the the one with smallest vesting balance 
+            else if (chain.maxNumOfValidators != 0 && chain.validators.list.length >= chain.maxNumOfValidators) {
+                require(validator.vesting > chain.usersData[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to be able to start mining and replace him");
             }
         }
         
@@ -373,7 +394,7 @@ contract LitionRegistry {
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
-        require(notaryPeriod >= MIN_NOTARY_PERIOD,                                                      "Notary period must be bigger than MIN_NOTARY_PERIOD(1440)");
+        require(notaryPeriod >= MIN_NOTARY_PERIOD && notaryPeriod <= MAX_NOTARY_PERIOD,                 "Notary period must be in range <MIN_NOTARY_PERIOD(1440), MAX_NOTARY_PERIOD(17280)>");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
     
         chainId                         = nextId;
@@ -445,8 +466,8 @@ contract LitionRegistry {
     }
     
     // Returns user details
-    function getUserDetails(uint256 chainId, address acc) external view returns (uint256 deposit, bool whitelisted, uint256 vesting, 
-                                                                                 bool mining, bool prevNotaryMined, bool secondPrevNotaryMined,
+    function getUserDetails(uint256 chainId, address acc) external view returns (uint256 deposit, bool whitelisted, 
+                                                                                 uint256 vesting, uint256 lastVestingIncreaseTime, bool mining, bool prevNotaryMined,
                                                                                  bool vestingReqExist, uint256 vestingReqNotary, uint256 vestingReqValue,
                                                                                  bool depositFullWithdrawalReqExist, uint256 depositReqNotary) {
         ChainInfo storage chain = chains[chainId];
@@ -455,9 +476,9 @@ contract LitionRegistry {
         deposit                 = user.transactor.deposit;
         whitelisted             = user.transactor.whitelisted;
         vesting                 = user.validator.vesting;
+        lastVestingIncreaseTime = user.validator.lastVestingIncreaseTime;
         mining                  = activeValidatorExist(chain, acc);
         prevNotaryMined         = user.validator.currentNotaryMined;  
-        secondPrevNotaryMined   = user.validator.prevNotaryMined;  
         
         if (vestingRequestExist(chain, acc)) {
             vestingReqExist            = true;
@@ -700,11 +721,13 @@ contract LitionRegistry {
     // Inits validator data holder in the users mapping and inserts it into the list of users
     function validatorCreate(ChainInfo storage chain, address acc, uint256 vesting) internal {
         Validator storage validator     = chain.usersData[acc].validator;
-        validator.vesting               = uint96(vesting);
         
+        validator.vesting                   = uint96(vesting);
+        validator.lastVestingIncreaseTime   = now;
         // Inits previously notary windows as mined so validator does not get removed from the list of actively mining validators right after the creation
-        validator.currentNotaryMined    = true;
-        validator.prevNotaryMined       = true;
+        validator.currentNotaryMined        = true;
+        validator.prevNotaryMined           = true;
+        
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         insertAcc(chain.users, acc);
@@ -718,9 +741,10 @@ contract LitionRegistry {
             activeValidatorRemove(chain, acc);
         }
         
-        if (validator.vesting               != 0)       validator.vesting = 0;
-        if (validator.currentNotaryMined    == true)    validator.currentNotaryMined = false;
-        if (validator.prevNotaryMined       == true)    validator.prevNotaryMined = false;
+        validator.vesting                   = 0;
+        validator.lastVestingIncreaseTime   = 0;
+        validator.currentNotaryMined        = false;
+        validator.prevNotaryMined           = false;
         
         // No need to check if transactorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
         removeAcc(chain.users, acc);
@@ -835,7 +859,7 @@ contract LitionRegistry {
     function transactorDelete(ChainInfo storage chain, address acc) internal {
         Transactor storage transactor = chain.usersData[acc].transactor;
         
-        if (transactor.deposit != 0) transactor.deposit = 0;
+        transactor.deposit = 0;
         transactorBlacklist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
@@ -953,6 +977,7 @@ contract LitionRegistry {
             emit VestInChain(chain.id, acc, vesting, chain.lastNotary.block, true);
             return;
         }
+        // else full vesting withdrawal - process in 2 steps
         
         vestingRequestCreate(chain, acc, vesting);
         emit VestInChain(chain.id, acc, vesting, chain.usersData[acc].validator.vestingRequest.notaryBlock, false);
@@ -976,6 +1001,7 @@ contract LitionRegistry {
             // Existing validator
             else {
                 validator.vesting = uint96(request.newVesting);
+                validator.lastVestingIncreaseTime = now;
                 
                 if (activeValidatorExist(chain, acc) == true) {
                     chain.totalVesting = chain.totalVesting.add(request.newVesting - origVesting);
