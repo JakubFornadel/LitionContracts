@@ -162,6 +162,41 @@ contract EnergyChainValidator is ChainValidator {
         removeUsers(admins, accounts);
     }
     
+    // Returns list of admins
+    function getAdmins(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
+        return getUsers(admins, batch);
+    }
+    
+    // Returns list of whitelisted users
+    function getWhitelistedUsers(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
+        return getUsers(whitelistedUsers, batch);
+    }
+    
+    // Returns list of reserved validators
+    function getReservedValidators(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
+        return getUsers(reservedValidators, batch);
+    }
+    
+    
+    // Returns list of suers users
+    function getUsers(IterableMap storage internalUsersGroup, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
+        count = 0;
+        uint256 usersTotalCount = internalUsersGroup.list.length;
+        
+        uint256 i;
+        for(i = batch * 100; i < (batch + 1)*100 && i < usersTotalCount; i++) {
+            users[count] = internalUsersGroup.list[i];
+            count++;
+        }
+        
+        if (i >= usersTotalCount) {
+            end = true;
+        }
+        else {
+            end = false;
+        }
+    }
+    
     function addUsers(IterableMap storage internalUsersGroup, address[] memory users) internal {
         require(existAcc(admins, msg.sender) == true, "Only admins can do internal changes");
         require(users.length <= 100, "Max number of processed users is 100");
