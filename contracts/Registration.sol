@@ -26,7 +26,7 @@ contract LitionRegistry {
     // Token precision. 1 LIT token = 1*10^18
     uint256 constant LIT_PRECISION               = 10**18;
     
-    // How many toknes user must vest to be a trust node
+    // How many toknes user must vest to be a trust node (his vesting is virtually doubled when calculatiing rewards)
     uint256 constant TRUST_NODE_VESTING          = 50000*LIT_PRECISION;
     
     // Largest tx fee fixed at 0.1 LIT
@@ -39,18 +39,18 @@ contract LitionRegistry {
     uint256 constant MAX_VESTING                 = ~uint96(0);
     
     // Min notary period = 1440 blocks (2 hours)
-    uint256 constant MIN_NOTARY_PERIOD           = 1440;
+    uint256 constant MIN_NOTARY_PERIOD           = 59;      // mainnet 1440
     
     // Max notary period = 1440 blocks (24 hours)
-    uint256 constant MAX_NOTARY_PERIOD           = 17280;
+    uint256 constant MAX_NOTARY_PERIOD           = 17280;   // mainnet 17280
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
-    // Users can then increase their vesting instantly and bypass 2-step process. For instant full deposit withdrawal users must wait 2*CHAIN_INACTIVITY_TIMEOUT
+    // Users can then increase their vesting instantly and bypass 2-step process.
     // Vesting decrease or full withdrawal is always allowed only after VESTING_LOCKUP_TIMEOUT no matter if chain is active or not
-    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 14 days;
+    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 1 days; // mainnet 7 days
     
     // Time after which validators can withdraw their vesting
-    uint256 constant VESTING_LOCKUP_TIMEOUT      = 30 days;
+    uint256 constant VESTING_LOCKUP_TIMEOUT      = 1 days; // mainnet 14 days
     
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
@@ -333,7 +333,7 @@ contract LitionRegistry {
     function requestDepositInChain(uint256 chainId, uint256 deposit) external {
         ChainInfo storage chain = chains[chainId];
         
-        require(chain.registered == true,                                               "Non-registered chain");
+        require(chain.registered == true,                                             "Non-registered chain");
         require(validatorExist(chain, msg.sender) == false,                           "Transactor cannot be validator at the same time. Withdraw your vesting or use different account");
         require(depositWithdrawalRequestExist(chain, msg.sender) == false,            "There is already existing withdrawal request being processed for this acc");
         
@@ -343,23 +343,19 @@ contract LitionRegistry {
         // Withdraw whole deposit
         if (deposit == 0) {
             require(transactorExist(chain, msg.sender) == true,                       "Non-existing transactor account (0 deposit balance)");
-            
-            if (chain.active == false) {
-                require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now,  "Chain is inactive, for instant full deposit withdrawal wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
-            }
         }
         // Deposit in chain or withdraw just part of deposit
         else {
-            require(chain.usersData[msg.sender].transactor.deposit != deposit,          "Cannot deposit the same amount of tokens as you already has deposited");
-            require(checkLitionMinDeposit(deposit),                                     "user does not meet Lition's min.required deposit condition");
-            require(deposit <= MAX_DEPOSIT,                                             "deposit is greater than uint96_max_value");
+            require(chain.usersData[msg.sender].transactor.deposit != deposit,        "Cannot deposit the same amount of tokens as you already has deposited");
+            require(checkLitionMinDeposit(deposit),                                   "user does not meet Lition's min.required deposit condition");
+            require(deposit <= MAX_DEPOSIT,                                           "deposit is greater than uint96_max_value");
             
             if (chain.chainValidator != ChainValidator(0)) {
                 require(chain.chainValidator.validateNewTransactor(deposit, msg.sender, chain.actNumOfTransactors), "Transactor not allowed by external chainvalidator SC");
             }
             
             // Upper limit of transactors reached
-            if (chain.maxNumOfTransactors != 0 && chain.usersData[msg.sender].transactor.whitelisted  == false) {
+            if (chain.maxNumOfTransactors != 0 && chain.usersData[msg.sender].transactor.whitelisted == false) {
                 require(chain.actNumOfTransactors <= chain.maxNumOfTransactors, "Upper limit of transactors reached");
             }
         }
@@ -377,13 +373,9 @@ contract LitionRegistry {
         // Checks if chain is active, if not set it active flag to false 
         checkAndSetChainActivity(chain);
         
-        // Chain is active or it's been inactive for less than 2*CHAIN_INACTIVITY_TIMEOUT
+        // Chain is active
         if (chain.active == true) {
             require(chain.lastNotary.block > chain.usersData[msg.sender].transactor.depositWithdrawalRequest.notaryBlock, "Confirm can be called in the next notary window after request was accepted");
-        }
-        // Chain is inactive
-        else {
-            require(chain.lastNotary.timestamp + 2*CHAIN_INACTIVITY_TIMEOUT < now, "Chain is inactive, for instant full deposit withdrawal confirm wait for 2*CHAIN_INACTIVITY_TIMEOUT since the last notary");
         }
         
         confirmDepositWithdrawal(chain, msg.sender);
@@ -1030,7 +1022,7 @@ contract LitionRegistry {
         
         // If user wants to withdraw whole deposit
         if (deposit == 0) {
-            // Chain is not active and last notary is older than 2*CHAIN_INACTIVITY_TIMEOUT - enable full deposit withdrawal immmediately
+            // Chain is not active - enable full deposit withdrawal immmediately
             if (chain.active == false) {
                 uint256 toWithdraw = transactor.deposit;
                 transactorDelete(chain, acc);
