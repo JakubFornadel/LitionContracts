@@ -364,9 +364,9 @@ func (contractClient *ContractClient) GetUserDetails(userAddressStr string) (str
 	Deposit                       *big.Int
 	Whitelisted                   bool
 	Vesting                       *big.Int
+	LastVestingIncreaseTime       *big.Int
 	Mining                        bool
 	PrevNotaryMined               bool
-	SecondPrevNotaryMined         bool
 	VestingReqExist               bool
 	VestingReqNotary              *big.Int
 	VestingReqValue               *big.Int
