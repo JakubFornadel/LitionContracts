@@ -21,6 +21,7 @@ type ContractClient struct {
 	accWhitelistEventListener   *AccWhitelistEventListener
 	vestInChainEventListener    *VestInChainEventListener
 	depositInChainEventListener *DepositInChainEventListener
+	notaryEventListener         *NotaryEventListener
 }
 
 func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*ContractClient, error) {
@@ -45,6 +46,7 @@ func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*Contra
 	contractClient.accWhitelistEventListener = nil
 	contractClient.vestInChainEventListener = nil
 	contractClient.depositInChainEventListener = nil
+	contractClient.notaryEventListener = nil
 
 	return contractClient, nil
 }
@@ -89,6 +91,16 @@ func (contractClient *ContractClient) InitDepositInChainEventListener() error {
 	return nil
 }
 
+func (contractClient *ContractClient) InitNotaryEventListener() error {
+	var err error
+	contractClient.notaryEventListener, err = NewNotaryEventListener(contractClient.scClient, contractClient.chainID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (contractClient *ContractClient) DeInit() {
 	if contractClient.accMiningEventListener != nil {
 		contractClient.accMiningEventListener.DeInit()
@@ -102,12 +114,17 @@ func (contractClient *ContractClient) DeInit() {
 	if contractClient.depositInChainEventListener != nil {
 		contractClient.depositInChainEventListener.DeInit()
 	}
+	if contractClient.notaryEventListener != nil {
+		contractClient.notaryEventListener.DeInit()
+	}
 
 	contractClient.chainID = nil
 	contractClient.accMiningEventListener = nil
 	contractClient.accWhitelistEventListener = nil
 	contractClient.vestInChainEventListener = nil
 	contractClient.depositInChainEventListener = nil
+	contractClient.notaryEventListener = nil
+
 	contractClient.ethClient.Close()
 }
 
@@ -227,6 +244,39 @@ func (contractClient *ContractClient) Start_depositInChainEventListener(f func(*
 				return
 			}
 			log.Error("Start DepositInChainEventListener err: '", retErr, "'. Try to reinit.")
+		}
+
+		// Wait some time before trying to reinit and start listener again
+		time.Sleep(1 * time.Second)
+
+		err := listener.ReInit()
+		if err == nil {
+			log.Info("Reinit successfull")
+			initialized = true
+		} else {
+			log.Error("Reinit fail")
+			initialized = false
+		}
+	}
+}
+
+func (contractClient *ContractClient) Start_notaryEventListener(f func(*LitionScClientNotary)) {
+	listener := contractClient.notaryEventListener
+	if listener == nil {
+		log.Fatal("Trying to start 'Notary' listener without previous initialization")
+		return
+	}
+
+	// Infinite loop - try to initialze listeners until it succeeds
+	initialized := true
+	for {
+		if initialized == true {
+			retErr := listener.Start(f)
+			// Listener was manually stopped, do not try to start it again
+			if retErr == nil {
+				return
+			}
+			log.Error("Start NotaryEventListener err: '", retErr, "'. Try to reinit.")
 		}
 
 		// Wait some time before trying to reinit and start listener again

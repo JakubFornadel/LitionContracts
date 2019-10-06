@@ -6,6 +6,7 @@ interface ChainValidator {
 }
 
 contract EnergyChainValidator is ChainValidator {
+    
     /**************************************************************************************************************************/
     /************************************************** Constants *************************************************************/
     /**************************************************************************************************************************/
@@ -13,31 +14,20 @@ contract EnergyChainValidator is ChainValidator {
     // Token precision. 1 LIT token = 1*10^18
     uint256 constant LIT_PRECISION               = 10**18;
     
-    // How many toknes user must vest to be a trust node (his vesting is virtually doubled when calculatiing rewards)
-    uint256 constant TRUST_NODE_VESTING          = 50000*LIT_PRECISION;
-    
     // Min deposit value
     uint256 constant MIN_DEPOSIT                 = 5000*LIT_PRECISION;
     
-    // Max deposit value
-    uint256 constant MAX_DEPOSIT                 = ~uint96(0);
-    
     // Min vesting value
-    uint256 constant MIN_VESTING                 = ~uint96(0);
+    uint256 constant MIN_VESTING                 = 1000*LIT_PRECISION;
     
     // Min vesting value
     uint256 constant MAX_VESTING                 = 500000*LIT_PRECISION;
-    
-    // Max number of validators for Lition Energy chain
-    uint256 MAX_VALIDATORS_COUNT                 = 21;
-    
-    // Max number of validators reserved for Lition internal accounts
-    uint256 MAX_RESERVED_VALIDATORS_COUNT        = 6;
     
     
     /**************************************************************************************************************************/
     /*********************************** Structs and functions related to the list of users ***********************************/
     /**************************************************************************************************************************/
+    
     
     // Iterable map that is used only together with the Users mapping as data holder
     struct IterableMap {
@@ -79,15 +69,12 @@ contract EnergyChainValidator is ChainValidator {
     
     
     /**************************************************************************************************************************/
-    /******************************************* Other functions and functions ************************************************/
+    /******************************************** Other structs and functions *************************************************/
     /**************************************************************************************************************************/
 
 
     // List of admins - they can add/remove whitelisted validators and users
     IterableMap private admins;
-    
-    // List of Lition reserved validators
-    IterableMap private reservedValidators;
     
     // List of whitelisted users who can deposit
     IterableMap private whitelistedUsers;
@@ -95,19 +82,15 @@ contract EnergyChainValidator is ChainValidator {
     constructor() public {
         insertAcc(admins, msg.sender);
     }
+
+
+    /**************************************************************************************************************************/
+    /*********************************************** Contract Interface *******************************************************/
+    /**************************************************************************************************************************/
+
     
     // Validates new validator
     function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
-        // Reserved account wants to become validator
-        if (existAcc(reservedValidators, acc) == true && vesting >= MIN_VESTING && vesting <= MAX_VESTING) {
-            return true;
-        }
-        
-        // Non-reserved account wants to become validator
-        if (reservedValidators.list.length + actNumOfValidators + 1 > MAX_VALIDATORS_COUNT) {
-            return false;
-        }
-        
         if (vesting < MIN_VESTING || vesting > MAX_VESTING) {
             return false;
         }
@@ -124,22 +107,8 @@ contract EnergyChainValidator is ChainValidator {
         return false;
     }
     
-    // Adds new reserved validators
-    function addReservedValidators(address[] calldata accounts) external {
-        require(reservedValidators.list.length + accounts.length <= MAX_RESERVED_VALIDATORS_COUNT, "Trying to add too many new reserved validators. There is not enough free spots left. Max(6)");
-        
-        addUsers(reservedValidators, accounts);
-    }
-    
-    // Removes reserved validators
-    function removeReservedValidators(address[] calldata accounts) external {
-        require(reservedValidators.list.length > 0, "There are no validators to be removed");
-        
-        removeUsers(reservedValidators, accounts);
-    }
-    
     // Adds new whitelisted users
-    function whitelistUsers(address[] calldata accounts) external {
+    function addWhitelistedUsers(address[] calldata accounts) external {
         addUsers(whitelistedUsers, accounts);
     }
     
@@ -155,11 +124,12 @@ contract EnergyChainValidator is ChainValidator {
         addUsers(admins, accounts);
     }
     
-    // Removes existing admins
-    function removeAdmins(address[] calldata accounts) external {
-        require(admins.list.length > 0, "There are no admins to be removed");
+    // Removes existing admin
+    function removeAdmin(address account) external {
+        require(admins.list.length > 1, "Cannot remove all admins, at least one must be always present");
+        require(existAcc(admins, account) == true, "Trying to remove non-existing admin");
         
-        removeUsers(admins, accounts);
+        removeAcc(admins, account);
     }
     
     // Returns list of admins
@@ -172,11 +142,11 @@ contract EnergyChainValidator is ChainValidator {
         return getUsers(whitelistedUsers, batch);
     }
     
-    // Returns list of reserved validators
-    function getReservedValidators(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
-        return getUsers(reservedValidators, batch);
-    }
     
+    /*************************************************************************************************************************/
+    /******************************************** Contract internal functions ************************************************/
+    /*************************************************************************************************************************/
+
     
     // Returns list of suers users
     function getUsers(IterableMap storage internalUsersGroup, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
@@ -217,5 +187,5 @@ contract EnergyChainValidator is ChainValidator {
                 removeAcc(internalUsersGroup, users[i]);
             }    
         }
-    }  
+    }
 }

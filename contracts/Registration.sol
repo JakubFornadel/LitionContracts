@@ -39,14 +39,13 @@ contract LitionRegistry {
     uint256 constant MAX_VESTING                 = ~uint96(0);
     
     // Min notary period = 1440 blocks (2 hours)
-    uint256 constant MIN_NOTARY_PERIOD           = 59;      // mainnet 1440
+    uint256 constant MIN_NOTARY_PERIOD           = 60;      // mainnet 1440
     
     // Max notary period = 1440 blocks (24 hours)
     uint256 constant MAX_NOTARY_PERIOD           = 17280;   // mainnet 17280
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
-    // Users can then increase their vesting instantly and bypass 2-step process.
-    // Vesting decrease or full withdrawal is always allowed only after VESTING_LOCKUP_TIMEOUT no matter if chain is active or not
+    // Users can then increase/descrease their vesting/deposit instantly and bypass 2-step process with confirmations.
     uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 1 days; // mainnet 7 days
     
     // Time after which validators can withdraw their vesting
@@ -58,12 +57,12 @@ contract LitionRegistry {
     // Max num of characters in chain description
     uint256 constant MAX_DESCRIPTION_LENGTH      = 200;
     
-    // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+    // This is lition additional required check for the one from ChainValidator, in which chain creator specifies conditions himself
     function checkLitionMinVesting(uint256 vesting) private pure returns (bool) {
         return vesting >= 1000*LIT_PRECISION;
     }
     
-    // This is lition additional required check for the one from ChainValidator, in which sidechain creator specifies conditions himself
+    // This is lition additional required check for the one from ChainValidator, in which chain creator specifies conditions himself
     function checkLitionMinDeposit(uint256 deposit) private pure returns (bool) {
         return deposit >= 1000*LIT_PRECISION;
     }
@@ -165,6 +164,7 @@ contract LitionRegistry {
     /**************************************************************************************************************************/
     /***************************************************** Other structs ******************************************************/
     /**************************************************************************************************************************/
+    
     ERC20 token;
     
     struct LastNotary {
@@ -280,8 +280,11 @@ contract LitionRegistry {
         if (vesting == 0) {
             require(validatorExist(chain, msg.sender) == true,            "Non-existing validator account (0 vesting balance)");
             require(activeValidatorExist(chain, msg.sender) == false,     "StopMinig must be called first");
-            // In case user wants to withdraw full vesting, check vesting lockup timeout
-            require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(30 days) since the last increase");
+            
+            // In case user wants to withdraw full vesting and chain is active, check vesting lockup timeout
+            if (chain.active == true) {
+                require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(14 days) since the last increase");
+            }
         }
         // Vest in chain or withdraw just part of vesting
         else {
@@ -293,13 +296,15 @@ contract LitionRegistry {
                 require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length), "Validator not allowed by external chainvalidator SC");
             }
             
-            // In case user wants to decrease vesting, check vesting lockup timeout
+            // In case user wants to decrease vesting and chain is active, check vesting lockup timeout
             if (vesting < validator.vesting) {
-                require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(30 days) since the last increase");
+                if (chain.active == true) {
+                    require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(14 days) since the last increase");
+                }
             }
             // In case user wants to increase vesting, do not allow him if there is no more places for active validators and user does not vest more than the the one with smallest vesting balance 
             else if (chain.maxNumOfValidators != 0 && chain.validators.list.length >= chain.maxNumOfValidators) {
-                require(validator.vesting > chain.usersData[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to be able to start mining and replace him");
+                require(vesting > chain.usersData[chain.lastValidator].validator.vesting, "Upper limit of validators reached. Must vest more than the last validator to be able to start mining and replace him");
             }
         }
         
@@ -589,7 +594,7 @@ contract LitionRegistry {
         }
     }
     
-    // Returns list of whitelisted transactors in case transactorsFlag == true, otherwise list of validators (active and non-active)
+    // Returns list of users
     function getUsers(ChainInfo storage chain, bool transactorsFlag, uint256 batch) internal view returns (address[100] memory users, uint256 count, bool end) {
         count = 0;
         uint256 usersTotalCount = chain.users.list.length;
@@ -1187,7 +1192,7 @@ contract LitionRegistry {
         totalInvolvedVesting /= maxBlocksMined;
 
         // Process miningValidators and set current validators mining flags accordingly
-        for(uint256 i = 0; i < miningValidators.length; i++) {
+        for(uint256 i = 0; i < chain.validators.list.length; i++) {
             actValidatorAcc = chain.validators.list[i];
             
             Validator storage validator = chain.usersData[actValidatorAcc].validator;
