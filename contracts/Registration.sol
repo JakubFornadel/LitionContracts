@@ -1270,7 +1270,6 @@ contract LitionRegistry {
             
             // Add rewards to the validator's vesting balance
             actValidator.vesting = actValidator.vesting.add(actValidatorReward);
-            chain.totalVesting = chain.totalVesting.add(actValidatorReward);
             
             emit MiningReward(chain.id, actValidatorAcc, actValidatorReward);
         }
@@ -1281,13 +1280,19 @@ contract LitionRegistry {
             
             sender.vesting = sender.vesting.add(litToDistributeRest);
             
-            if (activeValidatorExist(chain, msg.sender) == true) {
-                chain.totalVesting = chain.totalVesting.add(litToDistributeRest);
+            if (activeValidatorExist(chain, msg.sender) == false) {
+                chain.totalVesting = chain.totalVesting.sub(litToDistributeRest);
             }
             
             emit MiningReward(chain.id, msg.sender, litToDistributeRest);
         }
         
+        // Updates chain total vesting
+        chain.totalVesting = chain.totalVesting.add(litToDistribute); 
+        
+        // As validators vestings were updated, last validator might change so find a new one
+        resetLastActiveValidator(chain);
+
         delete miningValidators;
     }
    
