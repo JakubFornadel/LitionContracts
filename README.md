@@ -10,7 +10,7 @@ https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 
 ### Actual Lition Registry contract
 ```
-https://ropsten.etherscan.io/address/0xCa592e3c404a01D9d1cB01baEc1E75187d2A8A60
+https://ropsten.etherscan.io/address/0x9B4D23ee30950356CA687Dbecf94bc0a6Bc23dD8
 ```
 
 ### Actual Lition Energy Chain Validator contract
