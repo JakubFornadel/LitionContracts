@@ -32,12 +32,6 @@ contract LitionRegistry {
     // Largest tx fee fixed at 0.1 LIT
     uint256 constant LARGEST_TX_FEE              = LIT_PRECISION/10;
     
-    // Max deposit value
-    uint256 constant MAX_DEPOSIT                 = ~uint96(0);
-    
-    // Max vesting value
-    uint256 constant MAX_VESTING                 = ~uint96(0);
-    
     // Min notary period = 1440 blocks (2 hours)
     uint256 constant MIN_NOTARY_PERIOD           = 60;      // mainnet 1440
     
@@ -57,15 +51,11 @@ contract LitionRegistry {
     // Max num of characters in chain description
     uint256 constant MAX_DESCRIPTION_LENGTH      = 200;
     
-    // This is lition additional required check for the one from ChainValidator, in which chain creator specifies conditions himself
-    function checkLitionMinVesting(uint256 vesting) private pure returns (bool) {
-        return vesting >= 1000*LIT_PRECISION;
-    }
+    // Min. required deposit for all chains
+    uint256 constant LITION_MIN_REQUIRED_DEPOSIT = 1000*LIT_PRECISION;
     
-    // This is lition additional required check for the one from ChainValidator, in which chain creator specifies conditions himself
-    function checkLitionMinDeposit(uint256 deposit) private pure returns (bool) {
-        return deposit >= 1000*LIT_PRECISION;
-    }
+    // Min. required vesting for all chains
+    uint256 constant LITION_MIN_REQUIRED_VESTING = 1000*LIT_PRECISION;
     
     
     /**************************************************************************************************************************/
@@ -94,12 +84,11 @@ contract LitionRegistry {
     // Validator start/stop mining
     event AccountMining(uint256 indexed chainId, address indexed account, bool mining);
 
+    // Validator's new mining reward 
+    event MiningReward(uint256 indexed chainId, address indexed account, uint256 reward);
+    
     // New notary was processed
-    // in case confirmed == false, notary processing just stared and listener needs to wait for another event with confirmed flag == true.
-    // in case confirmed == true, notary was processed successfully
-    // It can paired up with the first event if first 4 parameters are the same
-    // If the second event with confirmed flag set to true is not emmited in reasonable time, it means notary failed
-    event Notary(uint256 indexed chainId, uint256 notaryBlock, bool confirmed);
+    event Notary(uint256 indexed chainId, uint256 lastBlock, uint256 blocksProcessed);
 
     /**************************************************************************************************************************/
     /***************************************** Structs related to the list of users *******************************************/
@@ -115,23 +104,23 @@ contract LitionRegistry {
     }
     
     struct VestingRequest {
-        // Last notary block number when the request was accepted 
-        uint256                 notaryBlock;
         // Flag if there is ongoing request for user
         bool                    exist;
+        // Last notary block number when the request was accepted 
+        uint256                 notaryBlock;
         // New value of vesting to be set
-        uint96                  newVesting;
+        uint256                 newVesting;
     }
     
     struct Validator {
-        // Vesting request
-        VestingRequest          vestingRequest;
-        // Actual user's vesting
-        uint96                  vesting;
         // Flag if validator mined at least 1 block in current notary window
         bool                    currentNotaryMined;
         // Flag if validator mined at least 1 block in the previous notary window
         bool                    prevNotaryMined;
+        // Vesting request
+        VestingRequest          vestingRequest;
+        // Actual user's vesting
+        uint256                  vesting;
         // Last time when the user increased his vesting balance. It is used to calculate the time when he can withdraw his vesting 
         uint256                 lastVestingIncreaseTime;
     }
@@ -145,19 +134,20 @@ contract LitionRegistry {
     }
     
     struct Transactor {
+        // Actual user's deposit
+        uint256                  deposit;
         // DepositWithdrawalRequest request
         DepositWithdrawalRequest depositWithdrawalRequest;
-        // Actual user's deposit
-        uint96                   deposit;
         // Flag if user is whitelisted (allowed to transact) -> actual deposit must be greater than min. required deposit condition 
         bool                     whitelisted;
     }
     
     struct User {
-        // Validator's data
-        Validator    validator;
         // Transactor's data
         Transactor   transactor;
+        
+        // Validator's data
+        Validator    validator;
     }
 
     
@@ -177,6 +167,12 @@ contract LitionRegistry {
     struct ChainInfo {
         // Internal chain ID
         uint256                         id;
+        
+        // Min. required deposit for transactors (more sophisticated conditions might be set in external validator contract)
+        uint256                         minRequiredDeposit;
+        
+        // Min. required vesting for validators (more sophisticated conditions might be set in external validator contract)
+        uint256                         minRequiredVesting;
         
         // Actual number of whitelisted transactors (their current depost > min.required deposit)
         uint256                         actNumOfTransactors;
@@ -288,9 +284,8 @@ contract LitionRegistry {
         }
         // Vest in chain or withdraw just part of vesting
         else {
-            require(vesting <= MAX_VESTING,                               "vesting is greater than uint96_max_value");
             require(validator.vesting != vesting,                         "Cannot vest the same amount of tokens as you already has vested");
-            require(checkLitionMinVesting(vesting) == true,               "user does not meet Lition's min.required vesting condition");
+            require(vesting >= chain.minRequiredVesting,                  "User does not meet min.required vesting condition");
             
             if (chain.chainValidator != ChainValidator(0)) {
                 require(chain.chainValidator.validateNewValidator(vesting, msg.sender, false /* not mining yet */, chain.validators.list.length), "Validator not allowed by external chainvalidator SC");
@@ -352,8 +347,7 @@ contract LitionRegistry {
         // Deposit in chain or withdraw just part of deposit
         else {
             require(chain.usersData[msg.sender].transactor.deposit != deposit,        "Cannot deposit the same amount of tokens as you already has deposited");
-            require(checkLitionMinDeposit(deposit),                                   "user does not meet Lition's min.required deposit condition");
-            require(deposit <= MAX_DEPOSIT,                                           "deposit is greater than uint96_max_value");
+            require(deposit >= chain.minRequiredDeposit,                              "User does not meet min.required deposit condition");
             
             if (chain.chainValidator != ChainValidator(0)) {
                 require(chain.chainValidator.validateNewTransactor(deposit, msg.sender, chain.actNumOfTransactors), "Transactor not allowed by external chainvalidator SC");
@@ -387,12 +381,15 @@ contract LitionRegistry {
     }
     
     // Internally creates/registers new chain.
-    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 notaryPeriod, uint256 maxNumOfValidators,
+    function registerChain(string calldata description, string calldata initEndpoint, ChainValidator chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators,
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
         require(notaryPeriod >= MIN_NOTARY_PERIOD && notaryPeriod <= MAX_NOTARY_PERIOD,                 "Notary period must be in range <MIN_NOTARY_PERIOD(1440), MAX_NOTARY_PERIOD(17280)>");
-        require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least on notary condition must be specified");
+        require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least one notary condition must be specified");
+        require(minRequiredDeposit >= LITION_MIN_REQUIRED_DEPOSIT,                                      "Min. required deposit for all chains must be >= LITION_MIN_REQUIRED_DEPOSIT (1000 LIT)");
+        require(minRequiredVesting >= LITION_MIN_REQUIRED_VESTING,                                      "Min. required vesting for all chains must be >= LITION_MIN_REQUIRED_VESTING (1000 LIT)");
+        
     
         chainId                         = nextId;
         ChainInfo storage chain         = chains[chainId];
@@ -404,6 +401,8 @@ contract LitionRegistry {
         chain.id                        = chainId;
         chain.description               = description;
         chain.endpoint                  = initEndpoint;
+        chain.minRequiredDeposit        = minRequiredDeposit;
+        chain.minRequiredVesting        = minRequiredVesting;
         chain.notaryPeriod              = notaryPeriod;
         chain.registered                = true;
         chain.maxNumOfValidators        = maxNumOfValidators;
@@ -434,13 +433,15 @@ contract LitionRegistry {
     }
     
     // Returns static chain details
-    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors,
-                                                                           bool involvedVestingNotaryCond, bool participationNotaryCond) {
+    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, 
+                                                                           uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) {
         ChainInfo storage chain = chains[chainId];
         
         description                 = chain.description;
         endpoint                    = chain.endpoint;
         registered                  = chain.registered;
+        minRequiredDeposit          = chain.minRequiredDeposit;
+        minRequiredVesting          = chain.minRequiredVesting;
         notaryPeriod                = chain.notaryPeriod;
         maxNumOfValidators          = chain.maxNumOfValidators;
         maxNumOfTransactors         = chain.maxNumOfTransactors;
@@ -497,8 +498,6 @@ contract LitionRegistry {
     function notary(uint256 chainId, uint256 notaryStartBlock, uint256 notaryEndBlock, address[] memory validators, uint32[] memory blocksMined,
                     address[] memory users, uint64[] memory userGas, uint64 largestTx,
                     uint8[] memory v, bytes32[] memory r, bytes32[] memory s) public {
-        
-        emit Notary(chainId, notaryEndBlock, false);
                   
         ChainInfo storage chain = chains[chainId];
         require(chain.registered    == true,                            "Invalid chain data: Non-registered chain");
@@ -557,7 +556,7 @@ contract LitionRegistry {
             chain.active = true;
         }
         
-        emit Notary(chainId, notaryEndBlock, true);
+        emit Notary(chainId, notaryEndBlock, maxBlocksMined);
     }
     
     // Returns list of user's addresses that are allowed to transact - their deposit >= min. required deposit
@@ -719,7 +718,7 @@ contract LitionRegistry {
     function validatorCreate(ChainInfo storage chain, address acc, uint256 vesting) internal {
         Validator storage validator     = chain.usersData[acc].validator;
         
-        validator.vesting                   = uint96(vesting);
+        validator.vesting                   = vesting;
         validator.lastVestingIncreaseTime   = now;
         // Inits previously notary windows as mined so validator does not get removed from the list of actively mining validators right after the creation
         validator.currentNotaryMined        = true;
@@ -845,7 +844,7 @@ contract LitionRegistry {
     function transactorCreate(ChainInfo storage chain, address acc, uint256 deposit) internal {
         Transactor storage transactor = chain.usersData[acc].transactor;
         
-        transactor.deposit            = uint96(deposit);
+        transactor.deposit = deposit;
         transactorWhitelist(chain, acc);
         
         // No need to check if validatorExist for the same acc as it is not possible to have vesting > 0 & deosit > 0 at the same time
@@ -901,7 +900,7 @@ contract LitionRegistry {
         VestingRequest storage request = chain.usersData[acc].validator.vestingRequest;
         
         request.exist       = true;
-        request.newVesting  = uint96(vesting);
+        request.newVesting  = vesting;
         request.notaryBlock = chain.lastNotary.block; 
     }
 
@@ -955,7 +954,7 @@ contract LitionRegistry {
         else if (vesting != 0) {
             uint256 toWithdraw = validatorVesting - vesting;
             
-            validator.vesting = uint96(vesting);    
+            validator.vesting = vesting;    
             
             // If validator is actively mining, decrease chain's total vesting
             if (activeValidatorExist(chain, acc) == true) {
@@ -997,7 +996,7 @@ contract LitionRegistry {
             }
             // Existing validator
             else {
-                validator.vesting = uint96(request.newVesting);
+                validator.vesting = request.newVesting;
                 validator.lastVestingIncreaseTime = now;
                 
                 if (activeValidatorExist(chain, acc) == true) {
@@ -1052,7 +1051,7 @@ contract LitionRegistry {
         uint256 actTransactorDeposit = transactor.deposit;
         
         if(actTransactorDeposit > deposit) {
-            transactor.deposit = uint96(deposit);
+            transactor.deposit = deposit;
          
             uint256 toWithdraw = actTransactorDeposit - deposit;
             token.transfer(acc, toWithdraw);
@@ -1065,7 +1064,7 @@ contract LitionRegistry {
                 transactorCreate(chain, acc, deposit);
             }
             else {
-                transactor.deposit = uint96(deposit);
+                transactor.deposit = deposit;
                 transactorWhitelist(chain, acc);
             }
         }
@@ -1104,7 +1103,6 @@ contract LitionRegistry {
         // Individual user's usage cost in LIT tokens
         uint256 userCost;
         
-        // Use uint256 transactorDeposit instead of stored uint96 transactor.deposit because of simplified math  
         uint256 transactorDeposit;
         address acc;
         for(uint256 i = 0; i < users.length; i++) {
@@ -1133,24 +1131,19 @@ contract LitionRegistry {
                 transactorDelete(chain, acc);
             }
             else {
-                transactorDeposit -= userCost;
+                transactorDeposit = transactorDeposit.sub(userCost);
                 
                 // Updates user's stored deposit balance based on his usage
-                transactor.deposit = uint96(transactorDeposit);
+                transactor.deposit = transactorDeposit;
                 
                 // Check if user's deposit balance is >= min. required deposit conditions
-                if (checkLitionMinDeposit(transactorDeposit) == false) {
+                if (transactorDeposit < chain.minRequiredDeposit) {
                     transactorBlacklist(chain, acc);
                 }
-                else if (chain.chainValidator != ChainValidator(0) && chain.chainValidator.validateNewTransactor(transactorDeposit, acc, chain.actNumOfTransactors) == false) {
-                    // If not, do not allow him to transact anymore
-                    transactorBlacklist(chain, acc);
-                } 
             }
             
             // Adds user's cost to the total cost
-            // No need for safe math as max possible userCost is 10^64 * 10^17 allows 10^175 users to ovewflow uint256 and that is impossible because of gas 
-            totalCost += userCost;  
+            totalCost = totalCost.add(userCost);
         }
     }
     
@@ -1167,31 +1160,34 @@ contract LitionRegistry {
         for(uint256 i = 0; i < validators.length; i++) {
             actValidatorAcc = validators[i];
         
-            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
-            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
+            // Validators, who are not actively mining anymore (their node probably crashed) do not receive no rewaeds
+            if (activeValidatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
                 continue;
             }
             
             actValidatorIdx = chain.validators.listIndex[actValidatorAcc] - 1;
-            miningValidators[actValidatorIdx] = true;
+            
+            // In case there miningValidators[actValidatorIdx] is already true, it means the same validator address is twice in the statistics,
+            // This should never happen, ignore such validators 
+            if (miningValidators[actValidatorIdx] == true) {
+                continue;
+            }
+            else {
+                miningValidators[actValidatorIdx] = true;
+            }
             
             actValidatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
             
             // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
             if (actValidatorVesting >= TRUST_NODE_VESTING) {
-                // Validator's stored vesting is max uint96
-                actValidatorVesting *= 2;
+                actValidatorVesting = actValidatorVesting.mul(2);
             }
             
-            // No need for safe math
-            // max possible (blocksMined[i] * actValidatorVesting) valuse is 10^32 * 10^96 = 10^128,
-            // so to overflow uint256 there would have to be 10^128 validators, which is impossible because of gas
-            totalInvolvedVesting += (blocksMined[i] * actValidatorVesting); 
+            totalInvolvedVesting = totalInvolvedVesting.add(SafeMath.mul(blocksMined[i], actValidatorVesting)); 
         }
         totalInvolvedVesting /= maxBlocksMined;
 
-        // Process miningValidators and set current validators mining flags accordingly
+        // Process miningValidators from statistics and set current validators(registered in sc as active validators) mining flags accordingly
         for(uint256 i = 0; i < chain.validators.list.length; i++) {
             actValidatorAcc = chain.validators.list[i];
             
@@ -1226,8 +1222,12 @@ contract LitionRegistry {
 
     // Process validators rewards based on their participation rate(how many blocks they signed) and their vesting balance
     function processValidatorsRewards(ChainInfo storage chain, uint256 totalInvolvedVesting, address[] memory validators, uint32[] memory blocksMined, uint256 maxBlocksMined, uint256 litToDistribute) internal {
+        // Array of flags if active validators mined this notary window 
+        bool[] memory miningValidators = new bool[](chain.validators.list.length); 
+        
         // Selected validator's account address and vesting balance
         address actValidatorAcc;
+        uint256 actValidatorIdx;
         uint256 actValidatorVesting;
         uint256 actValidatorReward;
         
@@ -1240,33 +1240,60 @@ contract LitionRegistry {
         for(uint256 i = 0; i < validators.length; i++) {
             actValidatorAcc = validators[i];
             
-            // This can happen only if there is validator with 0 vesting balance in statistics or there is 0 mined blocks for this validators, which means that
-            // there is probably ongoing coordinated attack based on invalid statistics sent to the notary
-            if (validatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
+            // Validators, who are not actively mining anymore (their node probably crashed) do not receive no rewaeds
+            if (activeValidatorExist(chain, actValidatorAcc) == false || blocksMined[i] == 0) {
                 continue;
             } 
             
-            actValidatorVesting = chain.usersData[actValidatorAcc].validator.vesting;
+            actValidatorIdx = chain.validators.listIndex[actValidatorAcc] - 1;
+            
+            // In case there miningValidators[actValidatorIdx] is already true, it means the same validator address is twice in the statistics,
+            // This should never happen, ignore such validators 
+            if (miningValidators[actValidatorIdx] == true) {
+                continue;
+            }
+            else {
+                miningValidators[actValidatorIdx] = true;
+            }
+            
+            Validator storage actValidator = chain.usersData[actValidatorAcc].validator;
+            actValidatorVesting = actValidator.vesting;
             
             // In case validator is trust node (his vesting >= 50k LIT tokens) - virtually double his vesting
             if (actValidatorVesting >= TRUST_NODE_VESTING) {
-                // Validator's stored vesting is max uint96
-                actValidatorVesting *= 2;
+                actValidatorVesting = actValidatorVesting.mul(2);
             }
+        
+            actValidatorReward = SafeMath.mul(SafeMath.mul(actValidatorVesting, blocksMined[i]), litToDistribute) / maxBlocksMined / totalInvolvedVesting;
             
-            // No need for safe math as max value of (blocksMined[i] / maxBlocksMined) is 10^32, max value of (actValidatorVesting / totalInvolvedVesting) is 1 and 
-            // max value of litToDistribute(calculated in processUsersConsumptions) is 10^97, so max possible validator reward is 10^32 * 1 * 10^97 = 10^129
-            actValidatorReward = (actValidatorVesting * blocksMined[i] * litToDistribute) / maxBlocksMined / totalInvolvedVesting;
-            token.transfer(validators[i], actValidatorReward);
+            litToDistributeRest = litToDistributeRest.sub(actValidatorReward);
             
-            // No need for safe math as validator reward is calculated as fraction of total litToDistribute and sum of all validators rewards must always be <= litToDistribute
-            litToDistributeRest -= actValidatorReward;
+            // Add rewards to the validator's vesting balance
+            actValidator.vesting = actValidator.vesting.add(actValidatorReward);
+            
+            emit MiningReward(chain.id, actValidatorAcc, actValidatorReward);
         }
         
         if(litToDistributeRest > 0) {
-            // Sends the rest(math rounding) to the validator, who called notary function
-            token.transfer(msg.sender, litToDistributeRest);
+            // Add the rest(math rounding) to the validator, who called notary function
+            Validator storage sender = chain.usersData[msg.sender].validator;
+            
+            sender.vesting = sender.vesting.add(litToDistributeRest);
+            
+            if (activeValidatorExist(chain, msg.sender) == false) {
+                chain.totalVesting = chain.totalVesting.sub(litToDistributeRest);
+            }
+            
+            emit MiningReward(chain.id, msg.sender, litToDistributeRest);
         }
+        
+        // Updates chain total vesting
+        chain.totalVesting = chain.totalVesting.add(litToDistribute); 
+        
+        // As validators vestings were updated, last validator might change so find a new one
+        resetLastActiveValidator(chain);
+
+        delete miningValidators;
     }
    
    // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
@@ -1296,7 +1323,7 @@ contract LitionRegistry {
             }
             
             
-            involvedVestingSum += chain.usersData[signerAcc].validator.vesting;
+            involvedVestingSum = involvedVestingSum.add(chain.usersData[signerAcc].validator.vesting);
             involvedSignaturesCount++;
         }
         
@@ -1305,7 +1332,8 @@ contract LitionRegistry {
         // There must be more than 50% out of total possible vesting involved in signatures
         if (chain.involvedVestingNotaryCond == true) {
             // There must be more than 50% out of total possible vesting involved
-            require(involvedVestingSum*2 > chain.totalVesting, "Invalid statistics data: involvedVesting <= 50% of chain.totalVesting");
+            involvedVestingSum = involvedVestingSum.mul(2);
+            require(involvedVestingSum > chain.totalVesting, "Invalid statistics data: involvedVesting <= 50% of chain.totalVesting");
         }
         
         
@@ -1337,15 +1365,6 @@ contract LitionRegistry {
 
 // SafeMath library. Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol
 library SafeMath {
-    /**
-     * @dev Returns the addition of two unsigned integers, reverting on
-     * overflow.
-     *
-     * Counterpart to Solidity's `+` operator.
-     *
-     * Requirements:
-     * - Addition cannot overflow.
-     */
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         require(c >= a, "SafeMath: addition overflow");
@@ -1353,34 +1372,23 @@ library SafeMath {
         return c;
     }
 
-    /**
-     * @dev Returns the subtraction of two unsigned integers, reverting on
-     * overflow (when the result is negative).
-     *
-     * Counterpart to Solidity's `-` operator.
-     *
-     * Requirements:
-     * - Subtraction cannot overflow.
-     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return sub(a, b, "SafeMath: subtraction overflow");
+        require(b <= a, "SafeMath: subtraction overflow");
+        uint256 c = a - b;
+
+        return c;
     }
 
-    /**
-     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
-     * overflow (when the result is negative).
-     *
-     * Counterpart to Solidity's `-` operator.
-     *
-     * Requirements:
-     * - Subtraction cannot overflow.
-     *
-     * NOTE: This is a feature of the next version of OpenZeppelin Contracts.
-     * @dev Get it via `npm install @openzeppelin/contracts@next`.
-     */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        uint256 c = a - b;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
 
         return c;
     }
