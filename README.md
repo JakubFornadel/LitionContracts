@@ -1,3 +1,8 @@
+## ETH Mainnet Contracts
+TODO: add when available
+
+## ETH Ropsten Contracts
+
 ### Actual Lition ERC20 token contract
 ```
 https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
@@ -5,16 +10,16 @@ https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 
 ### Actual Lition Registry contract
 ```
-https://ropsten.etherscan.io/address/0xA1e73CCF0715E2f9080c5168f0272a8c21e243e8
+https://ropsten.etherscan.io/address/0xCa592e3c404a01D9d1cB01baEc1E75187d2A8A60
 ```
 
-### Actual Lition Validator contract
+### Actual Lition Energy Chain Validator contract
 ```
-https://ropsten.etherscan.io/address/0xd5a1f09f0e7fb237847752a0f5748aeed07c917d
+https://ropsten.etherscan.io/address/0x570BB52721408A9eB721e57d451D186bd5C25365
 ```
 
-### Contract debugging
-To get require error message, use:
+## Contract debugging
+To get require error message, use this script (or check tx status on etherscan):
 https://gist.github.com/msigwart/d3e374a64c8718f8ac5ec04b5093597f
 
 # go-lition-abi

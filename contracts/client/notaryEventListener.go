@@ -11,26 +11,26 @@ import (
 	"gitlab.com/lition/lition/event"
 )
 
-type AccMiningEventListener struct {
+type NotaryEventListener struct {
 	initialized    bool
 	listening      bool
 	scClient       *LitionScClient
-	eventChannel   chan *LitionScClientAccountMining
+	eventChannel   chan *LitionScClientNotary
 	eventSubs      event.Subscription
-	filterChainId  []*big.Int
+	filterChainID  []*big.Int
 	stopChannel    chan struct{}
 	stoppedChannel chan struct{}
 	mutex          sync.Mutex
 }
 
-func NewAccMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*AccMiningEventListener, error) {
-	p := new(AccMiningEventListener)
+func NewNotaryEventListener(scClient *LitionScClient, chainId *big.Int) (*NotaryEventListener, error) {
+	p := new(NotaryEventListener)
 
 	p.initialized = false
 	p.listening = false
 	p.mutex = sync.Mutex{}
 	p.scClient = scClient
-	p.filterChainId = []*big.Int{chainId}
+	p.filterChainID = []*big.Int{chainId}
 	err := p.Init()
 	if err == nil {
 		return p, nil
@@ -39,7 +39,7 @@ func NewAccMiningEventListener(scClient *LitionScClient, chainId *big.Int) (*Acc
 	return nil, err
 }
 
-func (listener *AccMiningEventListener) Init() error {
+func (listener *NotaryEventListener) Init() error {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -48,12 +48,11 @@ func (listener *AccMiningEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionScClientAccountMining)
-	listener.eventSubs, err = listener.scClient.WatchAccountMining(&bind.WatchOpts{
-		Context: context.Background(), Start: nil},
+	listener.eventChannel = make(chan *LitionScClientNotary)
+	listener.eventSubs, err = listener.scClient.WatchNotary(
+		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
-		listener.filterChainId,
-		nil)
+		listener.filterChainID)
 
 	if err != nil {
 		log.Error(err)
@@ -68,7 +67,7 @@ func (listener *AccMiningEventListener) Init() error {
 	return nil
 }
 
-func (listener *AccMiningEventListener) DeInit() {
+func (listener *NotaryEventListener) DeInit() {
 	listener.Stop()
 
 	listener.mutex.Lock()
@@ -85,23 +84,23 @@ func (listener *AccMiningEventListener) DeInit() {
 	listener.initialized = false
 }
 
-func (listener *AccMiningEventListener) ReInit() error {
+func (listener *NotaryEventListener) ReInit() error {
 	listener.DeInit()
 	return listener.Init()
 }
 
-func (listener *AccMiningEventListener) Start(f func(*LitionScClientAccountMining)) error {
+func (listener *NotaryEventListener) Start(f func(*LitionScClientNotary)) error {
 	if listener.initialized == false {
-		return errors.New("Trying to Start 'AccMiningEventListener' without previous initialization")
+		return errors.New("Trying to Start 'NotaryEventListener' without previous initialization")
 	}
 	if listener.listening == true {
-		log.Warning("Trying to Start 'AccMiningEventListener', which is already listening.")
+		log.Warning("Trying to Start 'NotaryEventListener', which is already listening.")
 		return nil
 	}
 
 	listener.stoppedChannel = make(chan struct{})
 	listener.listening = true
-	log.Info("AccMiningEventListener start listening")
+	log.Info("NotaryEventListener start listening")
 
 	// close the stoppedchan when this func exits
 	defer func() {
@@ -112,18 +111,18 @@ func (listener *AccMiningEventListener) Start(f func(*LitionScClientAccountMinin
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'AccountMining' event received.")
+			log.Info("New 'Notary' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
 		case <-listener.stopChannel:
-			log.Info("Signal to stop AccMiningEventListener received.")
+			log.Info("Signal to stop NotaryEventListener received.")
 			return nil
 		}
 	}
 }
 
-func (listener *AccMiningEventListener) Stop() {
+func (listener *NotaryEventListener) Stop() {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -135,5 +134,5 @@ func (listener *AccMiningEventListener) Stop() {
 	// wait for it to have stopped
 	<-listener.stoppedChannel
 	listener.stopChannel = make(chan struct{})
-	log.Info("AccMiningEventListener successfully stopped")
+	log.Info("NotaryEventListener successfully stopped")
 }
