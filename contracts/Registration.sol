@@ -523,14 +523,6 @@ contract LitionRegistry {
         require(notaryEndBlock      >  notaryStartBlock,            "Invalid statistics data: notaryEndBlock <= notaryStartBlock");
         require(largestTx           >  0,                           "Invalid statistics data: Largest tx <= 0");
         
-        // Updates info when the last notary was processed 
-        chain.lastNotary.block = notaryEndBlock;
-        chain.lastNotary.timestamp = now;
-        
-        if (chain.active == false) {
-            chain.active = true;
-        }
-        
         bytes32 signatureHash = keccak256(abi.encodePacked(notaryEndBlock, validators, blocksMined, users, userGas, largestTx));
         
         // Validates notary conditions(involvedVesting && participation) to statistics to be accepted
@@ -555,6 +547,14 @@ contract LitionRegistry {
         
         // Calculates and process validator's rewards based on their participation rate and vesting balance
         processValidatorsRewards(chain, totalInvolvedVesting, validators, blocksMined, maxBlocksMined, totalCost);
+        
+        // Updates info when the last notary was processed 
+        chain.lastNotary.block = notaryEndBlock;
+        chain.lastNotary.timestamp = now;
+        
+        if (chain.active == false) {
+            chain.active = true;
+        }
         
         emit Notary(chainId, notaryEndBlock, maxBlocksMined);
     }
@@ -1270,6 +1270,8 @@ contract LitionRegistry {
             
             // Add rewards to the validator's vesting balance
             actValidator.vesting = actValidator.vesting.add(actValidatorReward);
+            chain.totalVesting = chain.totalVesting.add(actValidatorReward);
+            
             emit MiningReward(chain.id, actValidatorAcc, actValidatorReward);
         }
         
@@ -1278,6 +1280,11 @@ contract LitionRegistry {
             Validator storage sender = chain.usersData[msg.sender].validator;
             
             sender.vesting = sender.vesting.add(litToDistributeRest);
+            
+            if (activeValidatorExist(chain, msg.sender) == true) {
+                chain.totalVesting = chain.totalVesting.add(litToDistributeRest);
+            }
+            
             emit MiningReward(chain.id, msg.sender, litToDistributeRest);
         }
         
