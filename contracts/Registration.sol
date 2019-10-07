@@ -84,6 +84,9 @@ contract LitionRegistry {
     // Validator start/stop mining
     event AccountMining(uint256 indexed chainId, address indexed account, bool mining);
 
+    // Validator's new mining reward 
+    event MiningReward(uint256 indexed chainId, address indexed account, uint256 reward);
+    
     // New notary was processed
     event Notary(uint256 indexed chainId, uint256 lastBlock, uint256 blocksProcessed);
 
@@ -1267,12 +1270,15 @@ contract LitionRegistry {
             
             // Add rewards to the validator's vesting balance
             actValidator.vesting = actValidator.vesting.add(actValidatorReward);
+            emit MiningReward(chain.id, actValidatorAcc, actValidatorReward);
         }
         
         if(litToDistributeRest > 0) {
             // Add the rest(math rounding) to the validator, who called notary function
             Validator storage sender = chain.usersData[msg.sender].validator;
+            
             sender.vesting = sender.vesting.add(litToDistributeRest);
+            emit MiningReward(chain.id, msg.sender, litToDistributeRest);
         }
         
         delete miningValidators;
