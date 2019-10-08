@@ -28,7 +28,7 @@ var (
 )
 
 // LitionScClientABI is the input ABI used to generate the binding from.
-const LitionScClientABI = "[{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"}],\"name\":\"AccountMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"AccountWhitelist\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"DepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"}],\"name\":\"MiningReward\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blocksProcessed\",\"type\":\"uint256\"}],\"name\":\"Notary\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"VestInChain\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmDepositWithdrawalFromChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getAllowedToValidate\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"validators\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainDynamicDetails\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"totalVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastValidatorVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryTimestamp\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainStaticDetails\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"registered\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryPeriod\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getTransactors\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"transactors\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"getUserDetails\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"whitelisted\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastVestingIncreaseTime\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"prevNotaryMined\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"vestingReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqNotary\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqValue\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"depositFullWithdrawalReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"depositReqNotary\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getValidators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"validators\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nextId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryStartBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryEndBlock\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocksMined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint64[]\",\"name\":\"userGas\",\"type\":\"uint64[]\"},{\"internalType\":\"uint64\",\"name\":\"largestTx\",\"type\":\"uint64\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"initEndpoint\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"chainValidator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryPeriod\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"name\":\"registerChain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"requestDepositInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"requestVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"setChainStaticDetails\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"startMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"stopMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const LitionScClientABI = "[{\"inputs\":[{\"internalType\":\"contractERC20\",\"name\":\"_token\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"}],\"name\":\"AccountMining\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"AccountWhitelisted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"DepositInChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reward\",\"type\":\"uint256\"}],\"name\":\"MiningReward\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"NewChain\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blocksProcessed\",\"type\":\"uint256\"}],\"name\":\"Notary\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"confirmed\",\"type\":\"bool\"}],\"name\":\"VestInChain\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmDepositWithdrawalFromChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"confirmVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getAllowedToValidate\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"validators\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainDynamicDetails\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"totalVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"validatorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactorsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastValidatorVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastNotaryTimestamp\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"getChainStaticDetails\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"registered\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardBonusRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardBonusPercentage\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryPeriod\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getTransactors\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"transactors\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"acc\",\"type\":\"address\"}],\"name\":\"getUserDetails\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"whitelisted\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastVestingIncreaseTime\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"mining\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"prevNotaryMined\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"vestingReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqNotary\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vestingReqValue\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"depositFullWithdrawalReqExist\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"depositReqNotary\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batch\",\"type\":\"uint256\"}],\"name\":\"getValidators\",\"outputs\":[{\"internalType\":\"address[100]\",\"name\":\"validators\",\"type\":\"address[100]\"},{\"internalType\":\"uint256\",\"name\":\"count\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"end\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nextId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryStartBlock\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryEndBlock\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\"},{\"internalType\":\"uint32[]\",\"name\":\"blocksMined\",\"type\":\"uint32[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"},{\"internalType\":\"uint64[]\",\"name\":\"userGas\",\"type\":\"uint64[]\"},{\"internalType\":\"uint64\",\"name\":\"largestTx\",\"type\":\"uint64\"},{\"internalType\":\"uint8[]\",\"name\":\"v\",\"type\":\"uint8[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"r\",\"type\":\"bytes32[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"s\",\"type\":\"bytes32[]\"}],\"name\":\"notary\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"initEndpoint\",\"type\":\"string\"},{\"internalType\":\"contractChainValidator\",\"name\":\"chainValidator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredDeposit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardBonusRequiredVesting\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardBonusPercentage\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"notaryPeriod\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfValidators\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxNumOfTransactors\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"involvedVestingNotaryCond\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"participationNotaryCond\",\"type\":\"bool\"}],\"name\":\"registerChain\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deposit\",\"type\":\"uint256\"}],\"name\":\"requestDepositInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"vesting\",\"type\":\"uint256\"}],\"name\":\"requestVestInChain\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"endpoint\",\"type\":\"string\"}],\"name\":\"setChainStaticDetails\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"startMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"}],\"name\":\"stopMining\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // LitionScClient is an auto generated Go binding around an Ethereum contract.
 type LitionScClient struct {
@@ -270,30 +270,34 @@ func (_LitionScClient *LitionScClientCallerSession) GetChainDynamicDetails(chain
 
 // GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
 func (_LitionScClient *LitionScClientCaller) GetChainStaticDetails(opts *bind.CallOpts, chainId *big.Int) (struct {
-	Description               string
-	Endpoint                  string
-	Registered                bool
-	MinRequiredDeposit        *big.Int
-	MinRequiredVesting        *big.Int
-	NotaryPeriod              *big.Int
-	MaxNumOfValidators        *big.Int
-	MaxNumOfTransactors       *big.Int
-	InvolvedVestingNotaryCond bool
-	ParticipationNotaryCond   bool
+	Description                string
+	Endpoint                   string
+	Registered                 bool
+	MinRequiredDeposit         *big.Int
+	MinRequiredVesting         *big.Int
+	RewardBonusRequiredVesting *big.Int
+	RewardBonusPercentage      *big.Int
+	NotaryPeriod               *big.Int
+	MaxNumOfValidators         *big.Int
+	MaxNumOfTransactors        *big.Int
+	InvolvedVestingNotaryCond  bool
+	ParticipationNotaryCond    bool
 }, error) {
 	ret := new(struct {
-		Description               string
-		Endpoint                  string
-		Registered                bool
-		MinRequiredDeposit        *big.Int
-		MinRequiredVesting        *big.Int
-		NotaryPeriod              *big.Int
-		MaxNumOfValidators        *big.Int
-		MaxNumOfTransactors       *big.Int
-		InvolvedVestingNotaryCond bool
-		ParticipationNotaryCond   bool
+		Description                string
+		Endpoint                   string
+		Registered                 bool
+		MinRequiredDeposit         *big.Int
+		MinRequiredVesting         *big.Int
+		RewardBonusRequiredVesting *big.Int
+		RewardBonusPercentage      *big.Int
+		NotaryPeriod               *big.Int
+		MaxNumOfValidators         *big.Int
+		MaxNumOfTransactors        *big.Int
+		InvolvedVestingNotaryCond  bool
+		ParticipationNotaryCond    bool
 	})
 	out := ret
 	err := _LitionScClient.contract.Call(opts, out, "getChainStaticDetails", chainId)
@@ -302,36 +306,40 @@ func (_LitionScClient *LitionScClientCaller) GetChainStaticDetails(opts *bind.Ca
 
 // GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
 func (_LitionScClient *LitionScClientSession) GetChainStaticDetails(chainId *big.Int) (struct {
-	Description               string
-	Endpoint                  string
-	Registered                bool
-	MinRequiredDeposit        *big.Int
-	MinRequiredVesting        *big.Int
-	NotaryPeriod              *big.Int
-	MaxNumOfValidators        *big.Int
-	MaxNumOfTransactors       *big.Int
-	InvolvedVestingNotaryCond bool
-	ParticipationNotaryCond   bool
+	Description                string
+	Endpoint                   string
+	Registered                 bool
+	MinRequiredDeposit         *big.Int
+	MinRequiredVesting         *big.Int
+	RewardBonusRequiredVesting *big.Int
+	RewardBonusPercentage      *big.Int
+	NotaryPeriod               *big.Int
+	MaxNumOfValidators         *big.Int
+	MaxNumOfTransactors        *big.Int
+	InvolvedVestingNotaryCond  bool
+	ParticipationNotaryCond    bool
 }, error) {
 	return _LitionScClient.Contract.GetChainStaticDetails(&_LitionScClient.CallOpts, chainId)
 }
 
 // GetChainStaticDetails is a free data retrieval call binding the contract method 0x8ea1e8c3.
 //
-// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
+// Solidity: function getChainStaticDetails(uint256 chainId) constant returns(string description, string endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond)
 func (_LitionScClient *LitionScClientCallerSession) GetChainStaticDetails(chainId *big.Int) (struct {
-	Description               string
-	Endpoint                  string
-	Registered                bool
-	MinRequiredDeposit        *big.Int
-	MinRequiredVesting        *big.Int
-	NotaryPeriod              *big.Int
-	MaxNumOfValidators        *big.Int
-	MaxNumOfTransactors       *big.Int
-	InvolvedVestingNotaryCond bool
-	ParticipationNotaryCond   bool
+	Description                string
+	Endpoint                   string
+	Registered                 bool
+	MinRequiredDeposit         *big.Int
+	MinRequiredVesting         *big.Int
+	RewardBonusRequiredVesting *big.Int
+	RewardBonusPercentage      *big.Int
+	NotaryPeriod               *big.Int
+	MaxNumOfValidators         *big.Int
+	MaxNumOfTransactors        *big.Int
+	InvolvedVestingNotaryCond  bool
+	ParticipationNotaryCond    bool
 }, error) {
 	return _LitionScClient.Contract.GetChainStaticDetails(&_LitionScClient.CallOpts, chainId)
 }
@@ -577,25 +585,25 @@ func (_LitionScClient *LitionScClientTransactorSession) Notary(chainId *big.Int,
 	return _LitionScClient.Contract.Notary(&_LitionScClient.TransactOpts, chainId, notaryStartBlock, notaryEndBlock, validators, blocksMined, users, userGas, largestTx, v, r, s)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0x84dd7b07.
+// RegisterChain is a paid mutator transaction binding the contract method 0x999bb54f.
 //
-// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientTransactor) RegisterChain(opts *bind.TransactOpts, description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
-	return _LitionScClient.contract.Transact(opts, "registerChain", description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientTransactor) RegisterChain(opts *bind.TransactOpts, description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, rewardBonusRequiredVesting *big.Int, rewardBonusPercentage *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.contract.Transact(opts, "registerChain", description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, rewardBonusRequiredVesting, rewardBonusPercentage, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0x84dd7b07.
+// RegisterChain is a paid mutator transaction binding the contract method 0x999bb54f.
 //
-// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
-	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, rewardBonusRequiredVesting *big.Int, rewardBonusPercentage *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, rewardBonusRequiredVesting, rewardBonusPercentage, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
 }
 
-// RegisterChain is a paid mutator transaction binding the contract method 0x84dd7b07.
+// RegisterChain is a paid mutator transaction binding the contract method 0x999bb54f.
 //
-// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
-func (_LitionScClient *LitionScClientTransactorSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
-	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
+// Solidity: function registerChain(string description, string initEndpoint, address chainValidator, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) returns(uint256 chainId)
+func (_LitionScClient *LitionScClientTransactorSession) RegisterChain(description string, initEndpoint string, chainValidator common.Address, minRequiredDeposit *big.Int, minRequiredVesting *big.Int, rewardBonusRequiredVesting *big.Int, rewardBonusPercentage *big.Int, notaryPeriod *big.Int, maxNumOfValidators *big.Int, maxNumOfTransactors *big.Int, involvedVestingNotaryCond bool, participationNotaryCond bool) (*types.Transaction, error) {
+	return _LitionScClient.Contract.RegisterChain(&_LitionScClient.TransactOpts, description, initEndpoint, chainValidator, minRequiredDeposit, minRequiredVesting, rewardBonusRequiredVesting, rewardBonusPercentage, notaryPeriod, maxNumOfValidators, maxNumOfTransactors, involvedVestingNotaryCond, participationNotaryCond)
 }
 
 // RequestDepositInChain is a paid mutator transaction binding the contract method 0x9e9a4db9.
@@ -856,9 +864,9 @@ func (_LitionScClient *LitionScClientFilterer) ParseAccountMining(log types.Log)
 	return event, nil
 }
 
-// LitionScClientAccountWhitelistIterator is returned from FilterAccountWhitelist and is used to iterate over the raw logs and unpacked data for AccountWhitelist events raised by the LitionScClient contract.
-type LitionScClientAccountWhitelistIterator struct {
-	Event *LitionScClientAccountWhitelist // Event containing the contract specifics and raw log
+// LitionScClientAccountWhitelistedIterator is returned from FilterAccountWhitelisted and is used to iterate over the raw logs and unpacked data for AccountWhitelisted events raised by the LitionScClient contract.
+type LitionScClientAccountWhitelistedIterator struct {
+	Event *LitionScClientAccountWhitelisted // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -872,7 +880,7 @@ type LitionScClientAccountWhitelistIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LitionScClientAccountWhitelistIterator) Next() bool {
+func (it *LitionScClientAccountWhitelistedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -881,7 +889,7 @@ func (it *LitionScClientAccountWhitelistIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LitionScClientAccountWhitelist)
+			it.Event = new(LitionScClientAccountWhitelisted)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -896,7 +904,7 @@ func (it *LitionScClientAccountWhitelistIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LitionScClientAccountWhitelist)
+		it.Event = new(LitionScClientAccountWhitelisted)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -912,29 +920,29 @@ func (it *LitionScClientAccountWhitelistIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LitionScClientAccountWhitelistIterator) Error() error {
+func (it *LitionScClientAccountWhitelistedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LitionScClientAccountWhitelistIterator) Close() error {
+func (it *LitionScClientAccountWhitelistedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LitionScClientAccountWhitelist represents a AccountWhitelist event raised by the LitionScClient contract.
-type LitionScClientAccountWhitelist struct {
+// LitionScClientAccountWhitelisted represents a AccountWhitelisted event raised by the LitionScClient contract.
+type LitionScClientAccountWhitelisted struct {
 	ChainId   *big.Int
 	Account   common.Address
 	Whitelist bool
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterAccountWhitelist is a free log retrieval operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
+// FilterAccountWhitelisted is a free log retrieval operation binding the contract event 0x6c013c340e1ef4f57c40269d3ed32d24f1a8db072b0158815d41353e4ae65ed6.
 //
-// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) FilterAccountWhitelist(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientAccountWhitelistIterator, error) {
+// Solidity: event AccountWhitelisted(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) FilterAccountWhitelisted(opts *bind.FilterOpts, chainId []*big.Int, account []common.Address) (*LitionScClientAccountWhitelistedIterator, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -945,17 +953,17 @@ func (_LitionScClient *LitionScClientFilterer) FilterAccountWhitelist(opts *bind
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "AccountWhitelist", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.FilterLogs(opts, "AccountWhitelisted", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LitionScClientAccountWhitelistIterator{contract: _LitionScClient.contract, event: "AccountWhitelist", logs: logs, sub: sub}, nil
+	return &LitionScClientAccountWhitelistedIterator{contract: _LitionScClient.contract, event: "AccountWhitelisted", logs: logs, sub: sub}, nil
 }
 
-// WatchAccountWhitelist is a free log subscription operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
+// WatchAccountWhitelisted is a free log subscription operation binding the contract event 0x6c013c340e1ef4f57c40269d3ed32d24f1a8db072b0158815d41353e4ae65ed6.
 //
-// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelist(opts *bind.WatchOpts, sink chan<- *LitionScClientAccountWhitelist, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
+// Solidity: event AccountWhitelisted(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelisted(opts *bind.WatchOpts, sink chan<- *LitionScClientAccountWhitelisted, chainId []*big.Int, account []common.Address) (event.Subscription, error) {
 
 	var chainIdRule []interface{}
 	for _, chainIdItem := range chainId {
@@ -966,7 +974,7 @@ func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelist(opts *bind.
 		accountRule = append(accountRule, accountItem)
 	}
 
-	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "AccountWhitelist", chainIdRule, accountRule)
+	logs, sub, err := _LitionScClient.contract.WatchLogs(opts, "AccountWhitelisted", chainIdRule, accountRule)
 	if err != nil {
 		return nil, err
 	}
@@ -976,8 +984,8 @@ func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelist(opts *bind.
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LitionScClientAccountWhitelist)
-				if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelist", log); err != nil {
+				event := new(LitionScClientAccountWhitelisted)
+				if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelisted", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -998,12 +1006,12 @@ func (_LitionScClient *LitionScClientFilterer) WatchAccountWhitelist(opts *bind.
 	}), nil
 }
 
-// ParseAccountWhitelist is a log parse operation binding the contract event 0xc732c367e58816f41ca8b732ffca6bc97e995866c236984c146082ce8b1f49d0.
+// ParseAccountWhitelisted is a log parse operation binding the contract event 0x6c013c340e1ef4f57c40269d3ed32d24f1a8db072b0158815d41353e4ae65ed6.
 //
-// Solidity: event AccountWhitelist(uint256 indexed chainId, address indexed account, bool whitelist)
-func (_LitionScClient *LitionScClientFilterer) ParseAccountWhitelist(log types.Log) (*LitionScClientAccountWhitelist, error) {
-	event := new(LitionScClientAccountWhitelist)
-	if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelist", log); err != nil {
+// Solidity: event AccountWhitelisted(uint256 indexed chainId, address indexed account, bool whitelist)
+func (_LitionScClient *LitionScClientFilterer) ParseAccountWhitelisted(log types.Log) (*LitionScClientAccountWhitelisted, error) {
+	event := new(LitionScClientAccountWhitelisted)
+	if err := _LitionScClient.contract.UnpackLog(event, "AccountWhitelisted", log); err != nil {
 		return nil, err
 	}
 	return event, nil
