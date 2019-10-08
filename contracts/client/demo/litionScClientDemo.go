@@ -16,7 +16,7 @@ func processAccMining(event *litionScClient.LitionScClientAccountMining) {
 	log.Info("processAccMining. Acc: ", event.Account.String(), " miningFlag: ", event.Mining)
 }
 
-func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelist) {
+func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelisted) {
 	log.Info("processAccWhitelist. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelist)
 }
 
@@ -54,14 +54,14 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to init 'AccountMining' event listeners")
 	}
-	err = litionScClient.InitAccWhitelistEventListener()
+	err = litionScClient.InitAccWhitelistedEventListener()
 	if err != nil {
 		log.Fatal("Unable to init 'AccountWHitelist' event listeners")
 	}
 
 	// Start standalone event listeners
 	go litionScClient.Start_accMiningEventListener(processAccMining)
-	go litionScClient.Start_accWhitelistEventListener(processAccWhitelist)
+	go litionScClient.Start_accWhitelistedEventListener(processAccWhitelist)
 
 	if privateKeyStr != "" {
 		tx, err := litionScClient.StartMining(auth)

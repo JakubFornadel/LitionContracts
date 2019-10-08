@@ -61,7 +61,7 @@ func (contractClient *ContractClient) InitAccMiningEventListener() error {
 	return nil
 }
 
-func (contractClient *ContractClient) InitAccWhitelistEventListener() error {
+func (contractClient *ContractClient) InitAccWhitelistedEventListener() error {
 	var err error
 	contractClient.accWhitelistedEventListener, err = NewAccWhitelistedEventListener(contractClient.scClient, contractClient.chainID)
 	if err != nil {
@@ -161,7 +161,7 @@ func (contractClient *ContractClient) Start_accMiningEventListener(f func(*Litio
 	}
 }
 
-func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*LitionScClientAccountWhitelisted)) {
+func (contractClient *ContractClient) Start_accWhitelistedEventListener(f func(*LitionScClientAccountWhitelisted)) {
 	listener := contractClient.accWhitelistedEventListener
 	if listener == nil {
 		log.Fatal("Trying to start 'AccountWhitelist' listener without previous initialization")
