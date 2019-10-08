@@ -660,8 +660,9 @@ contract LitionRegistry {
      * @return participationNotaryCond       Flag, 2/3 + 1 participation condition is checked during notary. It means that more or equal to 2/3+1 of all active validators on chain 
      *                                        must sign statistics sent to the notary for notary to be accepted 
      **/
-    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, uint256 rewardBonusRequiredVesting,
-                                                                           uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) {
+    function getChainStaticDetails(uint256 chainId) external view returns (string memory description, string memory endpoint, bool registered, uint256 minRequiredDeposit, uint256 minRequiredVesting, 
+                                                                           uint256 rewardBonusRequiredVesting, uint256 rewardBonusPercentage, uint256 notaryPeriod, uint256 maxNumOfValidators, 
+                                                                           uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) {
         ChainInfo storage chain = chains[chainId];
         
         description                 = chain.description;

@@ -52,7 +52,7 @@ make devtools
 run
 ```
 cd contracts
-solc --abi --overwrite --optimize Registration.sol --output-dir client/abi
+solc --abi --overwrite --optimize LitionRegistry.sol --output-dir client/abi
 ```
 
 #### Create SC go class 
