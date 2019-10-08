@@ -33,17 +33,17 @@ contract LitionRegistry {
     uint256 constant LARGEST_TX_FEE              = LIT_PRECISION/10;
     
     // Min notary period = 1440 blocks (2 hours)
-    uint256 constant MIN_NOTARY_PERIOD           = 60;      // mainnet 1440
+    uint256 constant MIN_NOTARY_PERIOD           = 1440;    // testnet 60
     
-    // Max notary period = 1440 blocks (24 hours)
-    uint256 constant MAX_NOTARY_PERIOD           = 17280;   // mainnet 17280
+    // Max notary period = 34560 blocks (48 hours)
+    uint256 constant MAX_NOTARY_PERIOD           = 34560;   // testnet 17280
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
     // Users can then increase/descrease their vesting/deposit instantly and bypass 2-step process with confirmations.
-    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 1 days; // mainnet 7 days
+    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 7 days;  // testnet 1 days
     
     // Time after which validators can withdraw their vesting
-    uint256 constant VESTING_LOCKUP_TIMEOUT      = 1 days; // mainnet 14 days
+    uint256 constant VESTING_LOCKUP_TIMEOUT      = 7 days;  // testnet 1 days
     
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
@@ -279,7 +279,7 @@ contract LitionRegistry {
             
             // In case user wants to withdraw full vesting and chain is active, check vesting lockup timeout
             if (chain.active == true) {
-                require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(14 days) since the last increase");
+                require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(7 days) since the last increase");
             }
         }
         // Vest in chain or withdraw just part of vesting
@@ -294,7 +294,7 @@ contract LitionRegistry {
             // In case user wants to decrease vesting and chain is active, check vesting lockup timeout
             if (vesting < validator.vesting) {
                 if (chain.active == true) {
-                    require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(14 days) since the last increase");
+                    require(validator.lastVestingIncreaseTime + VESTING_LOCKUP_TIMEOUT < now,  "Unable to decrease vesting balance, validators need to wait VESTING_LOCKUP_TIMEOUT(7 days) since the last increase");
                 }
             }
             // In case user wants to increase vesting, do not allow him if there is no more places for active validators and user does not vest more than the the one with smallest vesting balance 
@@ -385,7 +385,7 @@ contract LitionRegistry {
                            uint256 maxNumOfTransactors, bool involvedVestingNotaryCond, bool participationNotaryCond) external returns (uint256 chainId) {
         require(bytes(description).length > 0 && bytes(description).length <= MAX_DESCRIPTION_LENGTH,   "Chain description length must be: > 0 && <= MAX_DESCRIPTION_LENGTH(200)");
         require(bytes(initEndpoint).length > 0 && bytes(initEndpoint).length <= MAX_URL_LENGTH,         "Chain endpoint length must be: > 0 && <= MAX_URL_LENGTH(100)");
-        require(notaryPeriod >= MIN_NOTARY_PERIOD && notaryPeriod <= MAX_NOTARY_PERIOD,                 "Notary period must be in range <MIN_NOTARY_PERIOD(1440), MAX_NOTARY_PERIOD(17280)>");
+        require(notaryPeriod >= MIN_NOTARY_PERIOD && notaryPeriod <= MAX_NOTARY_PERIOD,                 "Notary period must be in range <MIN_NOTARY_PERIOD(1440), MAX_NOTARY_PERIOD(34560)>");
         require(involvedVestingNotaryCond == true || participationNotaryCond == true,                   "At least one notary condition must be specified");
         require(minRequiredDeposit >= LITION_MIN_REQUIRED_DEPOSIT,                                      "Min. required deposit for all chains must be >= LITION_MIN_REQUIRED_DEPOSIT (1000 LIT)");
         require(minRequiredVesting >= LITION_MIN_REQUIRED_VESTING,                                      "Min. required vesting for all chains must be >= LITION_MIN_REQUIRED_VESTING (1000 LIT)");

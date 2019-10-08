@@ -1,19 +1,23 @@
 ## ETH Mainnet Contracts
 TODO: add when available
+#### Actual Lition ERC20 token contract
+```
+https://etherscan.io/token/0x763fa6806e1acf68130d2d0f0df754c93cc546b2
+```
 
 ## ETH Ropsten Contracts
 
-### Actual Lition ERC20 token contract
+#### Actual Lition ERC20 token contract
 ```
 https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 ```
 
-### Actual Lition Registry contract
+#### Actual Lition Registry contract
 ```
 https://ropsten.etherscan.io/address/0xe494150A79eFc90a1efF9f04f72F0D15e92dE291
 ```
 
-### Actual Lition Energy Chain Validator contract
+#### Actual Lition Energy Chain Validator contract
 ```
 https://ropsten.etherscan.io/address/0x570BB52721408A9eB721e57d451D186bd5C25365
 ```
