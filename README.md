@@ -28,7 +28,7 @@ https://ropsten.etherscan.io/address/0xd7fc92865E368411eCB18756D5ac675043d67ba7
 
 #### Actual Lition Energy Chain Validator contract
 ```
-https://ropsten.etherscan.io/address/0x570BB52721408A9eB721e57d451D186bd5C25365
+https://ropsten.etherscan.io/address/0x8c8fb24B2514f89ce5E34Ee91A2DB5E9891C88FF
 ```
 
 ## Contract debugging
