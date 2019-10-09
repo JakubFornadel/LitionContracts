@@ -60,17 +60,17 @@ contract LitionRegistry {
     uint256 constant LARGEST_TX_FEE              = LIT_PRECISION/10;
     
     // Min notary period = 1440 blocks (2 hours)
-    uint256 constant MIN_NOTARY_PERIOD           = 60;    // mainnet 1440
+    uint256 constant MIN_NOTARY_PERIOD           = 1440;    // testnet 60 
     
     // Max notary period = 34560 blocks (48 hours)
     uint256 constant MAX_NOTARY_PERIOD           = 34560;
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
     // Users can then increase/descrease their vesting/deposit instantly and bypass 2-step process with confirmations.
-    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 1 days;  // mainnet 7 days
+    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 7 days;  // testnet 1 days 
     
     // Time after which validators can withdraw their vesting
-    uint256 constant VESTING_LOCKUP_TIMEOUT      = 1 days;  // mainnet 7 days
+    uint256 constant VESTING_LOCKUP_TIMEOUT      = 7 days;  // testnet 1 days
     
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
