@@ -1,10 +1,39 @@
 pragma solidity >= 0.5.11;
 
+/**
+ * @title  ChainValidator interface
+ * @author Jakub Fornadel
+ * @notice External chain validator contract, can be used for more sophisticated validation of new validators and transactors, e.g. custom min. required conditions,
+ *         concrete users whitelisting, etc...
+ **/
 interface ChainValidator {
-   function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool);
-   function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool);
+    /**
+     * @notice Validation function for new validators
+     * 
+     * @param vesting               How many tokens new validator wants to vest
+     * @param acc                   Account address of the validator
+     * @param mining                Flag if validator is going to mine. 
+     *                               mining == false in case validateNewValidator is called during vestInChain method
+     *                               mining == true in case validateNewValidator is called during startMining method
+     * @param actNumOfValidators    How many active validators is currently in chain
+     **/
+    function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool);
+    
+    /**
+     * @notice Validation function for new transactors
+     * 
+     * @param deposit               How many tokens new transactor wants to deposit
+     * @param acc                   Account address of the transactor
+     * @param actNumOfTransactors   How many whitelisted transactors (their deposit balance >= min. required balance) is currently in chain
+     **/
+    function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool);
 }
 
+/**
+ * @title  EnergyChainValidator for Lition energy chain
+ * @author Jakub Fornadel
+ * @notice External chain validator contract with specific conditions tailored for Lition Energy chain
+ **/
 contract EnergyChainValidator is ChainValidator {
     
     /**************************************************************************************************************************/
@@ -89,7 +118,16 @@ contract EnergyChainValidator is ChainValidator {
     /**************************************************************************************************************************/
 
     
-    // Validates new validator
+    /**
+     * @notice Validation function for new validators. All validators with vesting in range <1000, 50000> LIT tokens are allowed 
+     * 
+     * @param vesting               How many tokens new validator wants to vest
+     * @param acc                   Account address of the validator
+     * @param mining                Flag if validator is going to mine. 
+     *                               mining == false in case validateNewValidator is called during vestInChain method
+     *                               mining == true in case validateNewValidator is called during startMining method
+     * @param actNumOfValidators    How many active validators is currently in chain
+     **/
     function validateNewValidator(uint256 vesting, address acc, bool mining, uint256 actNumOfValidators) external returns (bool) {
         if (vesting < MIN_VESTING || vesting > MAX_VESTING) {
             return false;
@@ -98,7 +136,13 @@ contract EnergyChainValidator is ChainValidator {
         return true;
     }
     
-    // Validates new transactor
+    /**
+     * @notice Validation function for new transactors. Only whitelisted accounts are allowed
+     * 
+     * @param deposit               How many tokens new transactor wants to deposit
+     * @param acc                   Account address of the transactor
+     * @param actNumOfTransactors   How many whitelisted transactors (their deposit balance >= min. required balance) is currently in chain
+     **/
     function validateNewTransactor(uint256 deposit, address acc, uint256 actNumOfTransactors) external returns (bool) {
         if (existAcc(whitelistedUsers, acc) == true && deposit >= MIN_DEPOSIT) {
             return  true;
@@ -107,24 +151,43 @@ contract EnergyChainValidator is ChainValidator {
         return false;
     }
     
-    // Adds new whitelisted users
+    /**
+     * @notice Adds new whitelisted accounts that are allowed to transact on Lition energy chain
+     *         Provided existing accounts are ignored
+     * 
+     * @param accounts List of accounts
+     **/
     function addWhitelistedUsers(address[] calldata accounts) external {
         addUsers(whitelistedUsers, accounts);
     }
     
-    // Removes existing whitelisted users
+    /**
+     * @notice Removes existing whitelisted accounts that are allowed to transact on Lition energy chain.
+     *         Provided non-existing accounts are ignored
+     * 
+     * @param accounts List of accounts
+     **/
     function removeWhitelistedUsers(address[] calldata accounts) external {
         require(whitelistedUsers.list.length > 0, "There are no whitelisted users to be removed");
         
         removeUsers(whitelistedUsers, accounts);
     }
 
-    // Adds new admins
+    /**
+     * @notice Adds new admins that are allowed to add/remove whitelisted users
+     *         Provided existing accounts are ignored*
+     * @param accounts List of accounts
+     **/
     function addAdmins(address[] calldata accounts) external {
         addUsers(admins, accounts);
     }
     
-    // Removes existing admin
+    /**
+     * @notice Removes existing admin that is allowed to add/remove whitelisted users. 
+     *         Provided account must exist as registered admin
+     * 
+     * @param account List of accounts
+     **/
     function removeAdmin(address account) external {
         require(admins.list.length > 1, "Cannot remove all admins, at least one must be always present");
         require(existAcc(admins, account) == true, "Trying to remove non-existing admin");
@@ -132,12 +195,28 @@ contract EnergyChainValidator is ChainValidator {
         removeAcc(admins, account);
     }
     
-    // Returns list of admins
+    /**
+     * @notice Returns list of admins (their accounts)
+     *
+     * @param batch        Batch number to be fetched. If the list is too big it cannot return all admins in one call. Instead, users are fetching batches of 100 account at a time 
+     * 
+     * @return accounts    List(batch of 100) of account
+     * @return count       How many accounts are returned in specified batch
+     * @return end         Flag if there are no more accounts left. To get all accounts, caller should fetch all batches until he sees end == true
+     **/
     function getAdmins(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
         return getUsers(admins, batch);
     }
     
-    // Returns list of whitelisted users
+    /**
+     * @notice Returns list of whitelisted users (their accounts)
+     *
+     * @param batch        Batch number to be fetched. If the list is too big it cannot return all admins in one call. Instead, users are fetching batches of 100 account at a time 
+     * 
+     * @return accounts    List(batch of 100) of account
+     * @return count       How many accounts are returned in specified batch
+     * @return end         Flag if there are no more accounts left. To get all accounts, caller should fetch all batches until he sees end == true
+     **/
     function getWhitelistedUsers(uint256 batch) external view returns (address[100] memory accounts, uint256 count, bool end) {
         return getUsers(whitelistedUsers, batch);
     }

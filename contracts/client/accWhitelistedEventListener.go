@@ -11,11 +11,11 @@ import (
 	"gitlab.com/lition/lition/event"
 )
 
-type AccWhitelistEventListener struct {
+type AccWhitelistedEventListener struct {
 	initialized    bool
 	listening      bool
 	scClient       *LitionScClient
-	eventChannel   chan *LitionScClientAccountWhitelist
+	eventChannel   chan *LitionScClientAccountWhitelisted
 	eventSubs      event.Subscription
 	filterChainID  []*big.Int
 	stopChannel    chan struct{}
@@ -23,8 +23,8 @@ type AccWhitelistEventListener struct {
 	mutex          sync.Mutex
 }
 
-func NewAccWhitelistEventListener(scClient *LitionScClient, chainId *big.Int) (*AccWhitelistEventListener, error) {
-	p := new(AccWhitelistEventListener)
+func NewAccWhitelistedEventListener(scClient *LitionScClient, chainId *big.Int) (*AccWhitelistedEventListener, error) {
+	p := new(AccWhitelistedEventListener)
 
 	p.initialized = false
 	p.listening = false
@@ -39,7 +39,7 @@ func NewAccWhitelistEventListener(scClient *LitionScClient, chainId *big.Int) (*
 	return nil, err
 }
 
-func (listener *AccWhitelistEventListener) Init() error {
+func (listener *AccWhitelistedEventListener) Init() error {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -48,8 +48,8 @@ func (listener *AccWhitelistEventListener) Init() error {
 	}
 
 	var err error
-	listener.eventChannel = make(chan *LitionScClientAccountWhitelist)
-	listener.eventSubs, err = listener.scClient.WatchAccountWhitelist(
+	listener.eventChannel = make(chan *LitionScClientAccountWhitelisted)
+	listener.eventSubs, err = listener.scClient.WatchAccountWhitelisted(
 		&bind.WatchOpts{Context: context.Background(), Start: nil},
 		listener.eventChannel,
 		listener.filterChainID,
@@ -68,7 +68,7 @@ func (listener *AccWhitelistEventListener) Init() error {
 	return nil
 }
 
-func (listener *AccWhitelistEventListener) DeInit() {
+func (listener *AccWhitelistedEventListener) DeInit() {
 	listener.Stop()
 
 	listener.mutex.Lock()
@@ -85,23 +85,23 @@ func (listener *AccWhitelistEventListener) DeInit() {
 	listener.initialized = false
 }
 
-func (listener *AccWhitelistEventListener) ReInit() error {
+func (listener *AccWhitelistedEventListener) ReInit() error {
 	listener.DeInit()
 	return listener.Init()
 }
 
-func (listener *AccWhitelistEventListener) Start(f func(*LitionScClientAccountWhitelist)) error {
+func (listener *AccWhitelistedEventListener) Start(f func(*LitionScClientAccountWhitelisted)) error {
 	if listener.initialized == false {
-		return errors.New("Trying to Start 'AccWhitelistEventListener' without previous initialization")
+		return errors.New("Trying to Start 'AccWhitelistedEventListener' without previous initialization")
 	}
 	if listener.listening == true {
-		log.Warning("Trying to Start 'AccWhitelistEventListener', which is already listening.")
+		log.Warning("Trying to Start 'AccWhitelistedEventListener', which is already listening.")
 		return nil
 	}
 
 	listener.stoppedChannel = make(chan struct{})
 	listener.listening = true
-	log.Info("AccWhitelistEventListener start listening")
+	log.Info("AccWhitelistedEventListener start listening")
 
 	// close the stoppedchan when this func exits
 	defer func() {
@@ -112,18 +112,18 @@ func (listener *AccWhitelistEventListener) Start(f func(*LitionScClientAccountWh
 	for {
 		select {
 		case event := <-listener.eventChannel:
-			log.Info("New 'WhitelistAccount' event received.")
+			log.Info("New 'WhitelistedAccount' event received.")
 			f(event)
 		case err := <-listener.eventSubs.Err():
 			return err
 		case <-listener.stopChannel:
-			log.Info("Signal to stop AccWhitelistEventListener received.")
+			log.Info("Signal to stop AccWhitelistedEventListener received.")
 			return nil
 		}
 	}
 }
 
-func (listener *AccWhitelistEventListener) Stop() {
+func (listener *AccWhitelistedEventListener) Stop() {
 	listener.mutex.Lock()
 	defer listener.mutex.Unlock()
 
@@ -135,5 +135,5 @@ func (listener *AccWhitelistEventListener) Stop() {
 	// wait for it to have stopped
 	<-listener.stoppedChannel
 	listener.stopChannel = make(chan struct{})
-	log.Info("AccWhitelistEventListener successfully stopped")
+	log.Info("AccWhitelistedEventListener successfully stopped")
 }

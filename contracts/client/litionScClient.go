@@ -18,7 +18,7 @@ type ContractClient struct {
 	scClient                    *LitionScClient
 	chainID                     *big.Int // chainID on top of which all sc calls are made
 	accMiningEventListener      *AccMiningEventListener
-	accWhitelistEventListener   *AccWhitelistEventListener
+	accWhitelistedEventListener *AccWhitelistedEventListener
 	vestInChainEventListener    *VestInChainEventListener
 	depositInChainEventListener *DepositInChainEventListener
 	notaryEventListener         *NotaryEventListener
@@ -43,7 +43,7 @@ func NewClient(ethClientURL string, scAddress string, chainID *big.Int) (*Contra
 	contractClient.scClient = pScClient
 
 	contractClient.accMiningEventListener = nil
-	contractClient.accWhitelistEventListener = nil
+	contractClient.accWhitelistedEventListener = nil
 	contractClient.vestInChainEventListener = nil
 	contractClient.depositInChainEventListener = nil
 	contractClient.notaryEventListener = nil
@@ -61,9 +61,9 @@ func (contractClient *ContractClient) InitAccMiningEventListener() error {
 	return nil
 }
 
-func (contractClient *ContractClient) InitAccWhitelistEventListener() error {
+func (contractClient *ContractClient) InitAccWhitelistedEventListener() error {
 	var err error
-	contractClient.accWhitelistEventListener, err = NewAccWhitelistEventListener(contractClient.scClient, contractClient.chainID)
+	contractClient.accWhitelistedEventListener, err = NewAccWhitelistedEventListener(contractClient.scClient, contractClient.chainID)
 	if err != nil {
 		return err
 	}
@@ -105,8 +105,8 @@ func (contractClient *ContractClient) DeInit() {
 	if contractClient.accMiningEventListener != nil {
 		contractClient.accMiningEventListener.DeInit()
 	}
-	if contractClient.accWhitelistEventListener != nil {
-		contractClient.accWhitelistEventListener.DeInit()
+	if contractClient.accWhitelistedEventListener != nil {
+		contractClient.accWhitelistedEventListener.DeInit()
 	}
 	if contractClient.vestInChainEventListener != nil {
 		contractClient.vestInChainEventListener.DeInit()
@@ -120,7 +120,7 @@ func (contractClient *ContractClient) DeInit() {
 
 	contractClient.chainID = nil
 	contractClient.accMiningEventListener = nil
-	contractClient.accWhitelistEventListener = nil
+	contractClient.accWhitelistedEventListener = nil
 	contractClient.vestInChainEventListener = nil
 	contractClient.depositInChainEventListener = nil
 	contractClient.notaryEventListener = nil
@@ -161,8 +161,8 @@ func (contractClient *ContractClient) Start_accMiningEventListener(f func(*Litio
 	}
 }
 
-func (contractClient *ContractClient) Start_accWhitelistEventListener(f func(*LitionScClientAccountWhitelist)) {
-	listener := contractClient.accWhitelistEventListener
+func (contractClient *ContractClient) Start_accWhitelistedEventListener(f func(*LitionScClientAccountWhitelisted)) {
+	listener := contractClient.accWhitelistedEventListener
 	if listener == nil {
 		log.Fatal("Trying to start 'AccountWhitelist' listener without previous initialization")
 		return
@@ -386,16 +386,18 @@ func (contractClient *ContractClient) Notary(auth *bind.TransactOpts,
 }
 
 func (contractClient *ContractClient) GetChainStaticDetails() (struct {
-	Description               string
-	Endpoint                  string
-	Registered                bool
-	MinRequiredDeposit        *big.Int
-	MinRequiredVesting        *big.Int
-	NotaryPeriod              *big.Int
-	MaxNumOfValidators        *big.Int
-	MaxNumOfTransactors       *big.Int
-	InvolvedVestingNotaryCond bool
-	ParticipationNotaryCond   bool
+	Description                string
+	Endpoint                   string
+	Registered                 bool
+	MinRequiredDeposit         *big.Int
+	MinRequiredVesting         *big.Int
+	RewardBonusRequiredVesting *big.Int
+	RewardBonusPercentage      *big.Int
+	NotaryPeriod               *big.Int
+	MaxNumOfValidators         *big.Int
+	MaxNumOfTransactors        *big.Int
+	InvolvedVestingNotaryCond  bool
+	ParticipationNotaryCond    bool
 }, error) {
 	return contractClient.scClient.GetChainStaticDetails(&bind.CallOpts{}, contractClient.chainID)
 }

@@ -1,21 +1,34 @@
 ## ETH Mainnet Contracts
+
+#### Actual Lition ERC20 token contract
+```
+https://etherscan.io/token/0x763fa6806e1acf68130d2d0f0df754c93cc546b2
+```
+#### Actual Lition Registry contract
+```
 TODO: add when available
+```
+
+#### Actual Lition Energy Chain Validator contract
+```
+TODO: add when available
+```
 
 ## ETH Ropsten Contracts
 
-### Actual Lition ERC20 token contract
+#### Actual Lition ERC20 token contract
 ```
 https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 ```
 
-### Actual Lition Registry contract
+#### Actual Lition Registry contract
 ```
-https://ropsten.etherscan.io/address/0xe494150A79eFc90a1efF9f04f72F0D15e92dE291
+https://ropsten.etherscan.io/address/0xA8659cee561B7C6118B2FB0D8f73e18aA8aC4ba4
 ```
 
-### Actual Lition Energy Chain Validator contract
+#### Actual Lition Energy Chain Validator contract
 ```
-https://ropsten.etherscan.io/address/0x570BB52721408A9eB721e57d451D186bd5C25365
+https://ropsten.etherscan.io/address/0x8c8fb24B2514f89ce5E34Ee91A2DB5E9891C88FF
 ```
 
 ## Contract debugging
@@ -39,7 +52,7 @@ make devtools
 run
 ```
 cd contracts
-solc --abi --overwrite --optimize Registration.sol --output-dir client/abi
+solc --abi --overwrite --optimize LitionRegistry.sol --output-dir client/abi
 ```
 
 #### Create SC go class 
