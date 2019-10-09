@@ -6,7 +6,7 @@ https://etherscan.io/token/0x763fa6806e1acf68130d2d0f0df754c93cc546b2
 ```
 #### Actual Lition Registry contract
 ```
-https://etherscan.io/address/0x5f7f797124ccf7145453bd120eab3f43abd3635a
+TODO: add when available
 ```
 
 #### Actual Lition Energy Chain Validator contract
