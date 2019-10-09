@@ -106,7 +106,7 @@ contract LitionRegistry {
     
     // if whitelisted == true  - allow user to transact
     // if whitelisted == false - do not allow user to transact
-    event AccountWhitelisted(uint256 indexed chainId, address indexed account, bool whitelist);
+    event AccountWhitelisted(uint256 indexed chainId, address indexed account, bool whitelisted);
     
     // Validator start/stop mining
     event AccountMining(uint256 indexed chainId, address indexed account, bool mining);
