@@ -864,8 +864,9 @@ contract LitionRegistry {
         }
         
         if (unvoteValidators == true) {
-            for (uint256 i = 0; i < chain.validators.list.length; i++) {
-                activeValidatorRemove(chain, chain.validators.list[i]);
+            uint256 activeValidatorsCount = chain.validators.list.length;
+            for (uint256 i = 0; i < activeValidatorsCount; i++) {
+                activeValidatorRemove(chain, chain.validators.list[0]);
             }
         }
     
