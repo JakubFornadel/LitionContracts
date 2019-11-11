@@ -163,6 +163,7 @@ contract EnergyChainValidator is ChainValidator {
      * @param num
      **/
     function setMaxNumOfValidators(uint256 num) external {
+        require(existAcc(admins, msg.sender) == true, "Only admins can do internal changes");
         maxNumOfValidators = num;
     }
     
