@@ -864,13 +864,27 @@ contract LitionRegistry {
         }
         
         if (unvoteValidators == true) {
-            uint256 activeValidatorsCount = chain.validators.list.length;
-            for (uint256 i = 0; i < activeValidatorsCount; i++) {
-                activeValidatorRemove(chain, chain.validators.list[0]);
-            }
+            removeValidators(chainId, chain.validators.list);
         }
     
         emit NotaryReset(chainId, lastValidBlock, resetBlock);               
+    }
+    
+    /**
+     * @notice Manually removes validators from list of active validators(stop Mining is called)
+     *
+     * @param chainId       ChainId that sender wants to interact with
+     * @param validators    List of validators (their addresses) to beremoved from list of active validators
+     **/
+    function removeValidators(uint256 chainId, address[] memory validators) public {
+        ChainInfo storage chain = chains[chainId];
+        require(msg.sender == chain.creator, "Only chain creator can call this method");
+        
+        for (uint256 i = 0; i < validators.length; i++) {
+            if (activeValidatorExist(chain, validators[i]) == true) {
+                activeValidatorRemove(chain, validators[i]);
+            }
+        }
     }
     
     /**
