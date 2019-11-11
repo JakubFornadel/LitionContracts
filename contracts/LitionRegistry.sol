@@ -846,8 +846,9 @@ contract LitionRegistry {
      * @param chainId           ChainId that sender wants to interact with
      * @param resetBlock        New last accepted notary block number
      * @param processRequests   Flag if notary block set in vesting/deposit requests should be set
+     * @param unvoteValidators  Flag if stopMining should be called for all active validators
      **/
-    function resetNotary(uint256 chainId, uint256 resetBlock, bool processRequests) external {
+    function resetNotary(uint256 chainId, uint256 resetBlock, bool processRequests, bool unvoteValidators) external {
         ChainInfo storage chain = chains[chainId];
         require(msg.sender == chain.creator, "Only chain creator can call this method");
         
@@ -860,6 +861,12 @@ contract LitionRegistry {
           for (uint256 batch = 0; end == false; batch++) {
               end = resetRequests(chainId, resetBlock, batch);
           }
+        }
+        
+        if (unvoteValidators == true) {
+            for (uint256 i = 0; i < chain.validators.list.length; i++) {
+                activeValidatorRemove(chain, chain.validators.list[i]);
+            }
         }
     
         emit NotaryReset(chainId, lastValidBlock, resetBlock);               
