@@ -60,17 +60,17 @@ contract LitionRegistry {
     uint256 constant LARGEST_TX_FEE              = LIT_PRECISION/10;
     
     // Min notary period = 1440 blocks (2 hours)
-    uint256 constant MIN_NOTARY_PERIOD           = 1440;    // testnet 60 
+    uint256 constant MIN_NOTARY_PERIOD           = 1440;    // mainnet: 1440, testnet: 60 
     
     // Max notary period = 34560 blocks (48 hours)
     uint256 constant MAX_NOTARY_PERIOD           = 34560;
     
     // Time after which chain becomes inactive in case there was no successfull notary processed
     // Users can then increase/descrease their vesting/deposit instantly and bypass 2-step process with confirmations.
-    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 7 days;  // testnet 1 days 
+    uint256 constant CHAIN_INACTIVITY_TIMEOUT    = 7 days;  // mainnet: 7, testnet 1 days 
     
     // Time after which validators can withdraw their vesting
-    uint256 constant VESTING_LOCKUP_TIMEOUT      = 7 days;  // testnet 1 days
+    uint256 constant VESTING_LOCKUP_TIMEOUT      = 7 days;  // mainnet: 7, testnet 1 days
     
     // Max num of characters in chain url
     uint256 constant MAX_URL_LENGTH              = 100;
@@ -116,6 +116,10 @@ contract LitionRegistry {
     
     // New notary was processed
     event Notary(uint256 indexed chainId, uint256 lastBlock, uint256 blocksProcessed);
+    
+    // Manual notary reset was processed
+    event NotaryReset(uint256 indexed chainId, uint256 lastValidBlock, uint256 resetBlock);
+    
 
     /**************************************************************************************************************************/
     /***************************************** Structs related to the list of users *******************************************/
@@ -836,7 +840,88 @@ contract LitionRegistry {
         emit Notary(chainId, notaryEndBlock, maxBlocksMined);
     }
     
-
+    /**
+     * @notice Manually resets last accepted notary block & timestamp. Only chain creator can call this method
+     *
+     * @param chainId           ChainId that sender wants to interact with
+     * @param resetBlock        New last accepted notary block number
+     * @param processRequests   Flag if notary block set in vesting/deposit requests should be set
+     * @param unvoteValidators  Flag if stopMining should be called for all active validators
+     **/
+    function resetNotary(uint256 chainId, uint256 resetBlock, bool processRequests, bool unvoteValidators) external {
+        ChainInfo storage chain = chains[chainId];
+        require(msg.sender == chain.creator, "Only chain creator can call this method");
+        
+        // Manually updates info when the last notary was processed 
+        uint256 lastValidBlock = chain.lastNotary.block;
+        chain.lastNotary.block = resetBlock;
+        
+        if (processRequests == true) {
+          bool end = false;
+          for (uint256 batch = 0; end == false; batch++) {
+              end = resetRequests(chainId, resetBlock, batch);
+          }
+        }
+        
+        if (unvoteValidators == true) {
+            removeValidators(chainId, chain.validators.list);
+        }
+    
+        emit NotaryReset(chainId, lastValidBlock, resetBlock);               
+    }
+    
+    /**
+     * @notice Manually removes validators from list of active validators(stop Mining is called)
+     *
+     * @param chainId       ChainId that sender wants to interact with
+     * @param validators    List of validators (their addresses) to beremoved from list of active validators
+     **/
+    function removeValidators(uint256 chainId, address[] memory validators) public {
+        ChainInfo storage chain = chains[chainId];
+        require(msg.sender == chain.creator, "Only chain creator can call this method");
+        
+        for (uint256 i = 0; i < validators.length; i++) {
+            if (activeValidatorExist(chain, validators[i]) == true) {
+                activeValidatorRemove(chain, validators[i]);
+            }
+        }
+    }
+    
+    /**
+     * @notice Manually resets notary block in vesting/deposit requests of users. Only chain creator can call this method
+     *
+     * @param chainId       ChainId that sender wants to interact with
+     * @param resetBlock    New notary to be set in requests
+     * @param batch         Batch number to be fetched. If the list is too big it cannot return all validators in one call. Instead, users are fetching batches of 100 account at a time 
+     *
+     * @return end          Flag if there are no more users(their requests) to be processed left. To get all users, caller should fetch all batches until he sees end == true
+     **/
+    function resetRequests(uint256 chainId, uint256 resetBlock, uint256 batch) public returns (bool end) {
+        ChainInfo storage chain = chains[chainId];
+        require(msg.sender == chain.creator, "Only chain creator can call this method");
+        
+        uint256 usersTotalCount = chain.users.list.length;
+        uint256 i;
+        for(i = batch * 100; i < (batch + 1)*100 && i < usersTotalCount; i++) {
+            User storage user = chain.usersData[chain.users.list[i]];
+            
+            if (user.transactor.depositWithdrawalRequest.exist == true) {
+              user.transactor.depositWithdrawalRequest.notaryBlock = resetBlock;
+            }
+            
+            if (user.validator.vestingRequest.exist == true) {
+              user.validator.vestingRequest.notaryBlock = resetBlock;
+            }
+        }
+        
+        if (i >= usersTotalCount) {
+            end = true;
+        }
+        else {
+            end = false;
+        }
+    }
+    
     /**
      * @notice Returns list of transactors (users) that are allowed to transact - their deposit >= min. required deposit (their accounts)
      *
@@ -1344,23 +1429,9 @@ contract LitionRegistry {
         
         // If user wants to withdraw whole deposit
         if (deposit == 0) {
-            // Chain is not active - enable full deposit withdrawal immmediately
-            if (chain.active == false) {
-                uint256 toWithdraw = transactor.deposit;
-                transactorDelete(chain, acc);
-                
-                // Withdraw whole deposit
-                token.transfer(acc, toWithdraw);
-                
-                emit DepositInChain(chain.id, acc, deposit, chain.lastNotary.block, true);
-            }
-            // Chain is active - create withdrawal request and process full deposit withdrawal in 2 steps
-            else {
-                depositWithdrawalRequestCreate(chain, acc);
-                
-                transactorBlacklist(chain, acc);
-                emit DepositInChain(chain.id, acc, deposit, chain.usersData[acc].transactor.depositWithdrawalRequest.notaryBlock, false);  
-            }  
+            depositWithdrawalRequestCreate(chain, acc);
+            transactorBlacklist(chain, acc);
+            emit DepositInChain(chain.id, acc, deposit, chain.usersData[acc].transactor.depositWithdrawalRequest.notaryBlock, false);  
           
             return;
         }

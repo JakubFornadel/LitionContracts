@@ -17,12 +17,12 @@ func processAccMining(event *litionScClient.LitionScClientAccountMining) {
 }
 
 func processAccWhitelist(event *litionScClient.LitionScClientAccountWhitelisted) {
-	log.Info("processAccWhitelist. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelist)
+	log.Info("processAccWhitelist. Acc: ", event.Account.String(), ", Whitelisted: ", event.Whitelisted)
 }
 
 func main() {
 	infuraURL := "wss://ropsten.infura.io/ws"
-	contractAddress := "0xA1e73CCF0715E2f9080c5168f0272a8c21e243e8"
+	contractAddress := "0xEa1912e78d5aE29cC4a52d8297Cf3aF913aA0187"
 	privateKeyStr := ""
 	chainID := 0
 

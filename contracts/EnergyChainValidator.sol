@@ -44,7 +44,7 @@ contract EnergyChainValidator is ChainValidator {
     uint256 constant LIT_PRECISION               = 10**18;
     
     // Min deposit value
-    uint256 constant MIN_DEPOSIT                 = 5000*LIT_PRECISION;
+    uint256 constant MIN_DEPOSIT                 = 1000*LIT_PRECISION;
     
     // Min vesting value
     uint256 constant MIN_VESTING                 = 1000*LIT_PRECISION;
@@ -108,6 +108,9 @@ contract EnergyChainValidator is ChainValidator {
     // List of whitelisted users who can deposit
     IterableMap private whitelistedUsers;
     
+    // Max allowed number of active validators at the same time 
+    uint256     public  maxNumOfValidators;
+    
     constructor() public {
         insertAcc(admins, msg.sender);
     }
@@ -132,6 +135,9 @@ contract EnergyChainValidator is ChainValidator {
         if (vesting < MIN_VESTING || vesting > MAX_VESTING) {
             return false;
         }
+        if (maxNumOfValidators != 0 && mining == true && actNumOfValidators >= maxNumOfValidators) {
+            return false;
+        }
         
         return true;
     }
@@ -149,6 +155,16 @@ contract EnergyChainValidator is ChainValidator {
         }
         
         return false;
+    }
+    
+    /**
+     * @notice Sets allowed max num of active validators at the same time  
+     * 
+     * @param num
+     **/
+    function setMaxNumOfValidators(uint256 num) external {
+        require(existAcc(admins, msg.sender) == true, "Only admins can do internal changes");
+        maxNumOfValidators = num;
     }
     
     /**

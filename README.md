@@ -6,12 +6,12 @@ https://etherscan.io/token/0x763fa6806e1acf68130d2d0f0df754c93cc546b2
 ```
 #### Actual Lition Registry contract
 ```
-https://etherscan.io/address/0x3b9a052bc3e457A0f278436f058E040A147aB323
+https://etherscan.io/address/0x7a79868b8375131B4c6A681b112109A51EEa0a6C
 ```
 
 #### Actual Lition Energy Chain Validator contract
 ```
-https://etherscan.io/address/0x022023BE5EC6aE0af99d3CB337a2811AD123B3D8
+https://etherscan.io/address/0x705E97b137f3b38E8D151B5619b436e2D8a2882A
 ```
 
 ## ETH Ropsten Contracts
@@ -23,12 +23,12 @@ https://ropsten.etherscan.io/address/0x65fc0f7d2bb96a9be30a770fb5fcd5a7762ad659
 
 #### Actual Lition Registry contract
 ```
-https://ropsten.etherscan.io/address/0xA8659cee561B7C6118B2FB0D8f73e18aA8aC4ba4
+https://ropsten.etherscan.io/address/0xFC80Ab40BBf9CF9faAcaD6407a9768E7D3AE92a3
 ```
 
 #### Actual Lition Energy Chain Validator contract
 ```
-https://ropsten.etherscan.io/address/0x8c8fb24B2514f89ce5E34Ee91A2DB5E9891C88FF
+https://ropsten.etherscan.io/address/0xb1C869C78c73298d06D818Aa377d6bbeb51536fd
 ```
 
 ## Contract debugging
